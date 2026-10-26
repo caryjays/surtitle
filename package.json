@@ -1,0 +1,51 @@
+{
+  "name": "surtitle",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "dev": "pnpm build && node --env-file-if-exists=.env --import tsx apps/service/main.ts",
+    "dev:local": "pnpm build && node --import tsx apps/service/main.ts --local-only",
+    "dev:listen": "pnpm build && node --env-file-if-exists=.env --import tsx apps/service/main.ts --listen",
+    "start:listen": "node --env-file-if-exists=.env dist/service.mjs --listen",
+    "preflight:listen": "pnpm build && node --env-file-if-exists=.env dist/service.mjs --listen --preflight",
+    "start:local": "node dist/service.mjs --local-only",
+    "local:setup": "uv venv .local/venv --python 3.12 --allow-existing && uv pip sync --python .local/venv/bin/python scripts/local/requirements.lock && .local/venv/bin/python scripts/local/download_models.py && .local/venv/bin/python scripts/local/download_vad.py && .local/venv/bin/python scripts/local/download_fixtures.py",
+    "local:setup-vad": ".local/venv/bin/python scripts/local/download_vad.py",
+    "local:fixtures": ".local/venv/bin/python scripts/local/download_fixtures.py",
+    "local:bench": ".local/venv/bin/python scripts/local/benchmark.py",
+    "local:stream": "tsx scripts/local-stream-benchmark.ts",
+    "local:noisy-fixtures": "python3 scripts/local/prepare_noisy_fixtures.py",
+    "local:noisy-prepare": ".local/venv/bin/python scripts/local/noisy_cases.py",
+    "local:noisy-screen": ".local/venv/bin/python scripts/local/noisy_screen.py --run",
+    "local:noisy-replay": "tsx scripts/noisy-stream-experiment.ts --run",
+    "local:silence": ".local/venv/bin/python scripts/local/silence_check.py",
+    "test:local-unit": "python3 -m unittest discover -s scripts/local -p 'test_*.py'",
+    "start": "node --env-file-if-exists=.env dist/service.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:browser": "pnpm build && tsx scripts/browser-smoke.ts",
+    "test:local-browser": "pnpm build && tsx scripts/local-browser-smoke.ts",
+    "test:listen-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --listen",
+    "docs:check": "tsx scripts/docs-check.ts",
+    "check": "pnpm typecheck && pnpm test && pnpm docs:check && pnpm build"
+  },
+  "dependencies": {
+    "ws": "^8.18.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.25.11",
+    "playwright-core": "^1.64.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

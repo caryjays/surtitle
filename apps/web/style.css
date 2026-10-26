@@ -1,0 +1,90 @@
+:root { font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+h1 { font-size: 1.8rem; }
+p { line-height: 1.6; }
+label { display: flex; flex-direction: column; gap: .4rem; }
+label.inline { display: flex; flex-direction: row; align-items: center; }
+button, select, input[type="search"] { padding: .7rem; font: inherit; border-radius: .3rem; border: 1px solid #789; background: #203244; color: white; }
+button { cursor: pointer; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, select:focus-visible, summary:focus-visible, input:focus-visible, #captions:focus-visible { outline: 3px solid #9cdbff; outline-offset: 3px; }
+a { color: #9cdbff; }
+.controls, .presets { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.presets button[aria-pressed="true"], button.primary, #reading-focus[aria-pressed="true"] { border-color: #93e6c6; background: #1e5148; }
+meter { width: 140px; height: 1.4rem; }
+article { background: rgba(8, 12, 19, .86); border-radius: 12px; padding: 16px 24px; margin-top: 12px; overflow-wrap: anywhere; }
+.original { font-size: 24px; line-height: 1.4; color: #e0e6ed; white-space: pre-wrap; }
+.translation { font-size: 40px; line-height: 1.4; font-weight: 650; color: white; white-space: pre-wrap; margin-top: 6px; }
+small { display: block; margin-top: .5rem; color: #a9bed1; }
+#error { color: #ffb3a7; min-height: 1.6rem; }
+#error:empty { display: none; }
+
+/* Personal reader only. Display variables never change the OBS surface. */
+.control {
+  --original-size: 18px; --translation-size: 28px;
+  --reading-leading: 1.45; --turn-gap: 10px; --turn-pad: 12px 18px;
+  background: #111923; color: #f4f7fa; padding: .75rem 1rem;
+}
+.control main { max-width: 1180px; margin: auto; height: calc(100dvh - 1.5rem); display: flex; flex-direction: column; }
+.control main > * { flex-shrink: 0; }
+.control[data-reading-width="narrow"] main { max-width: 860px; }
+.control[data-reading-width="full"] main { max-width: none; }
+.control header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.control h1 { font-size: 1.4rem; margin: .2rem 0; }
+.control button, .control select { font-size: .9rem; padding: .5rem .65rem; }
+.control .notice { font-size: .8rem; line-height: 1.4; color: #b7c9d7; padding: .45rem .65rem; margin: .5rem 0; border: 1px solid #3a5267; border-radius: .4rem; }
+.session-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: .4rem; }
+.control .input-level { font-size: .75rem; gap: .1rem; }
+.control #capture-input, .control #active-direction, .control #status, .control #activity { margin: .15rem 0; font-size: .85rem; line-height: 1.4; }
+#activity, #active-direction { color: #b4e9da; }
+#diagnostic-toggle[aria-pressed="true"] { border-color: #ffd294; background: #534026; }
+.control #error { margin: .25rem 0; }
+.reading-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; margin: .4rem 0 .2rem; font-size: .85rem; }
+.reading-controls > span { color: #a9bed1; margin-left: auto; font-size: .75rem; }
+#layout-preview[aria-pressed="true"] { border-color: #ffd294; background: #534026; }
+.history-search { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin: .25rem 0; font-size: .8rem; }
+.history-search input { flex: 1; min-width: 140px; font-size: .85rem; padding: .4rem .6rem; }
+.control #preview-notice { border-color: #a38555; color: #ffe0b5; }
+.control #reading-settings[open] { max-height: 32dvh; overflow-y: auto; }
+.control summary { cursor: pointer; padding: .4rem 0; font-size: .85rem; }
+.reading-options { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: .5rem .65rem; border: 1px solid #3a5267; border-radius: .4rem; }
+.reading-options label { font-size: .85rem; gap: .15rem; }
+.reading-options output { color: #a9bed1; font-size: .8rem; }
+.reading-options input[type="range"] { width: 170px; accent-color: #93e6c6; }
+.control .settings-note { font-size: .75rem; color: #a9bed1; margin: .3rem 0; }
+.control #captions { flex: 1 1 180px; min-height: 180px; overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior-y: contain; overflow-anchor: none; border: 1px solid #3a5267; border-radius: .65rem; padding: 0 .55rem .55rem; }
+.control #captions:empty::before { content: attr(data-empty-message); display: block; color: #a9bed1; padding: 1rem; }
+.control article { padding: var(--turn-pad); margin-top: var(--turn-gap); border-left: 2px solid #405466; border-radius: .4rem; }
+.control article[data-state="partial"] { border-left-style: dashed; }
+.control article[data-state="ready"] { border-left-color: #93e6c6; }
+.control .original { font-size: var(--original-size); line-height: var(--reading-leading); color: #c3d0dc; }
+.control .translation { font-size: var(--translation-size); line-height: var(--reading-leading); font-weight: 550; margin-top: .25rem; }
+.control small { font-size: .75rem; margin-top: .35rem; }
+.control:not([data-caption-details="true"]) article[data-state="ready"] small { display: none; }
+.control[data-spacing="compact"] { --reading-leading: 1.3; --turn-gap: 6px; --turn-pad: 8px 14px; }
+.control[data-spacing="roomy"] { --reading-leading: 1.65; --turn-gap: 16px; --turn-pad: 18px 22px; }
+.control #diagnostics { margin-top: .35rem; }
+.control #diagnostics[open], .control #diagnostic-log[open] { max-height: 40vh; overflow-y: auto; }
+.control #diagnostics p, .control #diagnostic-log p { font-size: .85rem; }
+.control[data-reading-focus="true"] .setup-only { display: none; }
+.control[data-reading-focus="true"] .notice { margin: .35rem 0; }
+.control[data-reading-focus="true"] .reading-controls { margin: .25rem 0; }
+@media (max-width: 600px) {
+  .control { padding: .5rem; }
+  .control main { height: calc(100dvh - 1rem); }
+  .control h1 { font-size: 1.15rem; }
+  .reading-controls > span { width: 100%; margin-left: 0; }
+  .history-search label { width: 100%; }
+  .control #reading-settings[open] { max-height: 28dvh; }
+  .control .input-level { display: none; }
+  .reading-options input[type="range"] { width: 140px; }
+}
+
+/* OBS presentation styling stays deliberately independent of personal settings. */
+.overlay { background: transparent; color-scheme: normal; overflow: hidden; }
+.overlay #captions { position: fixed; bottom: 5%; left: 6%; right: 6%; }
+.overlay .original, .overlay .translation { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.overlay .original { -webkit-line-clamp: 2; }
+.overlay .translation { -webkit-line-clamp: 3; }

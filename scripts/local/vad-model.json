@@ -1,0 +1,8 @@
+{
+  "repo": "snakers4/silero-vad",
+  "revision": "066409f3d9db45a30d21dfcbf9147826ffdd7052",
+  "file": "src/silero_vad/data/silero_vad.jit",
+  "bytes": 2272526,
+  "sha256": "e1122837f4154c511485fe0b9c64455f7b929c96fbb8d79fbdb336383ebd3720",
+  "license": "MIT"
+}

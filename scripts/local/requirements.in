@@ -1,0 +1,4 @@
+# Apple Silicon only; installed in an isolated repo-local venv.
+mlx-whisper==0.4.3
+# Also used directly by the pinned CPU Silero speech detector (already in lock).
+torch==2.14.1

@@ -1,0 +1,88 @@
+{
+  "dataset": "Google FLEURS",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "scope": "Held-out read-speech sources, not natural conversation. First eight eligible distinct JA sentence IDs excluding original tuning IDs; archive order, 4-16 seconds; first four targets, next four distractors.",
+  "fixtures": [
+    {
+      "id": "ja_lab-1834",
+      "language": "ja",
+      "role": "target",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10086073819084529371.wav",
+      "sha256": "fa4d3ce475c9b2fd127d3c9a6ea445792e21f04c5f8514452b0ad97b0ccbc2f8",
+      "seconds": 14.22,
+      "reference": "また、北側に行くなら世界的に有名なマリア像の聖地であるファティマの聖母の聖域（神社）を訪れましょう。"
+    },
+    {
+      "id": "ja_lab-1813",
+      "language": "ja",
+      "role": "target",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10112379500600537933.wav",
+      "sha256": "ade60c57813d704095310734906a9b6918b2dbbdcd0c9405c3f7d25580570d48",
+      "seconds": 12.84,
+      "reference": "バルセロナの公用語はカタルーニャ語とスペイン語です。約半数がカタルーニャ語を好み、大多数がカタルーニャ語を理解し、ほぼ全員がスペイン語を知っています。"
+    },
+    {
+      "id": "ja_lab-1869",
+      "language": "ja",
+      "role": "target",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10174984673310355687.wav",
+      "sha256": "7059c2e63434b2ffb6d33782ba99bf31b2c3f725feb988d50c514adda8efdb64",
+      "seconds": 12.54,
+      "reference": "その長い顎には70本以上の鋭い歯が並び、口蓋には別の歯列があり、つまりここを通ったら逃げ道はないということになります。"
+    },
+    {
+      "id": "ja_lab-1744",
+      "language": "ja",
+      "role": "target",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10193386983118883224.wav",
+      "sha256": "3a268d324535ea7360c2448837f8947e87440554f01cbfc54879052d48703110",
+      "seconds": 12.06,
+      "reference": "ロスビー数が小さいほど磁気反転に関して星の活性が低下するわけです。"
+    },
+    {
+      "id": "ja_lab-1771",
+      "language": "ja",
+      "role": "distractor",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10228875750894489453.wav",
+      "sha256": "f8ab164f389ee30d0c9694ce9b6fab387354503971262f5cc4a1b31c309e7b93",
+      "seconds": 12.96,
+      "reference": "メインステージの音楽が終わっても、フェスティバルには夜遅くまで演奏を流し続けるセクションがあるかもしれないことを覚えておいてください。"
+    },
+    {
+      "id": "ja_lab-2003",
+      "language": "ja",
+      "role": "distractor",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10281646305484957883.wav",
+      "sha256": "3562ad74d0632ff82c8ca4c57ff36afa0137a13486792783c9a5812add677b22",
+      "seconds": 9.66,
+      "reference": "香港の最高の景色を見るには、島から出て九龍のウォーターフロントに向かいましょう。"
+    },
+    {
+      "id": "ja_lab-1980",
+      "language": "ja",
+      "role": "distractor",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/10300959819649327821.wav",
+      "sha256": "a7297368ff66e4deaf5639aec5c4dbac2840f8ef233008b2709e1ba9a7f0fbd8",
+      "seconds": 11.94,
+      "reference": "残念ながら、運転手の行動を100%の確率で予測することはできないので、交通の流れを研究することは困難です。"
+    },
+    {
+      "id": "ja_lab-1822",
+      "language": "ja",
+      "role": "distractor",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+      "member": "test/1030930262884292674.wav",
+      "sha256": "99109b2c1be87e85ae9c5b683bf7dfdee569cf333bd5682f740a43e45bcd0c6d",
+      "seconds": 14.04,
+      "reference": "都市はモロッコのスルタンによってダルル・バディアとして再建され、貿易拠点を設立したスペイン人貿易商によってカサブランカと名付けられました。"
+    }
+  ]
+}

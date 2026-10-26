@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>English ↔ 日本語 companion</title><link rel="stylesheet" href="/style.css"></head>
+<body class="control"><main>
+<header><h1>English ↔ 日本語</h1><button id="reading-focus" type="button" aria-pressed="false">Reading focus</button></header>
+<p class="notice"><span id="processing">Waiting for processing configuration.</span> <strong>No local audio or transcript saving.</strong></p>
+<div class="session-toolbar">
+<section class="presets setup-only" aria-label="Listening preset">
+<button id="conversation" type="button" aria-pressed="true">Conversation · EN ↔ JA</button>
+<button id="lecture" type="button" aria-pressed="false">Lecture · Japanese → English</button>
+</section>
+<section class="controls" aria-label="Capture controls">
+<button id="start" class="primary" type="button" disabled>Start microphone</button>
+<button id="pause" type="button" disabled>Pause</button>
+<button id="flush" class="setup-only" type="button" disabled title="Optional: finalize the current speech without stopping the microphone">Translate now</button>
+<button id="clear" type="button" disabled>Clear screen</button>
+<label class="input-level setup-only">Input level <meter id="meter" min="0" max="1" value="0"></meter></label>
+</section>
+</div>
+<p id="active-direction" role="status">Direction: waiting for session status.</p>
+<p id="capture-input">Input: microphone off. Reload resets selection to System default; verify the named input.</p>
+<p id="gate-advice" class="notice" role="status" hidden>Gate threshold is high; quieter or distant speech may be missed. Calibration needs a room-wide quiet gap—not just your silence. Verify the actual input first. Recalibrate room noise during a quiet gap; this clears history/context.</p>
+<p id="status" class="setup-only" role="status">Connecting…</p><p id="activity" role="status">Microphone is off. Choose a preset, then Start.</p><p id="error" role="alert"></p>
+<div class="reading-controls"><label class="inline"><input id="follow" type="checkbox" checked> Follow latest</label><button id="latest" type="button">Jump to latest</button><button id="layout-preview" type="button" aria-pressed="false">Preview long conversation</button><span id="history-count">Recent 60 segments · memory only</span></div>
+<div class="history-search"><label for="history-search">Find in recent text</label><input id="history-search" type="search" placeholder="Search originals or translations…" maxlength="200" aria-controls="captions"><button id="search-clear" type="button">Clear search</button></div>
+<p id="preview-notice" class="notice" hidden>Layout preview · fictional EN/JA conversation, not your transcript. No microphone or translation calls. Starting capture returns to live text.</p>
+<details id="reading-settings"><summary>Text &amp; spacing</summary>
+<div class="reading-options">
+<label for="translation-size">Translation size <output id="translation-size-value" for="translation-size">28 px</output><input id="translation-size" aria-label="Translation size" type="range" min="18" max="48" step="2" value="28"></label>
+<label for="original-size">Original size <output id="original-size-value" for="original-size">18 px</output><input id="original-size" aria-label="Original size" type="range" min="12" max="24" step="2" value="18"></label>
+<label>Spacing <select id="reading-spacing"><option value="compact">Compact</option><option value="comfortable" selected>Comfortable</option><option value="roomy">Roomy</option></select></label>
+<label>Reading width <select id="reading-width"><option value="narrow">Narrow</option><option value="wide" selected>Wide</option><option value="full">Full window</option></select></label>
+<label class="inline"><input id="caption-details" type="checkbox"> Show caption diagnostics</label>
+<button id="reading-reset" type="button">Reset display</button>
+</div>
+<p class="settings-note">Only display preferences are saved in this browser. No captions, microphone selection or credentials. OBS styling is separate.</p>
+</details>
+<section id="captions" tabindex="0" aria-label="Recent bilingual captions"></section>
+<details id="diagnostic-log"><summary>Diagnostic log · <span id="diagnostic-indicator">OFF</span> · no speech text</summary>
+<p>Opt-in technical metadata only: per-turn mode and recognition language, audio duration/boundary reason, recognition queue/inference time, filtering reasons, clipping/ellipsis flags, translation/context metadata, queue/gate health and problem timestamps. No audio, original/translated text, device names or credentials.</p>
+<section class="controls" aria-label="Diagnostic log controls">
+<button id="diagnostic-toggle" type="button" aria-pressed="false">Start diagnostics</button>
+<button id="diagnostic-mark" type="button" disabled>Mark problem now</button>
+<button id="diagnostic-download" type="button" disabled>Download diagnostics JSON</button>
+<button id="diagnostic-clear" type="button" disabled>Discard diagnostics</button>
+</section>
+<p id="diagnostic-status" role="status">Diagnostics OFF · 0 events in memory</p>
+<p>Up to 5,000 recent events in this tab, including a metadata-only baseline of current rows when enabled. Reload/close loses the log; Download explicitly saves a file in your browser's download location. No automatic uploads. Clear screen/new session does not erase diagnostics; Discard stops and deletes the in-memory log, not downloaded files. Use Mark problem now when detection drifts, then compare Conversation with Japanese → English.</p>
+<p>Version 2 distinguishes quiet/time-limit splits, rejected or partly filtered turns, recognition versus translation language, character clipping and translation output-token limits. Enable Show caption diagnostics under Text &amp; spacing to see turn numbers/boundary labels. Exported flags do not reconstruct speech or prove a complete sentence. Browser timestamps are not audio-to-caption latency. Restart the updated service and reload this page to get the new turn details.</p>
+</details>
+<details id="diagnostics"><summary>Microphone, direction override &amp; diagnostics</summary>
+<section class="controls">
+<label>Microphone <select id="device"><option value="">System default</option></select></label>
+<button id="refresh" type="button">Refresh inputs</button>
+<label class="inline"><input id="auto-gain" type="checkbox"> Automatic mic gain (may amplify room noise)</label>
+<button id="calibrate" type="button" disabled>Recalibrate room noise</button>
+<label>Direction <select id="mode"><option value="auto">Auto · EN ↔ JA</option><option value="en-ja">EN → JA</option><option value="ja-en">JA → EN</option></select></label>
+<button id="new" type="button" disabled>New session</button>
+</section>
+<p id="gate-status">Noise gate diagnostics appear while listening.</p>
+<p>Check permission before transcribing other people. Cloud modes send text/context (and, only with cloud recognition, audio) to the provider; provider retention policies apply. Local recording and transcript saving are unavailable.</p>
+<p>At Start, the room (including other speakers) must be quiet during the 1.5-second room-noise calibration, then speak when Listening appears. Calibrating during someone else's speech can learn that speech as background noise. Reload resets input selection to System default; check the actual input shown above. Recalibrate clears captions/context and cancels pending translations without reloading the model. Automatic gain is off by default; Pause before changing it. Calibration is an energy heuristic, not a guarantee of speech detection.</p>
+<p>Direction changes finish the current turn with its previous setting; the next turn uses the new one. No microphone restart is needed. Pause before changing microphones. Select the Mac microphone here if the external input is unavailable.</p>
+<p>Automatic direction is not speaker identification. Short or ambiguous speech may stay original-only. Speak in turns; simultaneous voices can mix. Translate now is an optional recovery button, not required between turns.</p>
+<p>Captions finalize after a pause or at the maximum turn length (normally 12 seconds). Local source previews are provisional and never translated until finalized. This is not word-by-word simultaneous interpretation.</p>
+<p>Keep this tab open and the Mac awake. No synthesized speech. <a href="/overlay" target="_blank" rel="noopener">OBS overlay</a> remains available but is not needed here.</p>
+</details>
+</main><script type="module" src="/control.js"></script></body></html>

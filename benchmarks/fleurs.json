@@ -1,0 +1,74 @@
+[
+  {
+    "id": "en_us-1904",
+    "language": "en",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+    "member": "test/1003119935936341070.wav",
+    "sha256": "33aca50159ec2e3cbcc894eb26faa916d6badb1b49fb75994973561540a7f012",
+    "seconds": 10.56,
+    "reference": "However, due to the slow communication channels, styles in the west could lag behind by 25 to 30 year."
+  },
+  {
+    "id": "en_us-1675",
+    "language": "en",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+    "member": "test/10052240106321793346.wav",
+    "sha256": "7603cae3294309ef70d234180cefccc3b13865ee525262228a636069b9b62841",
+    "seconds": 8.76,
+    "reference": "All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence."
+  },
+  {
+    "id": "en_us-1950",
+    "language": "en",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+    "member": "test/10167324587744183095.wav",
+    "sha256": "260bdd1a15e1d35bcc5d91667516ca3bc659285e10f94872182715bcd7880398",
+    "seconds": 11.46,
+    "reference": "To the north and within easy reach is the romantic and fascinating town of Sintra and which was made famous to foreigners after a glowing account of its splendours recorded by Lord Byron."
+  },
+  {
+    "id": "en_us-1728",
+    "language": "en",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+    "member": "test/10197164397713068203.wav",
+    "sha256": "b174be7730f0aab6a26762130b66f2125392b50550645727bd057d8479fb6219",
+    "seconds": 5.76,
+    "reference": "The cabbage juice changes color depending on how acidic or basic (alkaline) the chemical is."
+  },
+  {
+    "id": "ja_jp-1828",
+    "language": "ja",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+    "member": "test/10020345318418093976.wav",
+    "sha256": "bd1b9533cfa176b8c2a71ecb4821a02bc86fa368d096373efe8d8dceafb35634",
+    "seconds": 10.44,
+    "reference": "インターネットで「敵対的環境コース」について検索すると、おそらく現地企業の住所が出てくるでしょう。"
+  },
+  {
+    "id": "ja_jp-1731",
+    "language": "ja",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+    "member": "test/10203675650837159328.wav",
+    "sha256": "70d05f350c3fe4585fa6be747cd00de46b84a270517527df8b271e2f0f4cca8c",
+    "seconds": 6.96,
+    "reference": "群島や湖では、必ずしもヨットは必要ありません。"
+  },
+  {
+    "id": "ja_jp-1910",
+    "language": "ja",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+    "member": "test/10214476888438240131.wav",
+    "sha256": "3cae5637b6406e6bdaaada5b7bbb75272b2e50f8f178dfdfc0c3760442e582a1",
+    "seconds": 8.88,
+    "reference": "パリジャンは、自己中心的で横柄で失礼な人が多いと言われています。"
+  },
+  {
+    "id": "ja_jp-1764",
+    "language": "ja",
+    "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ja_jp/audio/test.tar.gz",
+    "member": "test/10256418415643044307.wav",
+    "sha256": "08a7f22e72fe84fea5e7f563ede5b8a06b453cd5b6974e4dcaaa1ecd7918248d",
+    "seconds": 9.48,
+    "reference": "参列者の数が多すぎて、全員がサンピエトロ広場での葬儀に参加することは不可能でした。"
+  }
+]

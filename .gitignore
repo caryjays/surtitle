@@ -1,0 +1,44 @@
+# Dependencies and generated output
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Local credentials and machine configuration
+.env
+.env.*
+!.env.example
+.local/
+*.local.json
+*.local.yaml
+*.local.yml
+
+# Private session data; never commit audience recordings or transcripts
+sessions/
+recordings/
+exports/
+logs/
+captions-diagnostics-*.json
+*.log
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+*.webm
+*.mp4
+*.mkv
+
+# Downloaded model/audio caches live under ignored .local/ above.
+# Generated benchmark reports may include public-fixture hypotheses; never commit raw runs.
+benchmarks/results/
+__pycache__/
+*.pyc
+
+# OS/editor scratch
+.DS_Store
+*.swp
+
+# Personal overlay for the maintainer: context, notes, real glossary. Never tracked.
+/private/

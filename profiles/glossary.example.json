@@ -1,0 +1,14 @@
+[
+  { "term": "large language model", "translation": "大規模言語モデル" },
+  { "term": "LLM", "translation": "LLM" },
+  { "term": "machine learning", "translation": "機械学習" },
+  { "term": "inference", "translation": "推論" },
+  { "term": "fine-tuning", "translation": "ファインチューニング" },
+  { "term": "retrieval-augmented generation", "translation": "検索拡張生成" },
+  { "term": "RAG", "translation": "RAG" },
+  { "term": "prompt", "translation": "プロンプト" },
+  { "term": "AI agent", "translation": "AIエージェント" },
+  { "term": "personal wiki", "translation": "パーソナルWiki" },
+  { "term": "Claude", "translation": "Claude" },
+  { "term": "ChatGPT", "translation": "ChatGPT" }
+]

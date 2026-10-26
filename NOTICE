@@ -1,0 +1,8 @@
+surtitle
+Copyright 2026 Cary Jay Forest
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+Public speech fixtures referenced by benchmarks/*.json come from Google FLEURS,
+CC BY 4.0; attribution is in benchmarks/README.md. Whisper model weights and the
+Silero VAD model are downloaded at setup time and are not redistributed here.

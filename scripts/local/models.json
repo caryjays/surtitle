@@ -1,0 +1,14 @@
+{
+  "small-q4": {
+    "repo": "mlx-community/whisper-small-mlx-q4",
+    "revision": "cd85bf0648ec125b9cae1eb6b617a41e58721704",
+    "bytes": 196537352,
+    "sha256": "ca6659298fe7550468ff0fc49dea7442615d9a53d1ce087aaded1b7627451998"
+  },
+  "turbo-q4": {
+    "repo": "mlx-community/whisper-large-v3-turbo-q4",
+    "revision": "660c343bbf4e52ac257f0b7d952e5388e6f93bef",
+    "bytes": 463664664,
+    "sha256": "862bbc832b05f3f4ec19dd632b701d61a6d3f5c7906360a10d72a79870642a80"
+  }
+}
