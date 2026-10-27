@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-10-26 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-10-27 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -17,6 +17,7 @@ Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Ch
 | `pnpm build` then `pnpm start:local` or `pnpm start:listen` | run the built service |
 | `LOCAL_MODEL=small-q4 pnpm dev:local` | try the smaller model |
 | `LOCAL_PREVIEWS=off pnpm dev:listen` | disable source previews |
+| `LOCAL_SEGMENTATION=rolling pnpm dev:listen` | experimental rolling recognition; not yet rehearsed |
 
 After editing source, stop the service, run the `dev:*` command again and reload `/control`. A build alone changes nothing that is running.
 

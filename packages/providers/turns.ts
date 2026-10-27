@@ -14,9 +14,10 @@ export class TurnDetector {
   private calibrationRemaining = 0;
   private noiseLevels: number[] = [];
   constructor(private callbacks: { begin(): void; append(pcm: Uint8Array): void; commit(detail: { boundary: Boundary; audioMs: number; trailingQuietMs: number }): void },
-    private options: { maxTurnMs?: number; calibrationMs?: number } = {}) {
+    private options: { maxTurnMs?: number | null; calibrationMs?: number } = {}) {
+    // null: no maximum duration, for rolling segmentation, which bounds its own window.
     const max = options.maxTurnMs ?? 12_000;
-    if (!Number.isFinite(max) || max < 1000 || max > 12_000) throw new Error('Invalid turn limit');
+    if (options.maxTurnMs !== null && (!Number.isFinite(max) || max < 1000 || max > 12_000)) throw new Error('Invalid turn limit');
     if (options.calibrationMs !== undefined && (!Number.isInteger(options.calibrationMs)
       || options.calibrationMs < 1000 || options.calibrationMs > 2000 || options.calibrationMs % 50)) throw new Error('Invalid calibration duration');
     this.calibrationRemaining = options.calibrationMs ?? 0;
@@ -70,7 +71,7 @@ export class TurnDetector {
     }
     this.silence = voiced ? 0 : this.silence + 50;
     if (this.silence >= 700) this.finish('silence');
-    else if (this.duration >= (this.options.maxTurnMs ?? 12_000)) this.finish('max-duration');
+    else if (this.options.maxTurnMs !== null && this.duration >= (this.options.maxTurnMs ?? 12_000)) this.finish('max-duration');
   }
   finish(boundary: Boundary = 'flush') {
     if (this.active) {

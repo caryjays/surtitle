@@ -12,7 +12,7 @@ import mlx_whisper
 from mlx_whisper.transcribe import ModelHolder
 import numpy as np
 from scipy.signal import resample_poly
-from quality import accepted_result, quality_metadata
+from quality import accepted_segments, quality_metadata, segment_ends
 from speech_gate import SpeechGate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,11 +53,13 @@ class Engine:
         audio = np.frombuffer(pcm24, dtype='<i2').astype(np.float32) / 32768
         audio = resample_poly(audio, 2, 3).astype(np.float32)
         if not self.speech_gate.has_speech(audio, threshold=speech_threshold):
-            return {'text': '', 'rejected': True, 'language': language or 'unknown',
+            return {'text': '', 'rejected': True, 'language': language or 'unknown', 'segments': [],
                     'seconds': time.perf_counter() - start, 'quality': quality_metadata(True), 'clipped': False}
         result = self._decode(audio, language, prompt)
         mx.synchronize()
-        text, rejected, quality = accepted_result(result, min_logprob=min_logprob)
-        return {'text': text[:4000], 'rejected': rejected,
+        kept, rejected, quality = accepted_segments(result, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
+        text = ''.join(s['text'] for s in kept).strip()
+        return {'text': text[:4000], 'rejected': rejected, 'segments': segment_ends(kept, len(audio) / 16),
                 'language': result.get('language', 'unknown'),
                 'seconds': time.perf_counter() - start, 'quality': quality, 'clipped': len(text) > 4000}
+

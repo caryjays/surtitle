@@ -2,28 +2,42 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import { TurnMeasurement, type Mode, type Glossary } from '../protocol/index.ts';
+import { TurnMeasurement, RecognitionQuality as Quality, type Boundary, type Mode, type Glossary } from '../protocol/index.ts';
 import type { Transcriber, TranscriberFactory } from './types.ts';
 import { TurnDetector } from './turns.ts';
 import { isRepetitiveTranscript } from './quality.ts';
+import { ROLLING, endsSentence, hypothesis, isStockPhrase, joinText, lockCount, stablePrefix, type WorkerSegment } from './rolling.ts';
 
 const Reply = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ready') }).strict(),
   z.object({ type: z.literal('error') }).strict(),
   z.object({ type: z.literal('final'), id: z.string().uuid(), text: z.string().max(4000),
     language: z.enum(['en', 'ja', 'unknown']), inferenceMs: z.number().nonnegative().max(60_000), rejected: z.boolean().optional(),
+    // Where each accepted Whisper segment ends within the request's audio, for rolling segmentation.
+    segments: z.array(z.object({ endMs: z.number().int().min(0).max(30_000), text: z.string().max(4000) }).strict()).max(64).optional(),
     measurement: TurnMeasurement.pick({ recognitionLanguage: true, recognitionClipped: true, quality: true }).optional() }).strict(),
 ]);
 export type LocalOptions = {
   model: 'small-q4' | 'turbo-q4'; python?: string; maxTurnMs?: number;
+  // rolling: re-decode the open stretch about every second and lock text two decodes agree on. See rolling.ts.
+  segmentation?: 'turns' | 'rolling';
   previewIntervalMs?: number; glossary?: Glossary; calibrationMs?: number;
   startupTimeoutMs?: number; inferenceTimeoutMs?: number;
   workerFactory?: () => ChildProcessWithoutNullStreams;
   onDiagnostic?: (category: 'worker' | 'protocol' | 'startup-timeout' | 'inference-timeout' | 'queue-expired') => void;
   onTiming?: (timing: { id: string; audioMs: number; queueMs: number; inferenceMs: number; commitToFinalMs: number }) => void;
 };
-type Job = { id: string; requestId: string; kind: 'preview' | 'final'; language: 'en' | 'ja' | null;
-  audio: Buffer; queued: number; sent?: number };
+type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' | 'close'; language: 'en' | 'ja' | null;
+  audio: Buffer; queued: number; sent?: number;
+  // Rolling jobs: the stretch and row they decode for, and the closing boundary.
+  stretch?: Stretch; row?: Row; detail?: { boundary: Boundary; trailingQuietMs: number } };
+// A caption row in rolling mode: locked text only grows. Its begin event waits for its first locked text.
+type Row = { id: string; begun: boolean; text: string; audioMs: number; language: 'en' | 'ja' | null; created: number;
+  decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality };
+// One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
+type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
+type RecognitionQuality = z.infer<typeof Quality>;
+const BYTES_PER_MS = 48;
 export class LocalTranscriber implements Transcriber {
   private worker?: ChildProcessWithoutNullStreams;
   private closed = false;
@@ -34,6 +48,7 @@ export class LocalTranscriber implements Transcriber {
   private current?: { id: string; frames: Buffer[]; language: 'en' | 'ja' | null;
     lastPreviewMs: number; hypothesis: string; stable: string };
   private preview?: Job;
+  private stretch?: Stretch;
   private queue: Job[] = [];
   private active?: Job;
   private deadline?: ReturnType<typeof setTimeout>;
@@ -41,7 +56,25 @@ export class LocalTranscriber implements Transcriber {
   private rejectConnect?: () => void;
   private detector: TurnDetector;
   constructor(private options: LocalOptions & Parameters<TranscriberFactory>[0]) {
-    this.detector = new TurnDetector({
+    const rolling = options.segmentation === 'rolling';
+    this.detector = new TurnDetector(rolling ? {
+      begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', row: this.row() }; },
+      append: pcm => {
+        if (!this.stretch) return;
+        this.stretch.audio.push(Buffer.from(pcm));
+        this.stretch.windowMs += pcm.byteLength / BYTES_PER_MS; this.stretch.sinceRequestMs += pcm.byteLength / BYTES_PER_MS;
+      },
+      commit: detail => {
+        const stretch = this.stretch;
+        if (!stretch) return;
+        if (this.queue.length >= 2) throw new Error('Local inference backlog');
+        // A decode still in flight for this stretch is superseded: the closing decode covers its audio and locks all of it.
+        this.queue.push({ id: stretch.row.id, requestId: randomUUID(), kind: 'close', language: stretch.row.language,
+          audio: this.window(stretch), queued: performance.now(), row: stretch.row,
+          detail: { boundary: detail.boundary, trailingQuietMs: detail.trailingQuietMs } });
+        this.stretch = undefined; this.preview = undefined; this.pump();
+      },
+    } : {
       begin: () => {
         this.current = { id: randomUUID(), frames: [],
           language: options.mode === 'auto' ? null : options.mode === 'en-ja' ? 'en' : 'ja',
@@ -57,7 +90,17 @@ export class LocalTranscriber implements Transcriber {
           audio: Buffer.concat(this.current.frames), queued: performance.now() });
         this.current = undefined; this.preview = undefined; this.pump();
       },
-    }, { maxTurnMs: options.maxTurnMs ?? 12_000, calibrationMs: options.calibrationMs });
+    }, { maxTurnMs: rolling ? null : options.maxTurnMs ?? 12_000, calibrationMs: options.calibrationMs });
+  }
+  private row(): Row {
+    return { id: randomUUID(), begun: false, text: '', audioMs: 0, created: performance.now(), decodes: 0, forced: 0, lags: [],
+      language: this.options.mode === 'auto' ? null : this.options.mode === 'en-ja' ? 'en' : 'ja' };
+  }
+  // The unlocked audio as one buffer, capped below Whisper's 30 s input.
+  private window(stretch: Stretch) {
+    const audio = Buffer.concat(stretch.audio);
+    stretch.audio = [audio];
+    return audio.subarray(0, ROLLING.maxWindowMs * BYTES_PER_MS);
   }
   async connect() {
     if (this.closed || this.worker) throw new Error('Invalid local lifecycle');
@@ -104,6 +147,9 @@ export class LocalTranscriber implements Transcriber {
     const repeated = !message.rejected && isRepetitiveTranscript(message.text);
     const rejected = message.rejected || repeated;
     const text = rejected ? '' : message.text;
+    if (job.kind === 'roll' || job.kind === 'close') {
+      this.rolled(job, message, rejected, repeated); this.pump(); return;
+    }
     if (job.kind === 'final') {
       this.options.onTurnDiagnostic?.(job.id, { ...message.measurement,
         recognitionLanguage: message.measurement?.recognitionLanguage ?? message.language,
@@ -132,6 +178,78 @@ export class LocalTranscriber implements Transcriber {
     }
     this.pump();
   }
+  private rolled(job: Job, message: Extract<z.infer<typeof Reply>, { type: 'final' }>, rejected: boolean, repeated: boolean) {
+    const stretch = job.stretch;
+    if (job.kind === 'roll' && (!stretch || stretch !== this.stretch)) return; // superseded by the closing decode
+    const row = job.kind === 'close' ? job.row! : stretch!.row;
+    const windowMs = job.audio.length / BYTES_PER_MS;
+    row.decodes++; row.quality = mergeQuality(row.quality, message.measurement?.quality);
+    if (!row.language && (message.language === 'en' || message.language === 'ja')) row.language = message.language; // Auto: once per row
+    const segments: WorkerSegment[] = rejected ? [] : message.segments ?? [];
+    if (job.kind === 'close') {
+      // Everything left locks. An older worker without segments still returns its text.
+      row.text = joinText(row.text, rejected ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
+      row.audioMs += windowMs;
+      this.closeRow(row, job.detail!.boundary, { trailingQuietMs: job.detail!.trailingQuietMs,
+        recognitionQueueMs: Math.round(job.sent! - job.queued), recognitionInferenceMs: message.inferenceMs,
+        commitToFinalMs: Math.round(performance.now() - job.queued), adapterRepetitionRejected: repeated,
+        ...(message.measurement?.recognitionLanguage ? { recognitionLanguage: message.measurement.recognitionLanguage } : {}),
+      }, rejected);
+      this.options.onTiming?.({ id: row.id, audioMs: row.audioMs, queueMs: job.sent! - job.queued,
+        inferenceMs: message.inferenceMs, commitToFinalMs: performance.now() - job.queued });
+      return;
+    }
+    const current = hypothesis(segments);
+    const { count, forced } = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false);
+    if (count) {
+      const locked = segments.slice(0, count);
+      const endMs = locked.at(-1)!.endMs;
+      stretch!.previous = current.slice(hypothesis(locked).length).trimStart();
+      // Replies arrive in order and only replies trim, so the request's window still starts where this stretch's does.
+      stretch!.audio = [Buffer.concat(stretch!.audio).subarray(endMs * BYTES_PER_MS)];
+      stretch!.windowMs -= endMs;
+      row.text = joinText(row.text, locked.map(s => s.text).join(''));
+      row.audioMs += endMs; row.forced += Number(forced);
+      row.lags.push(windowMs - endMs + performance.now() - job.queued);
+      this.rowText(row);
+      if (row.audioMs >= ROLLING.maxRowMs || (row.audioMs >= ROLLING.sentenceRowMs && endsSentence(row.text))) {
+        this.closeRow(row, 'length', {}, false);
+        stretch!.row = this.row();
+      }
+    } else if (!segments.length && windowMs > ROLLING.noiseMs) {
+      // Noise held the gate open: keep only the last second, and in Auto relearn the language.
+      const dropMs = windowMs - ROLLING.keepMs;
+      stretch!.audio = [Buffer.concat(stretch!.audio).subarray(dropMs * BYTES_PER_MS)];
+      stretch!.windowMs -= dropMs; stretch!.previous = '';
+      if (!row.text && this.options.mode === 'auto') row.language = null;
+    } else {
+      stretch!.previous = current;
+    }
+  }
+  private rowText(row: Row) {
+    if (!row.begun) {
+      row.begun = true;
+      this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: this.options.mode });
+    }
+    row.firstTextMs ??= performance.now() - row.created;
+    if (row.text) this.options.onEvent({ type: 'partial', id: row.id, text: row.text });
+  }
+  private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean) {
+    // A whole row of stock sign-off from long audio replaced real speech.
+    const stock = row.audioMs >= ROLLING.stockMs && isStockPhrase(row.text);
+    if (!row.begun) { row.begun = true; this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: this.options.mode }); }
+    if (row.text.trim()) row.firstTextMs ??= performance.now() - row.created;
+    const lags = [...row.lags].sort((a, b) => a - b);
+    const quality = row.quality && stock ? { ...row.quality, stockPhraseDrops: Math.min(10_000, row.quality.stockPhraseDrops + 1) } : row.quality;
+    this.options.onTurnDiagnostic?.(row.id, { boundary, audioMs: Math.min(120_000, Math.round(row.audioMs)), ...extra,
+      decodes: row.decodes, forcedLocks: row.forced,
+      ...(row.firstTextMs !== undefined ? { firstTextMs: Math.min(120_000, Math.round(row.firstTextMs)) } : {}),
+      ...(lags.length ? { lockLagMs: Math.min(120_000, Math.round(lags[Math.floor((lags.length - 1) / 2)]!)) } : {}),
+      ...(quality ? { quality } : {}) });
+    const empty = stock || !row.text.trim();
+    this.options.onEvent({ type: 'final', id: row.id, text: stock ? '' : row.text, language: row.language ?? 'unknown',
+      ...((empty && rejected) || stock ? { rejected: true } : {}) });
+  }
   private pump() {
     if (this.closed || !this.ready || this.active) return;
     const job = this.queue.shift() ?? this.preview;
@@ -151,6 +269,15 @@ export class LocalTranscriber implements Transcriber {
     this.detector.push(pcm);
     if (this.options.calibrationMs && (++this.gateFrames % 5 === 0 || previousState !== this.detector.status().state)) {
       this.options.onGate?.(this.detector.status());
+    }
+    const stretch = this.stretch;
+    if (stretch && stretch.sinceRequestMs >= ROLLING.intervalMs && stretch.windowMs >= ROLLING.minWindowMs
+      && !this.active && !this.queue.length && !this.preview) {
+      // Backpressure: a slow decode delays the next request rather than queueing more.
+      stretch.sinceRequestMs = 0;
+      this.preview = { id: stretch.row.id, requestId: randomUUID(), kind: 'roll', language: stretch.row.language,
+        audio: this.window(stretch), queued: performance.now(), stretch };
+      this.pump();
     }
     const current = this.current;
     const interval = this.options.previewIntervalMs;
@@ -173,7 +300,7 @@ export class LocalTranscriber implements Transcriber {
   }
   private failure(category: Parameters<NonNullable<LocalOptions['onDiagnostic']>>[0] = 'worker', id?: string) {
     if (this.closed) return;
-    const turnId = id ?? this.active?.id ?? this.current?.id;
+    const turnId = id ?? this.active?.id ?? this.current?.id ?? this.stretch?.row.id;
     if (turnId) this.options.onTurnDiagnostic?.(turnId, { recognitionFailure: category === 'worker' ? 'runtime' : category });
     this.options.onDiagnostic?.(category); this.close(); this.options.onFailure();
   }
@@ -181,9 +308,21 @@ export class LocalTranscriber implements Transcriber {
     if (this.closed) return;
     this.closed = true; this.ready = false; clearTimeout(this.deadline);
     this.rejectConnect?.(); this.rejectConnect = undefined; this.resolveConnect = undefined;
-    this.queue = []; this.preview = undefined; this.active = undefined; this.current = undefined; this.output = '';
+    this.queue = []; this.preview = undefined; this.active = undefined; this.current = undefined; this.stretch = undefined; this.output = '';
     this.worker?.stdin.destroy(); this.worker?.kill('SIGKILL');
   }
+}
+// Quality over a row's decodes: counters add, extremes combine.
+function mergeQuality(a: RecognitionQuality | undefined, b: RecognitionQuality | undefined): RecognitionQuality | undefined {
+  if (!a || !b) return a ?? b;
+  const add = (x: number, y: number) => Math.min(10_000, x + y);
+  const extreme = (x: number | null, y: number | null, pick: (...v: number[]) => number) => x === null ? y : y === null ? x : pick(x, y);
+  return { speechGateRejected: a.speechGateRejected || b.speechGateRejected,
+    decodedSegments: add(a.decodedSegments, b.decodedSegments), droppedSegments: add(a.droppedSegments, b.droppedSegments),
+    noSpeechDrops: add(a.noSpeechDrops, b.noSpeechDrops), lowConfidenceDrops: add(a.lowConfidenceDrops, b.lowConfidenceDrops),
+    repetitionDrops: add(a.repetitionDrops, b.repetitionDrops), stockPhraseDrops: add(a.stockPhraseDrops, b.stockPhraseDrops),
+    invalidScoreDrops: add(a.invalidScoreDrops, b.invalidScoreDrops),
+    noSpeechMax: extreme(a.noSpeechMax, b.noSpeechMax, Math.max), logprobMin: extreme(a.logprobMin, b.logprobMin, Math.min) };
 }
 export function localTranscriberFactory(options: LocalOptions): TranscriberFactory {
   return callbacks => new LocalTranscriber({ ...options, ...callbacks });

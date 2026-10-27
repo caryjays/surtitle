@@ -2,11 +2,12 @@ import { z } from 'zod';
 
 const ms = z.number().finite().min(0).max(120_000);
 const count = z.number().int().min(0).max(10_000);
-export const Boundary = z.enum(['silence', 'max-duration', 'flush', 'mode-change', 'pause', 'recalibration']);
+// length: rolling segmentation closed a row at sentence punctuation or its length limit while speech continued.
+export const Boundary = z.enum(['silence', 'max-duration', 'length', 'flush', 'mode-change', 'pause', 'recalibration']);
 export type Boundary = z.infer<typeof Boundary>;
 export const RecognitionQuality = z.object({
   speechGateRejected: z.boolean(), decodedSegments: count, droppedSegments: count,
-  noSpeechDrops: count, lowConfidenceDrops: count, repetitionDrops: count, invalidScoreDrops: count,
+  noSpeechDrops: count, lowConfidenceDrops: count, repetitionDrops: count, stockPhraseDrops: count, invalidScoreDrops: count,
   noSpeechMax: z.number().finite().min(0).max(1).nullable(),
   logprobMin: z.number().finite().min(-100).max(10).nullable(),
 }).strict();
@@ -17,6 +18,9 @@ export const TurnMeasurement = z.object({
   recognitionClipped: z.boolean().optional(), adapterRepetitionRejected: z.boolean().optional(),
   recognitionFailure: z.enum(['runtime', 'protocol', 'startup-timeout', 'inference-timeout', 'queue-expired']).optional(),
   quality: RecognitionQuality.optional(),
+  // Rolling segmentation only: decodes that fed the row, locks forced without agreement, row start to its
+  // first locked text, and the median time from a locked segment's end to its lock.
+  decodes: count.optional(), forcedLocks: count.optional(), firstTextMs: ms.optional(), lockLagMs: ms.optional(),
 }).strict();
 export type TurnMeasurement = z.infer<typeof TurnMeasurement>;
 export const TranslationDiagnostic = z.object({

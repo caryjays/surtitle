@@ -1,6 +1,6 @@
 # Content-free diagnostics
 
-Verified: 2026-10-26 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
+Verified: 2026-10-27 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
 
 Diagnostics answer what the pipeline did with each turn without storing what anyone said. The service keeps up to 60 recent turn traces in memory; the browser records them only after the operator opts in.
 
@@ -28,9 +28,10 @@ The buffer holds 5,000 events and reports how many older ones were dropped. Stab
 | Group | Fields |
 | --- | --- |
 | identity | `sequence`; `mode` at turn start; `outcome` in `capturing`, `committed`, `rejected`, `empty`, `original`, `translating`, `ready`, `unresolved`, `failed`, `skipped`, `capture-failed` |
-| boundary | `boundary` in `silence`, `max-duration`, `flush`, `mode-change`, `pause`, `recalibration`; `audioMs` including pre-roll and trailing quiet; `trailingQuietMs` |
+| boundary | `boundary` in `silence`, `max-duration`, `length`, `flush`, `mode-change`, `pause`, `recalibration`; `audioMs` including pre-roll and trailing quiet; `trailingQuietMs` |
+| rolling | `decodes` that fed the row; `forcedLocks` made without agreement; `firstTextMs` from row start to its first locked text; `lockLagMs`, the median from a locked segment's end to its lock. In rolling mode, `audioMs` is the row's locked audio and quality counters sum over its decodes |
 | recognition | `recognitionQueueMs`; `recognitionInferenceMs` covering resample, gate, decode and filter; `commitToFinalMs`; `recognitionLanguage`, the decoder code; `recognitionSource` in EN, JA or unknown; `recognitionClipped`; `adapterRepetitionRejected`; `controllerRepetitionRejected`; `recognitionFailure` |
-| quality | `speechGateRejected`, `decodedSegments`, `droppedSegments`, `noSpeechDrops`, `lowConfidenceDrops`, `repetitionDrops`, `invalidScoreDrops`, `noSpeechMax`, `logprobMin` |
+| quality | `speechGateRejected`, `decodedSegments`, `droppedSegments`, `noSpeechDrops`, `lowConfidenceDrops`, `repetitionDrops`, `stockPhraseDrops`, `invalidScoreDrops`, `noSpeechMax`, `logprobMin` |
 | translation | `contextSequences`, `contextMissingTranslations`, `contextClippedRows`, `translationQueueMs`, `translationMs`, `translationResponse`, `outputTokenLimitReached`, `translationFailure`, `originalEndsInEllipsis`, `translationEndsInEllipsis` |
 
 A missing field means unavailable, never zero.
@@ -38,7 +39,7 @@ A missing field means unavailable, never zero.
 ## Reading a log
 
 - `speechGateRejected` separates pre-Whisper rejection from decoded-but-dropped output in `lowConfidenceDrops` and `noSpeechDrops`. High gate rejection with a threshold stuck at the 0.004 floor points at input level or capture processing rather than the decoder.
-- Short `audioMs` with `silence` boundaries means the energy gate is closing often; many `max-duration` boundaries mean continuous speech and long waits.
+- Short `audioMs` with `silence` boundaries means the energy gate is closing often; many `max-duration` boundaries mean continuous speech and long waits. In rolling mode, `length` boundaries are the normal way continuous speech closes rows, and any `forcedLocks` mean decodes stopped agreeing.
 - All timings are process or worker clocks. None is human speech end to display. Browser `atMs` is observation time.
 - Caption `source` and `target` can be revised by translation; `recognitionLanguage` is what the decoder saw.
 - The log cannot say what was spoken, whether a rejection was correct, or how accurate a caption was.

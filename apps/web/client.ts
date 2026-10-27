@@ -57,7 +57,7 @@ export function renderSegments(container: HTMLElement, rows: Snapshot['segments'
       failed: 'Translation unavailable · original preserved', unresolved: 'Language uncertain · original preserved',
       skipped: 'Translation skipped · backlog', original: 'Original only · translation off' };
     const turn = operator ? turns.find(turn => turn.sequence === row.sequence) : undefined;
-    const boundaries = { silence: 'quiet boundary', 'max-duration': 'time-limit split · may continue', flush: 'manual flush', 'mode-change': 'direction change', pause: 'capture pause', recalibration: 'recalibration' };
+    const boundaries = { silence: 'quiet boundary', 'max-duration': 'time-limit split · may continue', length: 'row length · speech continues', flush: 'manual flush', 'mode-change': 'direction change', pause: 'capture pause', recalibration: 'recalibration' };
     const infoText = `#${row.sequence} · ${row.source === 'unknown' ? 'Auto' : row.source.toUpperCase()} · ${labels[row.state]}${row.translationMs === null ? '' : ` · request ${row.translationMs} ms`}`
       + (turn?.boundary ? ` · ${boundaries[turn.boundary]}${turn.audioMs === undefined ? '' : ` (${(turn.audioMs / 1000).toFixed(1)} s)`}` : '')
       + (turn?.quality?.droppedSegments ? ` · filtered ${turn.quality.droppedSegments} decoder pieces` : '')

@@ -13,6 +13,12 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-10-26-translation-eval.md](2026-10-26-translation-eval.md) | Offline translation eval harness |
 | [2026-10-26-first-translation-eval.md](2026-10-26-first-translation-eval.md) | First paid translation eval |
 | [2026-10-26-prompt-variants.md](2026-10-26-prompt-variants.md) | Translation prompt variants and segmentation losses |
+| [2026-10-26-held-out-transcription.md](2026-10-26-held-out-transcription.md) | Held-out transcription plausibility, stock-phrase rule |
+| [2026-10-26-rolling-window-simulation.md](2026-10-26-rolling-window-simulation.md) | Rolling-window simulation, soak, word-level locking |
+| [2026-10-26-rolling-recognition-design.md](2026-10-26-rolling-recognition-design.md) | Rolling recognition design proposal |
+| [2026-10-27-worker-segments.md](2026-10-27-worker-segments.md) | Worker segment ends, rolling step 1 |
+| [2026-10-27-rolling-mode.md](2026-10-27-rolling-mode.md) | Rolling mode in the local adapter, rolling step 2 |
+| [2026-10-27-rolling-replay.md](2026-10-27-rolling-replay.md) | Rolling mode replayed on the held-out set, rolling step 3 |
 | [2026-10-27-product-direction.md](2026-10-27-product-direction.md) | Product identity, stack and language sequence |
 | [2026-10-27-capture-lanes.md](2026-10-27-capture-lanes.md) | Five usage lanes and the capture plan |
 

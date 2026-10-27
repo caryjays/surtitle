@@ -18,10 +18,11 @@ def main(engine_factory=Engine):
     engine.warm()
     send({'type': 'ready'})
     while True:
-        line = sys.stdin.buffer.readline(900_001)
+        # 30 s of 24 kHz PCM16 is 1.92 MB in base64, the engine's audio limit.
+        line = sys.stdin.buffer.readline(2_000_001)
         if not line:
             return
-        if len(line) > 900_000 or not line.endswith(b'\n'):
+        if len(line) > 2_000_000 or not line.endswith(b'\n'):
             raise ValueError('Invalid RPC frame')
         request = json.loads(line)
         if set(request) not in ({'id', 'audio', 'language'}, {'id', 'audio', 'language', 'prompt'}) or not isinstance(request['id'], str) or len(request['id']) > 100:
@@ -31,6 +32,7 @@ def main(engine_factory=Engine):
         send({'type': 'final', 'id': request['id'], 'text': result['text'],
               'language': result['language'] if result['language'] in ('en', 'ja') else 'unknown',
               'inferenceMs': round(result['seconds'] * 1000), 'rejected': result['rejected'],
+              'segments': result['segments'],
               'measurement': {'recognitionLanguage': result['language'] if isinstance(result['language'], str)
                               and re.fullmatch('[a-z]{2,3}', result['language']) else 'unknown',
                               'recognitionClipped': result['clipped'], 'quality': result['quality']}})

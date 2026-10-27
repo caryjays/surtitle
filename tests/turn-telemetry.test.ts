@@ -20,7 +20,7 @@ test('turn traces preserve rejected/empty outcomes without retaining speech and 
   cb.onTurnDiagnostic?.('private-id', { boundary: 'max-duration', audioMs: 12000, trailingQuietMs: 0 });
   cb.onTurnDiagnostic?.('private-id', { recognitionLanguage: 'ru', recognitionInferenceMs: 301, recognitionQueueMs: 4,
     quality: { speechGateRejected: true, decodedSegments: 0, droppedSegments: 0, noSpeechDrops: 0,
-      lowConfidenceDrops: 0, repetitionDrops: 0, invalidScoreDrops: 0, noSpeechMax: null, logprobMin: null } });
+      lowConfidenceDrops: 0, repetitionDrops: 0, stockPhraseDrops: 0, invalidScoreDrops: 0, noSpeechMax: null, logprobMin: null } });
   cb.onEvent({ type: 'final', id: 'private-id', text: '', rejected: true, language: 'unknown' });
   assert.equal(f.controller.snapshot().segments.length, 0);
   const trace = f.controller.snapshot().turns[0]!;

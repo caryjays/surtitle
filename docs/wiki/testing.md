@@ -1,6 +1,6 @@
 # Testing and benchmarks
 
-Verified: 2026-10-27 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md
+Verified: 2026-10-27 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md
 
 Ordinary tests never read `.env`, never call a provider and never touch a physical microphone. Real-model checks are explicit commands.
 
@@ -41,6 +41,7 @@ pnpm eval:translation --paid \
 | Blinding | The judge sees only reference, recognized text, whitespace-collapsed translation and target language. Outputs identical for a case are graded once and the score shared. Jobs are shuffled across cases and candidates with a seed, `--seed` or random, recorded with the opaque job keys in the results file. Blinding removes labels and order, not style: a judge may still recognize its own family's phrasing, so repeat with an OpenAI judge before trusting a close Anthropic-versus-OpenAI result |
 | Cost | Token usage read from each reply, priced from `benchmarks/model-prices.json` |
 | Invention | The judge also flags a translation that introduces a term, name, command, number or claim supported by neither the reference nor the recognized text, so a prompt that repairs more cannot hide that it also invents more |
+| Own recordings | `scripts/replay-cases.ts --audio <file> --out private/<name>.json --calibrate` replays a recording in real time through the live recognizer, with `--max-turn-ms` for shorter caps or `--segmentation rolling` for rolling rows, and writes one draft case per turn or row with context and cut flags; rolling rows also carry decodes, forced locks, time to first text and lock lag. `scripts/local/rolling_sim.py` simulates rolling against fixed cuts offline from a file, with real decode times and virtual audio time. `scripts/local/full_clip.py` transcribes the whole file in Whisper's own windows as a reference draft. References are corrected by hand. Personal and third-party recordings and their outputs stay in `private/` |
 
 Latency is request time from this machine, so run it on the network you care about and record which one in the log.
 

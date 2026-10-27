@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-10-26 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts
+Verified: 2026-10-27 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one HTTPS request per finalized turn.
 
@@ -13,6 +13,7 @@ Node service 127.0.0.1:4317                                  server.ts (HTTP + W
   turns.ts        energy turn detector
   local.ts  ───── stdio JSON ───▶ scripts/local/worker.py  (Silero gate → MLX Whisper → filters)
   openai.ts ───── HTTPS ───────▶ OpenAI Responses            (listen profile only)
+  anthropic.ts ── HTTPS ───────▶ Anthropic Messages          (TRANSLATION_PROVIDER=anthropic)
                                                                        │
 OBS Browser Source /overlay   ◀── snapshots ───────────────────────────┘
 ```
@@ -33,6 +34,9 @@ OBS Browser Source /overlay   ◀── snapshots ──────────
 | `packages/providers/turns.ts` | Energy turn detector, fixed or calibrated |
 | `packages/providers/local.ts` | Local adapter: worker lifecycle, job queue, previews, repetition check |
 | `packages/providers/openai.ts` | Cloud transcriber, opt-in and never run live, plus the Responses translator |
+| `packages/providers/anthropic.ts` | Messages translator, selected by `TRANSLATION_PROVIDER=anthropic` |
+| `packages/providers/translation.ts` | Translator instructions and output schema shared by every translator |
+| `packages/providers/chat.ts` | Chat-completions translator for local servers, used only by the translation eval |
 | `packages/providers/quality.ts` | Language-independent repetition rejection |
 | `scripts/local/*.py` | Worker RPC, engine, speech gate, decoder output filters |
 
@@ -40,7 +44,7 @@ OBS Browser Source /overlay   ◀── snapshots ──────────
 
 1. The operator clicks Start. The page opens the selected input with mono, echo cancellation and noise suppression on, automatic gain off unless enabled, loads the worklet and sends `start`. The service opens a transcriber stream; local mode spawns and warms the worker before reporting ACTIVE.
 2. Each 50 ms frame travels as a binary WebSocket message to the controller, then to the detector. In listen mode the first 1.5 s calibrate the noise floor and never reach recognition.
-3. The detector opens a turn on onset, replays 300 ms of pre-roll, and commits on 700 ms of quiet, at the 12 s cap, or on flush, direction change, pause or recalibration. The commit carries its boundary reason and durations.
+3. The detector opens a turn on onset, replays 300 ms of pre-roll, and commits on 700 ms of quiet, at the 12 s cap, or on flush, direction change, pause or recalibration. The commit carries its boundary reason and durations. With the experimental `LOCAL_SEGMENTATION=rolling`, there is no cap and steps 4 to 6 repeat about once a second within the turn; see [recognition](recognition.md#node-side-segmentation).
 4. The local adapter queues a final job and writes base64 PCM to the worker. In listen mode it also requests a preview every 3 s of turn audio; a preview shows only the prefix two consecutive hypotheses agree on.
 5. The worker resamples to 16 kHz, runs the Silero speech gate, decodes with Whisper at temperature 0, drops low-confidence, no-speech and repetitive pieces, and replies with text, language, timing and quality counters. See [recognition](recognition.md).
 6. The adapter rejects repetitive output again and emits a final event with a turn measurement. The controller finalizes the row, drops it if rejected or empty, or marks it original-only when translation is off.
@@ -68,12 +72,13 @@ Operations: Start begins a fresh session. Pause finishes the current turn, waits
 | WebSocket clients | 16, one control owner, overlays read-only |
 | Pre-roll | 6 frames, 300 ms |
 | Quiet boundary | 700 ms |
-| Maximum turn | 12,000 ms; `LOCAL_MAX_TURN_MS` accepts 1,000 to 12,000 |
+| Maximum turn | 12,000 ms; `LOCAL_MAX_TURN_MS` accepts 1,000 to 12,000; none with `LOCAL_SEGMENTATION=rolling` |
 | Minimum committed audio | 100 ms, zero padded |
 | Fixed gate, local-only and benchmarks | RMS 0.012, one onset frame |
 | Calibrated gate, listen mode | 1.5 s calibration; threshold max(0.004, p90 noise × 2.5); three onset frames; 0.65 hysteresis while open; slow drift while idle |
 | Local jobs | 1 active, 2 queued finals, 1 replaceable preview; 8 s queue expiry; 12 s inference deadline; 60 s startup |
-| Previews | every 3 s of turn audio in listen mode, two agreeing hypotheses |
+| Previews | every 3 s of turn audio in listen mode, two agreeing hypotheses; off in rolling mode |
+| Rolling mode | a decode per further 1 s of audio, one in flight; window under 29 s; forced lock at 25 s; rows close at 3 s with sentence punctuation or 8 s |
 | History | 60 rows and 60 turn traces |
 | Translation | queue 8, 8 s TTL, 2 concurrent, 12 s timeout, text 4,000 chars, context 4 rows × 800 + 800 chars, glossary 32 entries |
 | Session cap | none for local recognition; 25 min for cloud recognition |

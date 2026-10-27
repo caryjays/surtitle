@@ -1,6 +1,6 @@
 # Overview
 
-Verified: 2026-10-26 · Sources: apps/service/main.ts, apps/service/glossary.ts, package.json, .env.example
+Verified: 2026-10-27 · Sources: apps/service/main.ts, apps/service/glossary.ts, package.json, .env.example
 
 Surtitle is a local English ↔ Japanese live caption companion for one Mac. The name is the theatre term for translated text projected above a stage during a live performance. An operator browser tab captures a microphone, a loopback Node service turns speech into bilingual text, and a transparent overlay page can be composed in OBS. It was built by a presenter who gives English talks to Japanese audiences and reads Japanese lectures in English, and it has been used live at a conference.
 
@@ -17,7 +17,7 @@ Surtitle is a local English ↔ Japanese live caption companion for one Mac. The
 | Command | Recognition | Translation | Reads `.env` | Paid calls |
 | --- | --- | --- | --- | --- |
 | `pnpm dev:local` / `pnpm start:local` | local MLX Whisper | off | no | none |
-| `pnpm dev:listen` / `pnpm start:listen` | local MLX Whisper | OpenAI Responses | yes | after Start, per finalized turn |
+| `pnpm dev:listen` / `pnpm start:listen` | local MLX Whisper | OpenAI Responses, or Anthropic Messages with `TRANSLATION_PROVIDER=anthropic` | yes | after Start, per finalized turn |
 | `pnpm dev` / `pnpm start` | per `.env`, default local | per `.env`, default off | yes | only if a cloud backend is set |
 | `pnpm preflight:listen` | presence checks only | | yes | none |
 
@@ -25,7 +25,7 @@ Surtitle is a local English ↔ Japanese live caption companion for one Mac. The
 
 ## Configuration
 
-`.env` is ignored and never read by agents. It holds `OPENAI_API_KEY`, `TRANSCRIPTION_BACKEND`, `TRANSLATION_BACKEND`, `LOCAL_MODEL` with `turbo-q4` default or `small-q4`, `LOCAL_MAX_TURN_MS` from 1000 to 12000, `LOCAL_PREVIEWS` which is `on` in listen mode by default, `PORT`, `TRANSCRIPTION_MODEL`, `TRANSLATION_MODEL`, `TRANSLATION_REASONING_EFFORT` and `GLOSSARY_PATH`. The `--local-only` flag overrides all of these to local recognition with translation off; `--listen` forces local recognition plus cloud translation.
+`.env` is ignored and never read by agents. It holds `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TRANSCRIPTION_BACKEND`, `TRANSLATION_BACKEND`, `TRANSLATION_PROVIDER` with `openai` default or `anthropic`, `LOCAL_MODEL` with `turbo-q4` default or `small-q4`, `LOCAL_MAX_TURN_MS` from 1000 to 12000, `LOCAL_PREVIEWS` which is `on` in listen mode by default, `LOCAL_SEGMENTATION` with `turns` default or the experimental `rolling`, `PORT`, `TRANSCRIPTION_MODEL`, `TRANSLATION_MODEL`, `ANTHROPIC_TRANSLATION_MODEL`, `TRANSLATION_REASONING_EFFORT` and `GLOSSARY_PATH`. The `--local-only` flag overrides all of these to local recognition with translation off; `--listen` forces local recognition plus cloud translation.
 
 The glossary resolves in this order: `GLOSSARY_PATH` when set, `private/glossary.json` when present, otherwise the tracked `profiles/glossary.example.json`. Startup and preflight report which one loaded. A `GLOSSARY_PATH` still naming the retired default `profiles/glossary.json` falls through to the normal order with a notice.
 

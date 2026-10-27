@@ -19,6 +19,8 @@ async function main() {
     LOCAL_MODEL: z.enum(['small-q4', 'turbo-q4']).default('turbo-q4'),
     LOCAL_MAX_TURN_MS: z.coerce.number().int().min(1000).max(12_000).default(12_000),
     LOCAL_PREVIEWS: z.enum(['on', 'off']).default(listen ? 'on' : 'off'),
+    // rolling is the experimental segmentation from docs/log/2026-10-26-rolling-recognition-design.md.
+    LOCAL_SEGMENTATION: z.enum(['turns', 'rolling']).default('turns'),
     PORT: z.coerce.number().int().min(1024).max(65535).default(4317),
     TRANSCRIPTION_MODEL: z.string().min(1).max(80).default('gpt-live-transcribe'),
     TRANSLATION_MODEL: z.string().min(1).max(80).default('gpt-5.6-terra'),
@@ -60,7 +62,9 @@ async function main() {
   }
   const controller = new Controller({
     transcriber: local ? localTranscriberFactory({ model: config.LOCAL_MODEL, maxTurnMs: config.LOCAL_MAX_TURN_MS,
-      previewIntervalMs: config.LOCAL_PREVIEWS === 'on' ? 3000 : undefined,
+      segmentation: config.LOCAL_SEGMENTATION,
+      // Rolling mode replaces previews with its own locked partials.
+      previewIntervalMs: config.LOCAL_PREVIEWS === 'on' && config.LOCAL_SEGMENTATION === 'turns' ? 3000 : undefined,
       calibrationMs: listen ? 1500 : undefined })
       : openAITranscriberFactory(config.OPENAI_API_KEY, config.TRANSCRIPTION_MODEL, glossary),
     translator: !translate ? null : anthropic
