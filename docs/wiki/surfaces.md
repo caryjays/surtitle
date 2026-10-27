@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-10-26 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/style.css, packages/protocol/index.ts
+Verified: 2026-10-27 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/style.css, packages/protocol/index.ts
 
 ## /control
 

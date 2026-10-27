@@ -31,6 +31,8 @@ export type TranslationContext = z.infer<typeof TranslationContext>;
 export const TranslationInput = z.object({
   text: z.string().min(1).max(4000), mode: Mode, glossary: Glossary,
   sourceLanguage: z.enum(['en', 'ja', 'unknown']).optional(), context: TranslationContext.optional(),
+  // Whether the turn was cut at the maximum duration: its first or last word may be partial.
+  truncated: z.object({ start: z.boolean(), end: z.boolean() }).strict().optional(),
 }).strict();
 export type TranslationInput = z.infer<typeof TranslationInput>;
 export const MAX_SEGMENTS = 60;

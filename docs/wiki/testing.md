@@ -1,6 +1,6 @@
 # Testing and benchmarks
 
-Verified: 2026-10-26 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, benchmarks/README.md
+Verified: 2026-10-27 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md
 
 Ordinary tests never read `.env`, never call a provider and never touch a physical microphone. Real-model checks are explicit commands.
 
@@ -14,9 +14,35 @@ Ordinary tests never read `.env`, never call a provider and never touch a physic
 | `pnpm local:silence` | Synthetic silence, noise and hum through the real engine must yield no text | yes | no |
 | `pnpm local:bench`, `pnpm local:stream` | Full-clip and real-time replay accuracy and timing on the tuning fixtures; metrics to ignored `benchmarks/results/` | yes | no |
 | `pnpm local:noisy-fixtures`, `local:noisy-prepare`, `local:noisy-screen`, `local:noisy-replay` | Controlled noisy Japanese experiment; fixture setup downloads bounded public data once | yes | fixtures only |
+| `pnpm eval:translation-cases` | Public fixtures and noisy variants through the live recognizer, frozen as translation cases in ignored `benchmarks/results/translation-cases.json` | yes | no |
+| `pnpm eval:translation` | Translation comparison; see below | local candidates only | paid only with `--paid` |
 | `pnpm docs:check` | Wiki freshness against sources, dead links, index coverage, leak scan of every commit-eligible file | no | no |
 
 Run real-model commands one at a time; they share the GPU and skew each other's timings. Browser checks use the installed Chrome; set `CHROME_PATH` to override.
+
+## Translation eval
+
+`pnpm eval:translation` replays frozen cases through any set of translators and writes a results file to ignored `benchmarks/results/`. It is the only command that loads `.env`, and it makes no cloud call without `--paid`; without it, it prints the planned call counts and exits.
+
+```text
+pnpm eval:translation --paid \
+  --candidate openai:gpt-5.6-terra \
+  --candidate anthropic:claude-haiku-5-5 \
+  --candidate local:<model>@http://127.0.0.1:8080/v1
+```
+
+| Part | Behavior |
+| --- | --- |
+| Candidates | `openai:<model>` and `anthropic:<model>` use the production translators; append `#low` and so on to set effort. `local:<model>@<url>` uses the chat-completions adapter against any loopback server. Append `~<variant>` to any candidate to use a prompt variant from `benchmarks/prompt-variants.json`, written as edits to the live instructions; an edit that no longer matches fails the run |
+| Cases | Each pairs recognizer output with the public reference. Add more files with repeated `--cases`; hand-written private cases belong in `private/` and may carry `terms`, `glossary` and `context` |
+| Timing | One untimed warm-up per candidate, then sequential calls with the order rotated per case; `--repeats`, default 2; `--timeout-ms`, default 12000 as live |
+| Terms | Required spellings per fixture in `benchmarks/translation-terms.json`; several test recovery from known recognition errors |
+| Judge | `--judge`, default `anthropic:claude-opus-5-5` with server-side fallback, grades the first output per case 1 to 5 against the reference and records whether a recognition error was repaired. `--no-judge` skips it |
+| Blinding | The judge sees only reference, recognized text, whitespace-collapsed translation and target language. Outputs identical for a case are graded once and the score shared. Jobs are shuffled across cases and candidates with a seed, `--seed` or random, recorded with the opaque job keys in the results file. Blinding removes labels and order, not style: a judge may still recognize its own family's phrasing, so repeat with an OpenAI judge before trusting a close Anthropic-versus-OpenAI result |
+| Cost | Token usage read from each reply, priced from `benchmarks/model-prices.json` |
+| Invention | The judge also flags a translation that introduces a term, name, command, number or claim supported by neither the reference nor the recognized text, so a prompt that repairs more cannot hide that it also invents more |
+
+Latency is request time from this machine, so run it on the network you care about and record which one in the log.
 
 ## Fixtures
 

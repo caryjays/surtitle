@@ -19,4 +19,8 @@
 
 These are **synthetic stress variants of read speech**, not authentic spontaneous/breakout recordings or representative noisy-room acceptance. Target-only CER for competing voices is not an all-speaker transcription grade. See [actual experiment results, exact scope and commands](../docs/log/NOISY-EXPERIMENT.md). Live defaults were not changed from the experiment.
 
+## Translation eval cases
+
+`pnpm eval:translation-cases` runs the 16 FLEURS clips above and, when present, the noisy variants of the four targets through the live recognizer with automatic language, and freezes reference plus recognized text to ignored `results/translation-cases.json`. Recognized text keeps the recognizer's real mistakes, which is the point: translators are scored on what they were actually given. `translation-terms.json` lists spellings a correct translation must contain, chosen from the public references. `model-prices.json` holds retrieved list prices for cost estimates. See [testing](../docs/wiki/testing.md#translation-eval).
+
 Use these clips to compare models/settings and detect regressions. EN word error rate and JA character error rate are transcription metrics, not translation grades or a percentage of understood meaning. Do not compare their percentages directly. A held-out, larger sample and representative spontaneous/mixed-language speech are needed before choosing event settings.

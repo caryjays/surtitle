@@ -9,6 +9,10 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-10-26-review-and-wiki.md](2026-10-26-review-and-wiki.md) | Code review, check results, documentation restructure |
 | [2026-10-26-public-private-split.md](2026-10-26-public-private-split.md) | Public-by-default repository, private overlay, leak scan, license |
 | [2026-10-26-rename-surtitle.md](2026-10-26-rename-surtitle.md) | Project renamed to Surtitle |
+| [2026-10-26-anthropic-translator.md](2026-10-26-anthropic-translator.md) | Anthropic translator adapter and shared prompt |
+| [2026-10-26-translation-eval.md](2026-10-26-translation-eval.md) | Offline translation eval harness |
+| [2026-10-26-first-translation-eval.md](2026-10-26-first-translation-eval.md) | First paid translation eval |
+| [2026-10-26-prompt-variants.md](2026-10-26-prompt-variants.md) | Translation prompt variants and segmentation losses |
 | [2026-10-27-product-direction.md](2026-10-27-product-direction.md) | Product identity, stack and language sequence |
 | [2026-10-27-capture-lanes.md](2026-10-27-capture-lanes.md) | Five usage lanes and the capture plan |
 

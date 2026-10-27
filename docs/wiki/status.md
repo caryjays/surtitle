@@ -8,7 +8,7 @@ This is the handoff page. Rewrite it at the end of every session; `pnpm docs:che
 
 Direction is set in the [roadmap](roadmap.md): an open-source, presenter-controlled caption layer pairing English with one other language per session, Japanese first, then Romance languages, Chinese, Korean and German, each behind a written gate. No language is added until the pair is generalized and Japanese passes its gate.
 
-The default profile is local Turbo Q4 with translation off. The listen profile, local recognition with cloud translation, has been used at a live conference.
+The default profile is local Turbo Q4 with translation off. The listen profile, local recognition with cloud translation, has been used at a live conference with OpenAI Terra. An Anthropic Haiku 5.5 translator exists behind `TRANSLATION_PROVIDER=anthropic` and has only run against fake responses; see [its log entry](../log/2026-10-26-anthropic-translator.md). `pnpm eval:translation` compares OpenAI, Anthropic and local chat-completions translators on frozen public recognizer output; its first paid run found Haiku 5.5 level with Terra on quality and speed at about a twelfth of the cost, Sonnet 5.5 slightly better with a slow tail, and no model repairing recognition errors that need domain inference. See [the eval entry](../log/2026-10-26-translation-eval.md) and [the first results](../log/2026-10-26-first-translation-eval.md).
 
 Automated and passing on 2026-10-26: `pnpm check`, `pnpm test:local-unit`, `pnpm test:browser`, `pnpm test:local-browser`, `pnpm test:listen-browser`. Details in the log entries for [the review](../log/2026-10-26-review-and-wiki.md) and [the public split](../log/2026-10-26-public-private-split.md).
 
@@ -17,7 +17,7 @@ Observed in the field by the maintainer:
 - Lecture and Q&A with about 50 people on shared Wi-Fi: local recognition smooth; most translations readable including loanwords; translation lag of 2 to 3 s acceptable; some loanword phrases upset language detection; proper names confused.
 - Breakout and group sessions: heavy false rejection. In the last logged interval 39 of 51 candidates were rejected, 30 of them by the speech gate before Whisper, with the energy gate threshold at its 0.004 floor. Raising the hardware input level helped noticeably. The final capture failure was an intentional unplug.
 
-Not verified: OBS Browser Source rehearsal and browser-to-terminal scene continuity; the fixed physical-microphone silence path; a lecture-length soak under thermal load; measured end-of-speech to display latency; held-out accuracy beyond the tiny tuning set.
+Not verified: Haiku 5.5 translation quality, latency and refusal rate against Terra; OBS Browser Source rehearsal and browser-to-terminal scene continuity; the fixed physical-microphone silence path; a lecture-length soak under thermal load; measured end-of-speech to display latency; held-out accuracy beyond the tiny tuning set.
 
 Experiment: the controlled noisy-Japanese run promoted nothing. Weaker gates matched baseline, faster previews did not speed finals, an 8 s cap hurt accuracy, and the room's rejection was not reproduced. See [NOISY-EXPERIMENT](../log/NOISY-EXPERIMENT.md).
 

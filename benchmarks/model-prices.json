@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "note": "USD per million tokens, standard first-party rates as retrieved. Estimates only; check the provider's pricing page before budgeting. Models missing here report tokens without cost.",
+  "models": {
+    "gpt-5.6-terra": { "input": 2, "output": 12, "retrieved": "2026-10-21" },
+    "claude-haiku-5-5": { "input": 0.1, "output": 0.5, "retrieved": "2026-10-26", "note": "prompts up to 100,000 tokens" },
+    "claude-sonnet-5-5": { "input": 2, "output": 10, "retrieved": "2026-10-26" },
+    "claude-opus-5-5": { "input": 4, "output": 20, "retrieved": "2026-10-26" }
+  }
+}

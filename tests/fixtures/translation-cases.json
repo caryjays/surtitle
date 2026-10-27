@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "cases": [
+    { "id": "t-en", "referenceId": "t-en", "condition": "clean", "language": "en", "detectedLanguage": "en", "reference": "Barcelona is lovely.", "asr": "Barcelona is lovely.", "terms": [["バルセロナ"]] },
+    { "id": "t-ja", "referenceId": "t-ja", "condition": "noise", "language": "ja", "detectedLanguage": "ja", "reference": "バルセロナのカタルーニャ語", "asr": "バルセアナのカタルーネ語", "terms": [["Catalan"]] }
+  ]
+}

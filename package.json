@@ -26,6 +26,8 @@
     "local:noisy-screen": ".local/venv/bin/python scripts/local/noisy_screen.py --run",
     "local:noisy-replay": "tsx scripts/noisy-stream-experiment.ts --run",
     "local:silence": ".local/venv/bin/python scripts/local/silence_check.py",
+    "eval:translation-cases": ".local/venv/bin/python scripts/local/translation_cases.py",
+    "eval:translation": "node --env-file-if-exists=.env --import tsx scripts/translation-eval.ts",
     "test:local-unit": "python3 -m unittest discover -s scripts/local -p 'test_*.py'",
     "start": "node --env-file-if-exists=.env dist/service.mjs",
     "typecheck": "tsc --noEmit",
@@ -37,6 +39,7 @@
     "check": "pnpm typecheck && pnpm test && pnpm docs:check && pnpm build"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "ws": "^8.18.3",
     "zod": "^4.1.12"
   },

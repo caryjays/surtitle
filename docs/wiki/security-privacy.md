@@ -1,6 +1,6 @@
 # Security and privacy
 
-Verified: 2026-10-27 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
+Verified: 2026-10-27 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
 
 ## Boundary
 
@@ -10,9 +10,9 @@ Verified: 2026-10-27 · Sources: apps/service/server.ts, apps/service/main.ts, p
 | Static route allowlist, `GET` only, `Cache-Control: no-store`, CSP `default-src 'none'` with self-only scripts, styles and sockets | `server.ts` |
 | `/control` may use the microphone; `/overlay` has `microphone=()` and imports no capture code | `server.ts`, `overlay.ts` |
 | One control socket; overlay sockets are closed on any write; 16 clients; 4 KiB payloads; audio and command rate limits | `server.ts` |
-| Secrets live only in the service process; endpoints are not configurable; nothing secret enters a snapshot, URL or browser | `main.ts`, `openai.ts` |
+| Secrets live only in the service process; endpoints are not configurable; nothing secret enters a snapshot, URL or browser | `main.ts`, `openai.ts`, `anthropic.ts` |
 | The worker child gets an allowlisted environment with no key and offline Hugging Face flags; its stderr is dropped | `local.ts` |
-| Spoken text, glossary and context are JSON data to the translator under fixed higher-priority instructions and no tools | `openai.ts` |
+| Spoken text, glossary and context are JSON data to the translator under fixed higher-priority instructions and no tools | `translation.ts` |
 
 This boundary protects against arbitrary web origins. A hostile local process or browser extension is out of scope.
 
@@ -20,7 +20,7 @@ This boundary protects against arbitrary web origins. A hostile local process or
 
 The application writes nothing to disk: no audio, no transcripts, no server logs with content. Browser storage holds only validated display preferences. Diagnostics are opt-in, content-free, in tab memory, and leave the machine only by explicit download. Benchmarks write metrics to ignored `benchmarks/results/`; `--review` adds public-fixture text only. Downloaded models and fixtures live under ignored `.local/`.
 
-In the listen profile, finalized text, up to four preceding rows and the glossary go to OpenAI with `store: false`. That is not zero retention; see [translation](translation.md). Transcribing other people requires their permission. Recording is not implemented and would need separate consent.
+In the listen profile, finalized text, up to four preceding rows and the glossary go to the selected translation provider: OpenAI with `store: false`, which is not zero retention, or Anthropic, whose retention for this account is unchecked; see [translation](translation.md). Transcribing other people requires their permission. Recording is not implemented and would need separate consent.
 
 ## Credential rules for agents
 
