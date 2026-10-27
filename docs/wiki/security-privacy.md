@@ -1,6 +1,6 @@
 # Security and privacy
 
-Verified: 2026-10-26 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
+Verified: 2026-10-27 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
 
 ## Boundary
 

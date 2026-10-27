@@ -9,6 +9,8 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-10-26-review-and-wiki.md](2026-10-26-review-and-wiki.md) | Code review, check results, documentation restructure |
 | [2026-10-26-public-private-split.md](2026-10-26-public-private-split.md) | Public-by-default repository, private overlay, leak scan, license |
 | [2026-10-26-rename-surtitle.md](2026-10-26-rename-surtitle.md) | Project renamed to Surtitle |
+| [2026-10-27-product-direction.md](2026-10-27-product-direction.md) | Product identity, stack and language sequence |
+| [2026-10-27-capture-lanes.md](2026-10-27-capture-lanes.md) | Five usage lanes and the capture plan |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

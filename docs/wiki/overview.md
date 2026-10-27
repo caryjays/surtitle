@@ -39,4 +39,4 @@ Apple Silicon Mac. Developed and benchmarked on an M5 MacBook Air with 24 GB. An
 
 ## Out of scope for now
 
-Speech synthesis, speaker identification, mixing several audio sources, remote call capture, native overlays, multi-user hosting, automatic backend failover, full offline translation. See [roadmap](roadmap.md).
+Speech synthesis, speaker identification, mixing several audio sources, remote call capture, native overlays, multi-user hosting, accounts or paid tiers, automatic backend failover, more than one language pair per session. Local translation in the live service waits on the translation eval. See [roadmap](roadmap.md) for direction and the language order.

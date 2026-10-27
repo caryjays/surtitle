@@ -1,10 +1,12 @@
 # Status
 
-Verified: 2026-10-26 · Sources: none
+Verified: 2026-10-27 · Sources: none
 
 This is the handoff page. Rewrite it at the end of every session; `pnpm docs:check` warns when it is older than 14 days. Personal observations belong in `private/`, technical ones here.
 
 ## Where things stand
+
+Direction is set in the [roadmap](roadmap.md): an open-source, presenter-controlled caption layer pairing English with one other language per session, Japanese first, then Romance languages, Chinese, Korean and German, each behind a written gate. No language is added until the pair is generalized and Japanese passes its gate.
 
 The default profile is local Turbo Q4 with translation off. The listen profile, local recognition with cloud translation, has been used at a live conference.
 
@@ -42,7 +44,8 @@ The project is now named Surtitle in the package, README, NOTICE and wiki; the w
 ## Next session
 
 1. Rename the working directory, create the fresh initial commit, create the `surtitle` repository, then publish when ready.
-2. Diagnostics additions and the two capture toggles; restart and reload; confirm with `pnpm test:browser`.
-3. Faint-level sweep with the noisy harness.
-4. Room session with diagnostics on, comparing Chrome processing on and off; download the log.
-5. Availability changes for problem 2, then recalibration for problem 3.
+2. Generalize the language pair, stage 0 of the [roadmap](roadmap.md): a configured pair in the protocol, modes `auto` plus the two directions, and one profile per language holding sentence-end characters, scoring unit, stock phrases and recognition hints. Japanese stays the only filled profile. Then write the Japanese gate targets before measuring against them.
+3. Diagnostics additions and source profiles, which replace the two planned capture toggles: Close mic, Line feed, Far field and App audio, per [lanes](lanes.md), with the active profile in `health` and diagnostics, and a source identifier on frames, traces and rows. Restart and reload; confirm with `pnpm test:browser`.
+4. Faint-level sweep with the noisy harness.
+5. Room session with diagnostics on, comparing Chrome processing on and off; download the log.
+6. Availability changes for problem 2, then recalibration for problem 3.

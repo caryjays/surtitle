@@ -42,7 +42,7 @@ Current priorities, open problems and next steps live in [status](docs/wiki/stat
 
 ## Product contract
 
-- English ↔ Japanese live text captions, not synthesized interpretation audio.
+- Live text captions pairing English with one other language per session, not synthesized interpretation audio. Japanese is the only pair today; the order and gates for others are in [roadmap](docs/wiki/roadmap.md).
 - OBS composes the overlay with slides, a browser, a terminal, or a webcam.
 - Capture and inference are independent of the OBS Browser Source lifecycle.
 - Original speech appears smaller; its translation appears larger.

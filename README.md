@@ -2,6 +2,8 @@
 
 Local English ↔ Japanese live captions for one Mac. Surtitles are the translated text projected above a stage during a live performance; this does the same for a talk, a lecture or a conversation. Chrome captures the microphone, a loopback Node service runs MLX Whisper in an isolated Python worker and can send finalized text to cloud translation, and OBS can compose a transparent overlay. Nothing is recorded or persisted.
 
+Japanese is the first language pair. More pairs with English are planned, each after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md).
+
 ## Quick start
 
 ```sh
