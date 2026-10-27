@@ -22,7 +22,9 @@ const LEAK_PATTERNS: [string, RegExp][] = [
   ['non-loopback IPv4 address', /\b(?!127\.0\.0\.1\b|0\.0\.0\.0\b)(?:\d{1,3}\.){3}\d{1,3}\b/],
   ['link into private/', /\]\((?:\.\.\/)*private\//],
 ];
-const today = new Date().toISOString().slice(0, 10);
+// All days are local calendar days, matching the dates written on wiki pages.
+const day = (date: Date) => date.toLocaleDateString('sv-SE');
+const today = day(new Date());
 const errors: string[] = [];
 const warnings: string[] = [];
 
@@ -38,12 +40,12 @@ async function lastChanged(source: string): Promise<string> {
   if (git(['status', '--porcelain', '--', source])) {
     let latest = '';
     for (const file of await files(source)) {
-      const day = (await stat(file)).mtime.toISOString().slice(0, 10);
-      if (day > latest) latest = day;
+      const changed = day((await stat(file)).mtime);
+      if (changed > latest) latest = changed;
     }
     return latest;
   }
-  return git(['log', '-1', '--format=%cs', '--', source]) || today;
+  return git(['log', '-1', '--date=format-local:%Y-%m-%d', '--format=%cd', '--', source]) || today;
 }
 
 async function checkWiki() {

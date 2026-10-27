@@ -84,7 +84,7 @@ test('old in-flight diagnostic callbacks cannot repopulate after clear or timeou
 });
 test('segment removal is explicit and attributed to a retained rejection trace', () => {
   const log = new DiagnosticLog(); log.start();
-  const snapshot = Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0,
+  const snapshot = Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0, pair: ['en', 'ja'],
     revision: 1, capture: 'active', mode: 'auto', processing: 'local-only', backend: 'fake', error: null,
     queue: 0, running: 0, sentAt: 1, segments: [{ id: 'test', sequence: 3, original: '', translation: null,
       state: 'partial', source: 'unknown', target: 'unknown', final: false, finalizedAt: null, translationMs: null }],

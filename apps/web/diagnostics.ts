@@ -4,7 +4,7 @@ export const DIAGNOSTIC_LIMIT = 5000;
 const SAMPLE_MS = 2000;
 type ControlCommand = ReturnType<typeof Command.parse>;
 
-type Health = Pick<Snapshot, 'capture' | 'processing' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate'>;
+type Health = Pick<Snapshot, 'capture' | 'processing' | 'pair' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate'>;
 type Row = Pick<Segment, 'sequence' | 'final' | 'state' | 'source' | 'target' | 'translationMs'> & {
   originalChars: number; translationChars: number; scriptLetters: { latin: number; kana: number; han: number; other: number };
 };
@@ -93,7 +93,7 @@ export class DiagnosticLog {
       this.rows.clear(); this.turns.clear(); this.lastHealth = ''; this.identity = identity;
     }
     // Deliberate allowlist: no backend strings, model names, IDs, text, provider bodies, device labels or URLs.
-    const health: Health = { capture: snapshot.capture, processing: snapshot.processing, mode: snapshot.mode,
+    const health: Health = { capture: snapshot.capture, processing: snapshot.processing, pair: [...snapshot.pair], mode: snapshot.mode,
       error: snapshot.error, queue: snapshot.queue, running: snapshot.running, rejected: snapshot.rejected,
       gate: snapshot.gate ? { state: snapshot.gate.state, level: snapshot.gate.level,
         threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs } : null };

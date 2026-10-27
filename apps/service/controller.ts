@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import type { AudioGate, Failure, Glossary, Mode, Segment, Snapshot } from '../../packages/protocol/index.ts';
-import { MAX_SEGMENTS, Translation, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext } from '../../packages/protocol/index.ts';
+import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, type Pair, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext } from '../../packages/protocol/index.ts';
 import { TranslationFailure, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
 
@@ -29,12 +29,15 @@ export class Controller {
   private started = 0;
   private listeners = new Set<() => void>();
   private clock: ReturnType<typeof setInterval>;
+  readonly pair: Pair;
   constructor(private options: {
     transcriber: TranscriberFactory; translator: Translator | null; glossary: Glossary;
     backend: string; processing?: Snapshot['processing']; translationTimeoutMs?: number; queueTtlMs?: number;
     // Local inference has no upstream session lifetime. Cloud ASR keeps its conservative cap.
     sessionLimitMs?: number | null;
+    pair?: Pair;
   }) {
+    this.pair = options.pair ?? DEFAULT_PAIR;
     this.clock = setInterval(() => {
       if (this.capture === 'active' && Date.now() - this.lastAudio > 5000) this.fail('capture');
       const limit = this.options.sessionLimitMs === undefined ? 25 * 60_000 : this.options.sessionLimitMs;
@@ -45,7 +48,7 @@ export class Controller {
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   snapshot(): Snapshot {
     return { type: 'snapshot', sessionId: this.sessionId, generation: this.generation, revision: this.revision,
-      mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
+      pair: [...this.pair], mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
       processing: this.options.processing ?? 'cloud-audio-and-text',
       queue: this.queue.length, running: this.running.size, gate: this.gate, rejected: this.rejected, segments: this.rows.map(r => ({ ...r })), sentAt: Date.now(), turns: structuredClone(this.traces), turnTelemetryVersion: 2 };
   }
@@ -57,7 +60,10 @@ export class Controller {
     this.running.clear(); this.rows = []; this.traces = []; this.error = null; this.gate = null; this.rejected = 0;
   }
   private closeStream() { this.streamToken++; this.transcriber?.close(); this.transcriber = undefined; this.gate = null; }
+  // Modes outside the session's pair are refused; the server treats them as a protocol error.
+  accepts(mode: Mode) { return modes(this.pair).includes(mode); }
   async start(mode: Mode) {
+    if (!this.accepts(mode)) return;
     if (this.capture === 'active' || this.capture === 'connecting' || this.capture === 'stopping') return;
     this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.mode = mode;
     await this.openStream();
@@ -66,7 +72,7 @@ export class Controller {
     const token = ++this.streamToken;
     this.capture = 'connecting'; this.changed();
     try {
-      const stream = this.options.transcriber({ mode: this.mode,
+      const stream = this.options.transcriber({ mode: this.mode, pair: this.pair,
         onEvent: event => { if (token === this.streamToken) this.transcript(event); },
         onFailure: () => { if (token === this.streamToken) this.fail('transcription'); },
         onTurnDiagnostic: (id, value) => {
@@ -93,6 +99,7 @@ export class Controller {
     try { this.transcriber?.audio(pcm); } catch { this.fail('transcription'); }
   }
   setMode(mode: Mode) {
+    if (!this.accepts(mode)) return;
     if (this.capture === 'connecting' || this.capture === 'stopping') return;
     if (mode === this.mode) return;
     if (this.capture === 'active') {
@@ -157,8 +164,10 @@ export class Controller {
       const repeated = isRepetitiveTranscript(event.text);
       const rejected = repeated || (event.type === 'final' && event.rejected);
       const trace = this.trace(row);
+      // A recognized language outside the session's pair is not evidence for either direction.
+      const language = event.type === 'final' && event.language && inPair(this.pair, event.language) ? event.language : 'unknown';
       if (event.type === 'final' && trace) {
-        trace.recognitionSource = event.language ?? 'unknown';
+        trace.recognitionSource = language;
         trace.controllerRepetitionRejected = repeated;
         trace.recognitionClipped = Boolean(trace.recognitionClipped || event.text.length > 4000);
         trace.originalEndsInEllipsis = endsInEllipsis(event.text.slice(0, 4000));
@@ -170,7 +179,7 @@ export class Controller {
       }
       if (event.type === 'final') {
         row.final = true; row.finalizedAt = Date.now(); row.state = 'pending';
-        row.source = event.language ?? 'unknown';
+        row.source = language;
         if (!row.original.trim()) { this.rows = this.rows.filter(r => r !== row); }
         else if (!this.options.translator) row.state = 'original';
         else if (this.queue.length >= 8) {
@@ -227,7 +236,9 @@ export class Controller {
             if (diagnostic.data.outputTokenLimitReached !== undefined) trace.outputTokenLimitReached = diagnostic.data.outputTokenLimitReached;
           }), cancelled,
       ]));
-      if (job.mode !== 'auto' && (result.source !== (job.mode === 'en-ja' ? 'en' : 'ja') || result.target !== (job.mode === 'en-ja' ? 'ja' : 'en'))) throw new Error('direction');
+      const forced = direction(job.mode);
+      if (forced ? result.source !== forced.source || result.target !== forced.target
+        : result.source !== 'unknown' && !(inPair(this.pair, result.source) && inPair(this.pair, result.target))) throw new Error('direction');
       if (job.epoch !== this.epoch || !this.rows.includes(job.row)) return;
       Object.assign(job.row, { translation: result.text || null, source: result.source, target: result.target,
         state: result.source === 'unknown' ? 'unresolved' : 'ready', translationMs: Math.round(performance.now() - start) });

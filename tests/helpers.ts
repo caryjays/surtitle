@@ -1,13 +1,13 @@
 import { Controller } from '../apps/service/controller.ts';
 import type { TranscriberFactory, TranscriptEvent, Translator } from '../packages/providers/types.ts';
-import type { AudioGate, Mode, Translation } from '../packages/protocol/index.ts';
+import type { AudioGate, Mode, Pair, Translation } from '../packages/protocol/index.ts';
 export const tick = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 export function deferred<T>() {
   let resolve!: (value: T) => void; let reject!: (reason?: unknown) => void;
   const promise = new Promise<T>((a, b) => { resolve = a; reject = b; });
   return { promise, resolve, reject };
 }
-export function harness(extra: { translationTimeoutMs?: number; queueTtlMs?: number; sessionLimitMs?: number | null } = {}) {
+export function harness(extra: { translationTimeoutMs?: number; queueTtlMs?: number; sessionLimitMs?: number | null; pair?: Pair } = {}) {
   const streams: { emit(event: TranscriptEvent): void; fail(): void; closed: boolean; frames: number; modes: Mode[]; flushes: number; calibrations: number; gate(gate: AudioGate): void }[] = [];
   const requests: { input: Parameters<Translator['translate']>[0]; signal: AbortSignal; result: ReturnType<typeof deferred<Translation>> }[] = [];
   const factory: TranscriberFactory = options => {

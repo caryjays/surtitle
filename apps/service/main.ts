@@ -1,6 +1,6 @@
 import { access } from 'node:fs/promises';
 import { z } from 'zod';
-import type { Glossary } from '../../packages/protocol/index.ts';
+import { parsePair, type Glossary } from '../../packages/protocol/index.ts';
 import { OpenAITranslator, openAITranscriberFactory } from '../../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../../packages/providers/anthropic.ts';
 import { Controller } from './controller.ts';
@@ -21,6 +21,10 @@ async function main() {
     LOCAL_PREVIEWS: z.enum(['on', 'off']).default(listen ? 'on' : 'off'),
     // rolling is the experimental segmentation from docs/log/2026-10-26-rolling-recognition-design.md.
     LOCAL_SEGMENTATION: z.enum(['turns', 'rolling']).default('turns'),
+    // English and one other language; each needs a profile in profiles/languages.json.
+    LANGUAGE_PAIR: z.string().default('en-ja').transform((value, ctx) => {
+      try { return parsePair(value); } catch { ctx.addIssue({ code: 'custom', message: 'LANGUAGE_PAIR needs two distinct languages with profiles' }); return z.NEVER; }
+    }),
     PORT: z.coerce.number().int().min(1024).max(65535).default(4317),
     TRANSCRIPTION_MODEL: z.string().min(1).max(80).default('gpt-live-transcribe'),
     TRANSLATION_MODEL: z.string().min(1).max(80).default('gpt-5.6-terra'),
@@ -55,7 +59,7 @@ async function main() {
     try { await access('.local/venv/bin/python'); } catch { python = false; }
     let speechDetector = true;
     try { await access('.local/models/silero-vad/model.jit'); } catch { speechDetector = false; }
-    console.log(`Preflight: credential ${configured ? 'configured' : 'missing'}; local model files ${modelFiles ? 'present' : 'missing'}; speech detector ${speechDetector ? 'present' : 'missing'}; Python ${python ? 'present' : 'missing'}; glossary valid (${glossarySource}).`);
+    console.log(`Preflight: credential ${configured ? 'configured' : 'missing'}; local model files ${modelFiles ? 'present' : 'missing'}; speech detector ${speechDetector ? 'present' : 'missing'}; Python ${python ? 'present' : 'missing'}; glossary valid (${glossarySource}); language pair ${config.LANGUAGE_PAIR.join('-')}.`);
     console.log('No provider calls made. Model access, billing, network, microphone and translation quality are NOT verified.');
     if (!configured || !modelFiles || !python || !speechDetector) process.exitCode = 1;
     return;
@@ -68,8 +72,9 @@ async function main() {
       calibrationMs: listen ? 1500 : undefined })
       : openAITranscriberFactory(config.OPENAI_API_KEY, config.TRANSCRIPTION_MODEL, glossary),
     translator: !translate ? null : anthropic
-      ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT })
-      : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT }),
+      ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR })
+      : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR }),
+    pair: config.LANGUAGE_PAIR,
     sessionLimitMs: local ? null : 25 * 60_000,
     glossary, backend: `${local ? 'Local' : 'Cloud'} transcription · translation ${translate ? `cloud (${config.TRANSLATION_PROVIDER})` : 'off'}`,
     processing: local ? (translate ? 'local-audio-cloud-text' : 'local-only') : (translate ? 'cloud-audio-and-text' : 'cloud-audio-only'),

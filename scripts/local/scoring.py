@@ -1,12 +1,13 @@
 """Deterministic transparent scoring; no model judge and no training on references."""
 import unicodedata
+from languages import PROFILES
 
 
 def units(text, language):
     text = unicodedata.normalize('NFKC', text).casefold()
-    # Punctuation is a word boundary for EN, removed for JA. Preserve kana/kanji and numbers.
+    # Punctuation is a word boundary for word-scored languages, removed for character-scored ones.
     text = ''.join(' ' if unicodedata.category(c)[0] in ('P', 'S', 'Z') else c for c in text)
-    return text.split() if language == 'en' else list(''.join(text.split()))
+    return text.split() if PROFILES[language]['scoring'] == 'word' else list(''.join(text.split()))
 
 
 def distance(reference, hypothesis):

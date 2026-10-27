@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-10-27 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts
+Verified: 2026-10-28 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one HTTPS request per finalized turn.
 
@@ -18,6 +18,10 @@ Node service 127.0.0.1:4317                                  server.ts (HTTP + W
 OBS Browser Source /overlay   ◀── snapshots ───────────────────────────┘
 ```
 
+
+## Language pair
+
+A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and checked at startup against `profiles/languages.json`; English and Japanese are the only profiles. The snapshot carries the pair. Modes are `auto` and the two directions written `source-target`. Schemas accept any two- or three-letter code, and the controller enforces the pair: the server closes a control socket that sends a mode outside it, a recognized language outside it becomes `unknown`, and an automatic translation into or out of another language fails the row with its original kept. Translation instructions, the output schema and cloud recognition hints are generated from the pair; for `en-ja` the instructions are unchanged text. The control page labels its presets and direction menu from the snapshot's pair, with English first, so Lecture reads the other language into English.
 ## Components
 
 | Path | Responsibility |
@@ -30,7 +34,8 @@ OBS Browser Source /overlay   ◀── snapshots ──────────
 | `apps/service/main.ts`, `glossary.ts` | Config validation, launch flags, preflight, glossary resolution, wiring |
 | `apps/service/server.ts` | Loopback HTTP and WebSocket, origin checks, one control owner, snapshot broadcast |
 | `apps/service/controller.ts` | Session, generation and epoch, rows and traces, translation queue |
-| `packages/protocol/` | Zod schemas shared by service and browser: `Command`, `Snapshot`, `Segment`, `Translation`, `TurnTrace` |
+| `packages/protocol/` | Zod schemas shared by service and browser: `Command`, `Snapshot`, `Segment`, `Translation`, `TurnTrace`; `languages.ts` holds language codes, modes, the pair and the profiles |
+| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, sentence-end characters, stock phrases |
 | `packages/providers/turns.ts` | Energy turn detector, fixed or calibrated |
 | `packages/providers/local.ts` | Local adapter: worker lifecycle, job queue, previews, repetition check |
 | `packages/providers/openai.ts` | Cloud transcriber, opt-in and never run live, plus the Responses translator |

@@ -1,18 +1,21 @@
 import { z } from 'zod';
-import { Translation, TranslationInput, type TranslationDiagnostic } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Translation, TranslationInput, type Pair, type TranslationDiagnostic } from '../protocol/index.ts';
 import { TranslationFailure, type Translator } from './types.ts';
-import { translationInstructions, translationSchema } from './translation.ts';
+import { translationInstructionsFor, translationSchemaFor } from './translation.ts';
 
 // Local servers (mlx_lm.server, LM Studio, Ollama) do not all enforce response_format,
 // so the expected shape is also stated in the prompt.
-const shape = 'Reply with only one JSON object of the form {"source":"en"|"ja"|"unknown","target":"en"|"ja"|"unknown","text":string}.';
+function shape(pair: Pair) {
+  const codes = [...pair, 'unknown'].map(code => `"${code}"`).join('|');
+  return `Reply with only one JSON object of the form {"source":${codes},"target":${codes},"text":string}.`;
+}
 
-export function chatTranslationRequest(model: string, input: TranslationInput, instructions = translationInstructions) {
+export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
   input = TranslationInput.parse(input);
   return {
     model, max_tokens: 2048, stream: false,
-    messages: [{ role: 'system', content: `${instructions} ${shape}` }, { role: 'user', content: JSON.stringify(input) }],
-    response_format: { type: 'json_schema', json_schema: { name: 'caption_translation', strict: true, schema: translationSchema } },
+    messages: [{ role: 'system', content: `${instructions ?? translationInstructionsFor(pair)} ${shape(pair)}` }, { role: 'user', content: JSON.stringify(input) }],
+    response_format: { type: 'json_schema', json_schema: { name: 'caption_translation', strict: true, schema: translationSchemaFor(pair) } },
   };
 }
 
@@ -33,7 +36,7 @@ const Completion = z.object({
 // OpenAI-compatible chat completions, for local or private-network servers. Not wired into the live service.
 export class ChatCompletionsTranslator implements Translator {
   private endpoint: string;
-  constructor(private options: { baseUrl: string; model: string; key?: string; instructions?: string; fetch?: typeof fetch }) {
+  constructor(private options: { baseUrl: string; model: string; key?: string; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {
     this.endpoint = `${new URL(options.baseUrl).href.replace(/\/$/, '')}/chat/completions`;
   }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
@@ -42,7 +45,7 @@ export class ChatCompletionsTranslator implements Translator {
     let response: Response;
     try {
       response = await (this.options.fetch ?? fetch)(this.endpoint, {
-        method: 'POST', signal, body: JSON.stringify(chatTranslationRequest(this.options.model, input, this.options.instructions)),
+        method: 'POST', signal, body: JSON.stringify(chatTranslationRequest(this.options.model, input, this.options.instructions, this.options.pair)),
         headers: { 'Content-Type': 'application/json', ...(this.options.key ? { Authorization: `Bearer ${this.options.key}` } : {}) },
       });
     } catch { report({ response: 'network-error' }); throw new TranslationFailure('translation-network'); }

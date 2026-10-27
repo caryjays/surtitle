@@ -3,6 +3,7 @@ import math
 import re
 import unicodedata
 import zlib
+from languages import PROFILES
 
 
 def repetitive(text):
@@ -17,9 +18,9 @@ def repetitive(text):
 
 
 # Sign-offs Whisper emits in place of ordinary speech. Said for real, they are short audio;
-# from a long turn they replaced whatever was spoken. Compared after compacting.
-STOCK_PHRASES = ('ご視聴ありがとうございました', 'ご清聴ありがとうございました', 'お疲れ様でした',
-                 'チャンネル登録よろしくお願いします', 'thankyouforwatching', 'thanksforwatching', 'thankyou')
+# from a long turn they replaced whatever was spoken. Compared after compacting. Every profile's
+# phrases apply, since a hallucination need not be in the session's languages.
+STOCK_PHRASES = tuple(phrase for profile in PROFILES.values() for phrase in profile['stockPhrases'])
 STOCK_MIN_SECONDS = 6.0
 
 

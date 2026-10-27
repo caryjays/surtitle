@@ -1,6 +1,6 @@
 # Content-free diagnostics
 
-Verified: 2026-10-27 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
+Verified: 2026-10-28 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
 
 Diagnostics answer what the pipeline did with each turn without storing what anyone said. The service keeps up to 60 recent turn traces in memory; the browser records them only after the operator opts in.
 
@@ -17,7 +17,7 @@ The buffer holds 5,000 events and reports how many older ones were dropped. Stab
 
 | Event | Content |
 | --- | --- |
-| `health` | capture and processing mode, direction, error category, queue and running counts, rejected count, gate state, level and threshold |
+| `health` | capture and processing mode, language pair, direction, error category, queue and running counts, rejected count, gate state, level and threshold |
 | `segment` | sequence, final flag, state, caption source and target, character counts, script letter counts, translation request ms, time since first seen; `baseline` marks rows already present at opt-in |
 | `segment-removed` | sequence plus the retained turn outcome, or `unknown` |
 | `turn` | the service `TurnTrace`, re-emitted whenever it changes |
@@ -30,7 +30,7 @@ The buffer holds 5,000 events and reports how many older ones were dropped. Stab
 | identity | `sequence`; `mode` at turn start; `outcome` in `capturing`, `committed`, `rejected`, `empty`, `original`, `translating`, `ready`, `unresolved`, `failed`, `skipped`, `capture-failed` |
 | boundary | `boundary` in `silence`, `max-duration`, `length`, `flush`, `mode-change`, `pause`, `recalibration`; `audioMs` including pre-roll and trailing quiet; `trailingQuietMs` |
 | rolling | `decodes` that fed the row; `forcedLocks` made without agreement; `firstTextMs` from row start to its first locked text; `lockLagMs`, the median from a locked segment's end to its lock. In rolling mode, `audioMs` is the row's locked audio and quality counters sum over its decodes |
-| recognition | `recognitionQueueMs`; `recognitionInferenceMs` covering resample, gate, decode and filter; `commitToFinalMs`; `recognitionLanguage`, the decoder code; `recognitionSource` in EN, JA or unknown; `recognitionClipped`; `adapterRepetitionRejected`; `controllerRepetitionRejected`; `recognitionFailure` |
+| recognition | `recognitionQueueMs`; `recognitionInferenceMs` covering resample, gate, decode and filter; `commitToFinalMs`; `recognitionLanguage`, the decoder code; `recognitionSource`, a language of the pair or unknown; `recognitionClipped`; `adapterRepetitionRejected`; `controllerRepetitionRejected`; `recognitionFailure` |
 | quality | `speechGateRejected`, `decodedSegments`, `droppedSegments`, `noSpeechDrops`, `lowConfidenceDrops`, `repetitionDrops`, `stockPhraseDrops`, `invalidScoreDrops`, `noSpeechMax`, `logprobMin` |
 | translation | `contextSequences`, `contextMissingTranslations`, `contextClippedRows`, `translationQueueMs`, `translationMs`, `translationResponse`, `outputTokenLimitReached`, `translationFailure`, `originalEndsInEllipsis`, `translationEndsInEllipsis` |
 

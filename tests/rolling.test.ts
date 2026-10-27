@@ -28,7 +28,9 @@ test('row text joins segments without gluing Latin words and detects sentence en
   assert.equal(joinText('Hello.', ' World'), 'Hello. World');
   assert.equal(joinText('Hello.', 'World'), 'Hello. World');
   assert.equal(joinText('今日は', '晴れです。'), '今日は晴れです。');
-  assert(endsSentence('It works.') && endsSentence('そうです。」') && !endsSentence('and then'));
+  const ends = '.!?。！？';
+  assert(endsSentence('It works.', ends) && endsSentence('そうです。」', ends) && !endsSentence('and then', ends));
+  assert(!endsSentence('そうです。', '.!?') && endsSentence('a-b]', ']-'));
 });
 test('stock sign-offs match only when they are the whole text', () => {
   assert(isStockPhrase('ご視聴ありがとうございました。'));

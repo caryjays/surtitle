@@ -4,6 +4,7 @@ import json
 import re
 import sys
 from engine import Engine
+from languages import PROFILES
 
 
 def send(message):
@@ -30,7 +31,7 @@ def main(engine_factory=Engine):
         pcm = base64.b64decode(request['audio'], validate=True)
         result = engine.transcribe(pcm, request['language'], request.get('prompt'))
         send({'type': 'final', 'id': request['id'], 'text': result['text'],
-              'language': result['language'] if result['language'] in ('en', 'ja') else 'unknown',
+              'language': result['language'] if result['language'] in PROFILES else 'unknown',
               'inferenceMs': round(result['seconds'] * 1000), 'rejected': result['rejected'],
               'segments': result['segments'],
               'measurement': {'recognitionLanguage': result['language'] if isinstance(result['language'], str)

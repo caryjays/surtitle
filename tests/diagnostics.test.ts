@@ -4,7 +4,7 @@ import { DiagnosticLog, DIAGNOSTIC_LIMIT } from '../apps/web/diagnostics.ts';
 import { Snapshot } from '../packages/protocol/index.ts';
 
 function snapshot(patch: Partial<Snapshot> = {}): Snapshot {
-  return Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0,
+  return Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0, pair: ['en', 'ja'],
     revision: 1, capture: 'active', mode: 'auto', processing: 'local-audio-cloud-text', backend: 'PRIVATE_CONFIG_SENTINEL',
     error: null, queue: 0, running: 0, sentAt: 123, rejected: 2, gate: { state: 'quiet', level: 0.01, threshold: 0.025, remainingMs: 0 },
     segments: [{ id: 'PRIVATE_ID_SENTINEL', sequence: 0, original: 'PRIVATE_ORIGINAL_SENTINEL 日本語です',

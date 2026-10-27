@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-10-27 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/style.css, packages/protocol/index.ts
+Verified: 2026-10-28 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/style.css, packages/protocol/index.ts
 
 ## /control
 
@@ -10,7 +10,7 @@ Capture request: selected device or System default, mono, `echoCancellation: tru
 
 | Control | Effect |
 | --- | --- |
-| Conversation / Lecture | `auto` / `ja-en`; sends `set-mode` while active |
+| Conversation / Lecture | `auto` / the other language into English, `ja-en` for the Japanese pair; labels follow the snapshot's pair; sends `set-mode` while active |
 | Start microphone | opens the input, sends `start` with the selected mode |
 | Pause | stops the input, sends `pause` |
 | Translate now | `flush`: finalize the current turn, keep listening |

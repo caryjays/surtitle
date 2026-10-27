@@ -1,0 +1,14 @@
+{
+  "en": {
+    "name": "English",
+    "scoring": "word",
+    "sentenceEnd": ".!?",
+    "stockPhrases": ["thank you for watching", "thanks for watching", "thank you"]
+  },
+  "ja": {
+    "name": "Japanese",
+    "scoring": "character",
+    "sentenceEnd": "。！？",
+    "stockPhrases": ["ご視聴ありがとうございました", "ご清聴ありがとうございました", "お疲れ様でした", "チャンネル登録よろしくお願いします"]
+  }
+}

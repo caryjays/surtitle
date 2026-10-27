@@ -1,5 +1,7 @@
 // Pure decisions for rolling segmentation. LocalTranscriber owns audio, the worker and events.
 // Design and measurements: docs/log/2026-10-26-rolling-recognition-design.md.
+import { PROFILES } from '../protocol/languages.ts';
+
 export type WorkerSegment = { endMs: number; text: string };
 
 export const ROLLING = {
@@ -47,13 +49,15 @@ export function joinText(row: string, text: string) {
   return /[A-Za-z0-9.,!?;:'")]$/.test(row) && /^[A-Za-z0-9"'(]/.test(text) ? `${row} ${text}` : row + text;
 }
 
-export function endsSentence(text: string) {
-  return /[.!?。！？][\s"'”’」』）)]*$/u.test(text);
+// ends lists the sentence-final characters of the session's languages; closing quotes and brackets may follow.
+export function endsSentence(text: string, ends: string) {
+  const set = [...ends].map(c => c.replace(/[\\\]^-]/g, '\\$&')).join('');
+  return new RegExp(`[${set}][\\s"'”’」』）)]*$`, 'u').test(text);
 }
 
-// Sign-offs Whisper emits in place of ordinary speech; mirrors STOCK_PHRASES in scripts/local/quality.py.
-const STOCK_PHRASES = ['ご視聴ありがとうございました', 'ご清聴ありがとうございました', 'お疲れ様でした',
-  'チャンネル登録よろしくお願いします', 'thankyouforwatching', 'thanksforwatching', 'thankyou'];
+// Sign-offs Whisper emits in place of ordinary speech, from every language profile, since a hallucination
+// need not be in the session's languages. scripts/local/quality.py reads the same profiles.
+const STOCK_PHRASES = Object.values(PROFILES).flatMap(profile => profile.stockPhrases);
 const compact = (text: string) => text.normalize('NFKC').toLowerCase().replace(/[\p{P}\p{Z}\p{S}\s]/gu, '');
 export function isStockPhrase(text: string) {
   let rest = compact(text);

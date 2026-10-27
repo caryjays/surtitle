@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Mode, Source } from './languages.ts';
 
 const ms = z.number().finite().min(0).max(120_000);
 const count = z.number().int().min(0).max(10_000);
@@ -29,9 +30,9 @@ export const TranslationDiagnostic = z.object({
 }).strict();
 export type TranslationDiagnostic = z.infer<typeof TranslationDiagnostic>;
 export const TurnTrace = TurnMeasurement.extend({
-  sequence: z.number().int().nonnegative(), mode: z.enum(['auto', 'en-ja', 'ja-en']),
+  sequence: z.number().int().nonnegative(), mode: Mode,
   outcome: z.enum(['capturing', 'committed', 'rejected', 'empty', 'original', 'translating', 'ready', 'unresolved', 'failed', 'skipped', 'capture-failed']),
-  recognitionSource: z.enum(['en', 'ja', 'unknown']).optional(), controllerRepetitionRejected: z.boolean().optional(),
+  recognitionSource: Source.optional(), controllerRepetitionRejected: z.boolean().optional(),
   originalEndsInEllipsis: z.boolean().optional(), translationEndsInEllipsis: z.boolean().optional(),
   translationQueueMs: ms.optional(), translationMs: ms.optional(),
   translationResponse: TranslationDiagnostic.shape.response.optional(), outputTokenLimitReached: z.boolean().optional(),

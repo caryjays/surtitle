@@ -12,6 +12,7 @@ import mlx_whisper
 from mlx_whisper.transcribe import ModelHolder
 import numpy as np
 from scipy.signal import resample_poly
+from languages import PROFILES
 from quality import accepted_segments, quality_metadata, segment_ends
 from speech_gate import SpeechGate
 
@@ -45,7 +46,7 @@ class Engine:
         )
 
     def transcribe(self, pcm24, language=None, prompt=None, *, speech_threshold=0.5, min_logprob=-1.0):
-        if language not in (None, 'en', 'ja') or not 4800 <= len(pcm24) <= 24_000 * 2 * 30 or len(pcm24) % 2:
+        if (language is not None and language not in PROFILES) or not 4800 <= len(pcm24) <= 24_000 * 2 * 30 or len(pcm24) % 2:
             raise ValueError('Invalid local audio')
         if prompt is not None and (not isinstance(prompt, str) or len(prompt) > 1000):
             raise ValueError('Invalid vocabulary prompt')

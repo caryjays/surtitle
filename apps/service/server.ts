@@ -66,6 +66,7 @@ export async function createCaptionServer(options: { controller: Controller; por
         if (++commands > 10) { ws.close(1008, 'Command limit'); return; }
         try {
           const command = Command.parse(JSON.parse(data.toString()));
+          if ('mode' in command && !options.controller.accepts(command.mode)) throw new Error('mode');
           switch (command.type) {
             case 'start':
               if (!options.configured) options.controller.fail('credentials');

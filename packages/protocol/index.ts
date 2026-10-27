@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { TurnTrace } from './diagnostics.ts';
+import { Mode, Pair, Source } from './languages.ts';
 export { Boundary, RecognitionQuality, TurnMeasurement, TranslationDiagnostic, TurnTrace, endsInEllipsis } from './diagnostics.ts';
+export * from './languages.ts';
 
-export const Mode = z.enum(['auto', 'en-ja', 'ja-en']);
-export type Mode = z.infer<typeof Mode>;
 export const Glossary = z.array(z.object({ term: z.string().min(1).max(80), translation: z.string().min(1).max(120) }).strict()).max(32);
 export type Glossary = z.infer<typeof Glossary>;
 export const Command = z.discriminatedUnion('type', [
@@ -19,18 +19,18 @@ export const Command = z.discriminatedUnion('type', [
 export const Failure = z.enum(['credentials', 'transcription', 'translation', 'translation-auth', 'translation-rate-limit', 'translation-network', 'capture', 'overload', 'protocol', 'session-limit']);
 export type Failure = z.infer<typeof Failure>;
 export const Translation = z.object({
-  source: z.enum(['en', 'ja', 'unknown']), target: z.enum(['en', 'ja', 'unknown']), text: z.string().max(4000),
+  source: Source, target: Source, text: z.string().max(4000),
 }).strict().refine(r => r.source === 'unknown' ? r.target === 'unknown' && r.text === '' : r.target !== 'unknown' && r.source !== r.target && r.text.trim().length > 0);
 export type Translation = z.infer<typeof Translation>;
 // Recent context is untrusted data, never a conversation with model privileges.
 export const TranslationContext = z.array(z.object({
   original: z.string().max(800), translation: z.string().max(800).nullable(),
-  source: z.enum(['en', 'ja', 'unknown']),
+  source: Source,
 }).strict()).max(4);
 export type TranslationContext = z.infer<typeof TranslationContext>;
 export const TranslationInput = z.object({
   text: z.string().min(1).max(4000), mode: Mode, glossary: Glossary,
-  sourceLanguage: z.enum(['en', 'ja', 'unknown']).optional(), context: TranslationContext.optional(),
+  sourceLanguage: Source.optional(), context: TranslationContext.optional(),
   // Whether the turn was cut at the maximum duration: its first or last word may be partial.
   truncated: z.object({ start: z.boolean(), end: z.boolean() }).strict().optional(),
 }).strict();
@@ -39,7 +39,7 @@ export const MAX_SEGMENTS = 60;
 export const Segment = z.object({
   id: z.string().max(100), sequence: z.number().int().nonnegative(), original: z.string().max(4000),
   final: z.boolean(), translation: z.string().max(4000).nullable(),
-  source: z.enum(['en', 'ja', 'unknown']), target: z.enum(['en', 'ja', 'unknown']),
+  source: Source, target: Source,
   state: z.enum(['partial', 'pending', 'ready', 'failed', 'unresolved', 'skipped', 'original']),
   finalizedAt: z.number().nullable(), translationMs: z.number().nonnegative().nullable(),
 });
@@ -52,7 +52,7 @@ export const AudioGate = z.object({
 export type AudioGate = z.infer<typeof AudioGate>;
 export const Snapshot = z.object({
   type: z.literal('snapshot'), sessionId: z.string().uuid(), generation: z.number().int().nonnegative(),
-  revision: z.number().int().nonnegative(), mode: Mode,
+  revision: z.number().int().nonnegative(), pair: Pair, mode: Mode,
   capture: z.enum(['paused', 'connecting', 'active', 'stopping', 'failed']),
   error: Failure.nullable(), backend: z.string().max(160),
   processing: z.enum(['local-only', 'local-audio-cloud-text', 'cloud-audio-and-text', 'cloud-audio-only']),

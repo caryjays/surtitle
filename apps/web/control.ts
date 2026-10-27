@@ -2,7 +2,7 @@ import { connect } from './client.ts';
 import { setupHistory } from './history.ts';
 import { setupDiagnostics } from './diagnostics.ts';
 import { setupReadingControls } from './reading.ts';
-import { HEARTBEAT_TIMEOUT_MS, Mode, type Snapshot } from '../../packages/protocol/index.ts';
+import { HEARTBEAT_TIMEOUT_MS, Mode, PROFILES, direction, type Pair, type Snapshot } from '../../packages/protocol/index.ts';
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const device = element<HTMLSelectElement>('device');
 const mode = element<HTMLSelectElement>('mode');
@@ -32,6 +32,28 @@ let node: AudioWorkletNode | undefined;
 let source: MediaStreamAudioSourceNode | undefined;
 let captureToken = 0;
 let selectedMode = Mode.parse(mode.value);
+// The page ships labelled for en-ja; the first snapshot relabels it for the service's pair.
+// The pair lists English first, so Lecture reads the other language into English.
+let pair: Pair = ['en', 'ja'];
+const name = (code: string) => PROFILES[code]?.name ?? code.toUpperCase();
+const lectureMode = () => `${pair[1]}-${pair[0]}`;
+function labelPair(next: Pair) {
+  if (next[0] === pair[0] && next[1] === pair[1]) return;
+  pair = next;
+  const [a, b] = pair.map(code => code.toUpperCase()) as [string, string];
+  conversation.textContent = `Conversation · ${a} ↔ ${b}`;
+  lecture.textContent = `Lecture · ${name(pair[1])} → ${name(pair[0])}`;
+  mode.replaceChildren(...[['auto', `Auto · ${a} ↔ ${b}`], [`${pair[0]}-${pair[1]}`, `${a} → ${b}`], [`${pair[1]}-${pair[0]}`, `${b} → ${a}`]]
+    .map(([value, text]) => new Option(text, value)));
+  if (![...mode.options].some(option => option.value === selectedMode)) selectedMode = 'auto';
+  mode.value = selectedMode;
+}
+function describe(value: Mode, listening: boolean) {
+  const forced = direction(value);
+  if (!forced) return listening ? `Listening · automatic ${pair[0].toUpperCase()} ↔ ${pair[1].toUpperCase()}.` : `Automatic ${pair[0].toUpperCase()} ↔ ${pair[1].toUpperCase()}`;
+  const route = `${name(forced.source)} → ${name(forced.target)}`;
+  return listening ? `Listening · ${route}.` : `${route} · ${name(forced.source)} recognition forced`;
+}
 const errors = {
   credentials: 'Provider credential missing. Run pnpm preflight:listen; configure the key locally, then restart the service.',
   transcription: 'Local recognition unavailable. Check local setup and processing load, then Start again. Original text is retained.',
@@ -57,7 +79,7 @@ function buttons() {
   device.disabled = active; refresh.disabled = active; autoGain.disabled = active;
   calibrate.disabled = !connected || state?.capture !== 'active' || !state.gate || state.gate.state === 'calibrating';
   conversation.setAttribute('aria-pressed', String(selectedMode === 'auto'));
-  lecture.setAttribute('aria-pressed', String(selectedMode === 'ja-en'));
+  lecture.setAttribute('aria-pressed', String(selectedMode === lectureMode()));
 }
 function stopLocal() {
   captureToken++; busy = false;
@@ -81,8 +103,8 @@ setupReadingControls(preserveReadingPosition);
 const renderHistory = setupHistory(preserveReadingPosition);
 const diagnostics = setupDiagnostics(() => ({ snapshot: state, online: connected }));
 const connection = connect('control', snapshot => {
-  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot);
-  element('active-direction').textContent = `Direction: ${snapshot.mode === 'auto' ? 'Automatic EN ↔ JA' : snapshot.mode === 'ja-en' ? 'Japanese → English · Japanese recognition forced' : 'English → Japanese · English recognition forced'}`;
+  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair);
+  element('active-direction').textContent = `Direction: ${describe(snapshot.mode, false)}`;
   // Paused selection remains local until Start; active changes are acknowledged by snapshots.
   if (['active', 'connecting', 'stopping'].includes(snapshot.capture)) {
     selectedMode = snapshot.mode; mode.value = snapshot.mode;
@@ -104,7 +126,7 @@ const connection = connect('control', snapshot => {
   element('activity').textContent = snapshot.capture === 'active'
     ? snapshot.gate?.state === 'calibrating' ? `Stay quiet · room must also be quiet · calibrating room noise (${(snapshot.gate.remainingMs / 1000).toFixed(1)} s). Speak when Listening appears.`
       : pending ? 'Speech detected · building original text; translation follows finalization.'
-      : snapshot.running ? 'Translating · microphone still listening.' : snapshot.mode === 'auto' ? 'Listening · automatic EN ↔ JA.' : snapshot.mode === 'ja-en' ? 'Listening · Japanese → English.' : 'Listening · English → Japanese.'
+      : snapshot.running ? 'Translating · microphone still listening.' : describe(snapshot.mode, true)
     : snapshot.capture === 'connecting' ? 'Warming recognition · stay quiet through the room-noise calibration before speaking.'
       : snapshot.capture === 'stopping' ? 'Finishing the last turn…' : 'Microphone is off. Recent text remains until Clear or a new Start.';
   renderHistory(snapshot); buttons();
@@ -127,7 +149,7 @@ function changeMode(value: string) {
   buttons();
 }
 conversation.onclick = () => changeMode('auto');
-lecture.onclick = () => changeMode('ja-en');
+lecture.onclick = () => changeMode(lectureMode());
 mode.onchange = () => changeMode(mode.value);
 function latest() { follow.checked = true; captions.scrollTop = captions.scrollHeight; }
 element('latest').onclick = latest;

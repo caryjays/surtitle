@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Translation, TranslationInput, type TranslationDiagnostic } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Translation, TranslationInput, type Pair, type TranslationDiagnostic } from '../protocol/index.ts';
 import { TranslationFailure, type Translator } from './types.ts';
-import { translationInstructions, translationSchema } from './translation.ts';
+import { translationInstructions, translationInstructionsFor, translationSchema, translationSchemaFor } from './translation.ts';
 
 export type AnthropicEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high';
 
@@ -14,7 +14,7 @@ export function thinkingFor(model: string, effort: AnthropicEffort): Anthropic.T
   return { type: 'disabled' };
 }
 
-export function anthropicTranslationRequest(model: string, effort: AnthropicEffort, input: TranslationInput, instructions = translationInstructions) {
+export function anthropicTranslationRequest(model: string, effort: AnthropicEffort, input: TranslationInput, instructions = translationInstructions, schema = translationSchema) {
   input = TranslationInput.parse(input);
   return {
     model, max_tokens: 2048,
@@ -23,21 +23,23 @@ export function anthropicTranslationRequest(model: string, effort: AnthropicEffo
     messages: [{ role: 'user' as const, content: JSON.stringify(input) }],
     output_config: {
       effort: effort === 'none' || effort === 'minimal' ? 'low' as const : effort,
-      format: { type: 'json_schema' as const, schema: translationSchema },
+      format: { type: 'json_schema' as const, schema },
     },
   } satisfies Anthropic.MessageCreateParamsNonStreaming;
 }
 
 export class AnthropicTranslator implements Translator {
   private client: Anthropic;
-  constructor(private options: { key: string; model: string; effort: AnthropicEffort; instructions?: string; fetch?: typeof fetch }) {
+  constructor(private options: { key: string; model: string; effort: AnthropicEffort; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {
     // Nothing is retried, matching the Responses translator; the controller owns timeouts.
     this.client = new Anthropic({ apiKey: options.key, maxRetries: 0, fetch: options.fetch });
   }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
     let reported = false;
     const report = (value: TranslationDiagnostic) => { reported = true; diagnostic?.(value); };
-    const body = anthropicTranslationRequest(this.options.model, this.options.effort, input, this.options.instructions);
+    const pair = this.options.pair ?? DEFAULT_PAIR;
+    const body = anthropicTranslationRequest(this.options.model, this.options.effort, input,
+      this.options.instructions ?? translationInstructionsFor(pair), translationSchemaFor(pair));
     let message: Anthropic.Message;
     try {
       message = await this.client.messages.create(body, { signal });

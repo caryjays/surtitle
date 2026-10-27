@@ -1,10 +1,10 @@
 import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { Translation, TranslationInput, type Glossary, type Mode, type TranslationDiagnostic } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Translation, TranslationInput, direction, profile, type Glossary, type Mode, type Pair, type TranslationDiagnostic } from '../protocol/index.ts';
 import { TranslationFailure, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from './types.ts';
 import { TurnDetector } from './turns.ts';
-import { translationInstructions, translationSchema } from './translation.ts';
+import { translationInstructions, translationInstructionsFor, translationSchema, translationSchemaFor } from './translation.ts';
 
 const Id = z.string().min(1).max(100);
 const ProviderEvent = z.discriminatedUnion('type', [
@@ -18,12 +18,13 @@ const ProviderEvent = z.discriminatedUnion('type', [
 const recognized = new Set(['session.updated', 'input_audio_buffer.committed', 'conversation.item.input_audio_transcription.delta', 'conversation.item.input_audio_transcription.completed', 'conversation.item.input_audio_transcription.failed', 'error']);
 type Turn = { id: string; sequence: number; text: string; item?: string; committed: boolean; final: boolean; started: number };
 
-export function transcriptionConfig(model: string, mode: Mode, glossary: Glossary) {
+export function transcriptionConfig(model: string, mode: Mode, glossary: Glossary, pair: Pair = DEFAULT_PAIR) {
+  const forced = direction(mode);
   return { type: 'session.update', session: { type: 'transcription', audio: { input: {
     format: { type: 'audio/pcm', rate: 24000 },
-    transcription: { model, languages: mode === 'auto' ? ['en', 'ja'] : [mode === 'en-ja' ? 'en' : 'ja'],
+    transcription: { model, languages: forced ? [forced.source] : [...pair],
       keywords: glossary.map(g => g.term).filter(t => !/[<>\r\n]/.test(t)),
-      prompt: 'Live English and Japanese talk and questions. Preserve the original spoken language.', delay: 'low' },
+      prompt: `Live ${profile(pair[0]).name} and ${profile(pair[1]).name} talk and questions. Preserve the original spoken language.`, delay: 'low' },
     turn_detection: null,
   } } } };
 }
@@ -42,7 +43,7 @@ export class OpenAITranscriber implements Transcriber {
   private rejectConnect?: () => void;
   private detector: TurnDetector;
   constructor(private options: {
-    key: string; model: string; mode: Mode; glossary: Glossary;
+    key: string; model: string; mode: Mode; pair?: Pair; glossary: Glossary;
     onEvent(event: TranscriptEvent): void; onFailure(): void;
     onTurnDiagnostic?: Parameters<TranscriberFactory>[0]['onTurnDiagnostic'];
     // Only tests inject a transport; production endpoints are not configurable.
@@ -74,7 +75,7 @@ export class OpenAITranscriber implements Transcriber {
       const timeout = setTimeout(() => this.failure(), 10_000);
       this.rejectConnect = () => { clearTimeout(timeout); reject(new Error('transcription unavailable')); };
       ws.on('open', () => {
-        try { this.send(transcriptionConfig(this.options.model, this.options.mode, this.options.glossary)); } catch { this.failure(); }
+        try { this.send(transcriptionConfig(this.options.model, this.options.mode, this.options.glossary, this.options.pair)); } catch { this.failure(); }
       });
       ws.on('message', data => {
         try {
@@ -150,7 +151,7 @@ export class OpenAITranscriber implements Transcriber {
   setMode(mode: Mode) {
     this.detector.finish('mode-change');
     this.options.mode = mode;
-    this.send(transcriptionConfig(this.options.model, mode, this.options.glossary));
+    this.send(transcriptionConfig(this.options.model, mode, this.options.glossary, this.options.pair));
   }
   async finish() {
     this.detector.finish('pause');
@@ -166,13 +167,13 @@ export class OpenAITranscriber implements Transcriber {
   }
 }
 
-export function translationRequest(model: string, effort: string, input: TranslationInput, instructions = translationInstructions) {
+export function translationRequest(model: string, effort: string, input: TranslationInput, instructions = translationInstructions, schema = translationSchema) {
   input = TranslationInput.parse(input);
   return {
     model, store: false, reasoning: { effort }, max_output_tokens: 2048,
     instructions,
     input: [{ role: 'user', content: JSON.stringify(input) }],
-    text: { format: { type: 'json_schema', name: 'caption_translation', strict: true, schema: translationSchema } },
+    text: { format: { type: 'json_schema', name: 'caption_translation', strict: true, schema } },
   };
 }
 const ResponseEnvelope = z.object({
@@ -180,11 +181,13 @@ const ResponseEnvelope = z.object({
   output: z.array(z.object({ type: z.string(), content: z.array(z.object({ type: z.string(), text: z.string().optional() })).optional() })),
 });
 export class OpenAITranslator implements Translator {
-  constructor(private options: { key: string; model: string; effort: string; instructions?: string; fetch?: typeof fetch }) {}
+  constructor(private options: { key: string; model: string; effort: string; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {}
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
     let reported = false;
     const report = (value: TranslationDiagnostic) => { reported = true; diagnostic?.(value); };
-    const body = JSON.stringify(translationRequest(this.options.model, this.options.effort, input, this.options.instructions));
+    const pair = this.options.pair ?? DEFAULT_PAIR;
+    const body = JSON.stringify(translationRequest(this.options.model, this.options.effort, input,
+      this.options.instructions ?? translationInstructionsFor(pair), translationSchemaFor(pair)));
     let response: Response;
     try {
       response = await (this.options.fetch ?? fetch)('https://api.openai.com/v1/responses', {

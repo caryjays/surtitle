@@ -2,7 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import { TurnMeasurement, RecognitionQuality as Quality, type Boundary, type Mode, type Glossary } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Source, TurnMeasurement, RecognitionQuality as Quality, direction, inPair, profile, type Boundary, type Language, type Mode, type Glossary } from '../protocol/index.ts';
 import type { Transcriber, TranscriberFactory } from './types.ts';
 import { TurnDetector } from './turns.ts';
 import { isRepetitiveTranscript } from './quality.ts';
@@ -12,7 +12,7 @@ const Reply = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ready') }).strict(),
   z.object({ type: z.literal('error') }).strict(),
   z.object({ type: z.literal('final'), id: z.string().uuid(), text: z.string().max(4000),
-    language: z.enum(['en', 'ja', 'unknown']), inferenceMs: z.number().nonnegative().max(60_000), rejected: z.boolean().optional(),
+    language: Source, inferenceMs: z.number().nonnegative().max(60_000), rejected: z.boolean().optional(),
     // Where each accepted Whisper segment ends within the request's audio, for rolling segmentation.
     segments: z.array(z.object({ endMs: z.number().int().min(0).max(30_000), text: z.string().max(4000) }).strict()).max(64).optional(),
     measurement: TurnMeasurement.pick({ recognitionLanguage: true, recognitionClipped: true, quality: true }).optional() }).strict(),
@@ -27,12 +27,12 @@ export type LocalOptions = {
   onDiagnostic?: (category: 'worker' | 'protocol' | 'startup-timeout' | 'inference-timeout' | 'queue-expired') => void;
   onTiming?: (timing: { id: string; audioMs: number; queueMs: number; inferenceMs: number; commitToFinalMs: number }) => void;
 };
-type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' | 'close'; language: 'en' | 'ja' | null;
+type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' | 'close'; language: Language | null;
   audio: Buffer; queued: number; sent?: number;
   // Rolling jobs: the stretch and row they decode for, and the closing boundary.
   stretch?: Stretch; row?: Row; detail?: { boundary: Boundary; trailingQuietMs: number } };
 // A caption row in rolling mode: locked text only grows. Its begin event waits for its first locked text.
-type Row = { id: string; begun: boolean; text: string; audioMs: number; language: 'en' | 'ja' | null; created: number;
+type Row = { id: string; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
   decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality };
 // One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
 type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
@@ -45,7 +45,7 @@ export class LocalTranscriber implements Transcriber {
   private output = '';
   private sequence = 0;
   private gateFrames = 0;
-  private current?: { id: string; frames: Buffer[]; language: 'en' | 'ja' | null;
+  private current?: { id: string; frames: Buffer[]; language: Language | null;
     lastPreviewMs: number; hypothesis: string; stable: string };
   private preview?: Job;
   private stretch?: Stretch;
@@ -55,7 +55,11 @@ export class LocalTranscriber implements Transcriber {
   private resolveConnect?: () => void;
   private rejectConnect?: () => void;
   private detector: TurnDetector;
+  private pair: readonly [Language, Language];
+  private sentenceEnds: string;
   constructor(private options: LocalOptions & Parameters<TranscriberFactory>[0]) {
+    this.pair = options.pair ?? DEFAULT_PAIR;
+    this.sentenceEnds = this.pair.map(language => profile(language).sentenceEnd).join('');
     const rolling = options.segmentation === 'rolling';
     this.detector = new TurnDetector(rolling ? {
       begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', row: this.row() }; },
@@ -77,7 +81,7 @@ export class LocalTranscriber implements Transcriber {
     } : {
       begin: () => {
         this.current = { id: randomUUID(), frames: [],
-          language: options.mode === 'auto' ? null : options.mode === 'en-ja' ? 'en' : 'ja',
+          language: direction(options.mode)?.source ?? null,
           lastPreviewMs: 0, hypothesis: '', stable: '' };
         options.onEvent({ type: 'begin', id: this.current.id, sequence: this.sequence++, mode: options.mode });
       },
@@ -94,7 +98,7 @@ export class LocalTranscriber implements Transcriber {
   }
   private row(): Row {
     return { id: randomUUID(), begun: false, text: '', audioMs: 0, created: performance.now(), decodes: 0, forced: 0, lags: [],
-      language: this.options.mode === 'auto' ? null : this.options.mode === 'en-ja' ? 'en' : 'ja' };
+      language: direction(this.options.mode)?.source ?? null };
   }
   // The unlocked audio as one buffer, capped below Whisper's 30 s input.
   private window(stretch: Stretch) {
@@ -184,7 +188,7 @@ export class LocalTranscriber implements Transcriber {
     const row = job.kind === 'close' ? job.row! : stretch!.row;
     const windowMs = job.audio.length / BYTES_PER_MS;
     row.decodes++; row.quality = mergeQuality(row.quality, message.measurement?.quality);
-    if (!row.language && (message.language === 'en' || message.language === 'ja')) row.language = message.language; // Auto: once per row
+    if (!row.language && inPair(this.pair, message.language)) row.language = message.language; // Auto: once per row
     const segments: WorkerSegment[] = rejected ? [] : message.segments ?? [];
     if (job.kind === 'close') {
       // Everything left locks. An older worker without segments still returns its text.
@@ -212,7 +216,7 @@ export class LocalTranscriber implements Transcriber {
       row.audioMs += endMs; row.forced += Number(forced);
       row.lags.push(windowMs - endMs + performance.now() - job.queued);
       this.rowText(row);
-      if (row.audioMs >= ROLLING.maxRowMs || (row.audioMs >= ROLLING.sentenceRowMs && endsSentence(row.text))) {
+      if (row.audioMs >= ROLLING.maxRowMs || (row.audioMs >= ROLLING.sentenceRowMs && endsSentence(row.text, this.sentenceEnds))) {
         this.closeRow(row, 'length', {}, false);
         stretch!.row = this.row();
       }
