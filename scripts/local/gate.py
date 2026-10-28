@@ -15,6 +15,7 @@ reviewer could not resolve, excluded from scoring. A reviewer rates each replaye
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 import platform
 import re
@@ -98,8 +99,9 @@ def run(args):
     streams = {f'public-{language}': [f for f in fleurs if f['language'] == language] for language in ('en', 'ja')}
     streams |= {f'nonspeech-{category}': [f for f in nonspeech if f['category'] == category][:keep]
                 for category in sorted({f['category'] for f in nonspeech})}
-    gains = {}
+    gains, loads = {}, []
     for name, clips in streams.items():
+        loads.append(os.getloadavg()[0])
         print(f'Replaying {name}: {sum(c["seconds"] for c in clips) / 60:.1f} min in real time', flush=True)
         stream, gains[name] = write_stream(name, clips)
         replay(stream, out / f'{name}.json', args.segmentation, name)
@@ -109,6 +111,7 @@ def run(args):
         results.mkdir()
         for entry in entries:
             print(f'Replaying held-out {entry["id"]}', flush=True)
+            loads.append(os.getloadavg()[0])
             replay(folder / entry['audio'], results / f'{entry["id"]}.json', args.segmentation, entry['id'])
         print(f'Held-out results: {results.relative_to(ROOT)}')
     silence = subprocess.run([sys.executable, str(ROOT / 'scripts/local/silence_check.py')], capture_output=True, text=True)
@@ -122,7 +125,9 @@ def run(args):
     dirty = bool(subprocess.run(['git', 'status', '--porcelain'], cwd=ROOT, capture_output=True, text=True).stdout.strip())
     (out / 'run.json').write_text(json.dumps({
         'segmentation': args.segmentation, 'smoke': args.smoke, 'model': 'turbo-q4', 'commit': commit, 'uncommittedChanges': dirty,
-        'platform': platform.platform(), 'gapSeconds': GAP_SECONDS, 'level': LEVEL,
+        'platform': platform.platform(), 'cpus': os.cpu_count(),
+        # Replay output depends on decode speed, so a busy machine changes results.
+        'loadAverage': {'max': round(max(loads), 1), 'median': round(sorted(loads)[len(loads) // 2], 1)}, 'gapSeconds': GAP_SECONDS, 'level': LEVEL,
         'gains': {name: {'min': min(g), 'max': max(g)} for name, g in gains.items()}, 'silenceCheckPassed': silence.returncode == 0,
         'streams': {name: len(clips) for name, clips in streams.items()}}, indent=2) + '\n')
     print(f'Run: {out.relative_to(ROOT)}')

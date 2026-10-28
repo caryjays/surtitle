@@ -7,6 +7,7 @@ A language ships when it passes a gate written before any gate measurement is ta
 ## Rules for every gate run
 
 - Measured through the real code path: real-time replay with `scripts/replay-cases.ts`, listen-mode calibration on 1.5 s of silence before each stream, the Turbo Q4 worker, and the segmentation that is the default when the run happens. If rolling is still behind `LOCAL_SEGMENTATION`, both modes are measured and the gate applies to the one that becomes the default.
+- Run on a machine without other heavy work, because real-time replay output depends on decode speed. Each run records the machine's load average.
 - Scored with the units of `scripts/local/scoring.py`: NFKC, case folding and punctuation removed; English by word error rate, Japanese by character error rate. Deletions are reported separately because they are the live path's main failure.
 - Material that informed a design or tuning choice is not gate material. The tuning and noisy FLEURS clips, and the seven recordings behind the rolling design, are excluded.
 - Every target applies to each language on its own; English passing does not carry Japanese.

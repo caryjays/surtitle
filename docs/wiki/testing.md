@@ -1,13 +1,13 @@
 # Testing and benchmarks
 
-Verified: 2026-10-28 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md, scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py
+Verified: 2026-10-28 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md, scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/prepare_corpus.py, scripts/local/corpus_eval.py
 
 Ordinary tests never read `.env`, never call a provider and never touch a physical microphone. Real-model checks are explicit commands.
 
 | Command | Covers | Real model | Network |
 | --- | --- | --- | --- |
 | `pnpm check` | TypeScript; Node tests with fake providers and a fake worker covering segmentation, direction, out-of-order results, failures, clear and session invalidation, queue bounds, server origin rules, telemetry schemas and diagnostics export; docs check; build | no | no |
-| `pnpm test:local-unit` | Python: scoring, gate alignment and the gate targets against the wiki table, decoder filters, worker RPC with a fake engine, experiment DSP and guards | no | no |
+| `pnpm test:local-unit` | Python: scoring, gate alignment and the gate targets against the wiki table, development-corpus screening rules and its fast alignment against the plain scorer, decoder filters, worker RPC with a fake engine, experiment DSP and guards | no | no |
 | `pnpm test:browser` | Headless Chrome with a synthetic microphone and fake providers: continuous EN/JA, preset switch, history, preview, diagnostics download, overlay, clear, pause, denied microphone | no | no |
 | `pnpm test:local-browser` | Public EN then JA fixtures through Chrome, the worklet and the real Turbo Q4 worker to the original-only overlay | yes | no |
 | `pnpm test:listen-browser` | Noise prelude plus fixtures through the real gate and model with previews into a fake translator | yes | no |
@@ -15,6 +15,8 @@ Ordinary tests never read `.env`, never call a provider and never touch a physic
 | `pnpm local:bench`, `pnpm local:stream` | Full-clip and real-time replay accuracy and timing on the tuning fixtures; metrics to ignored `benchmarks/results/` | yes | no |
 | `pnpm local:noisy-fixtures`, `local:noisy-prepare`, `local:noisy-screen`, `local:noisy-replay` | Controlled noisy Japanese experiment; fixture setup downloads bounded public data once | yes | fixtures only |
 | `pnpm gate:fixtures`, `gate:run`, `gate:score` | Language gate: public FLEURS and MUSAN non-speech streams, and private held-out recordings, replayed in real time and scored against the targets in [gates](gates.md); fixture setup downloads bounded public data once | yes | fixtures only |
+| `pnpm corpus:fetch` | Development corpus of CC BY 3.0 YODAS2 recordings with uploaded subtitles, a few hours per language, into `private/`; `--list` prints picks for review. Silver references, never gate material; see [benchmarks/README.md](../../benchmarks/README.md#development-corpus) | no | metadata, then the picked audio |
+| `pnpm corpus:run`, `corpus:score` | Development corpus replayed in real time in one segmentation mode, plus a cached whole-file decode of each recording in its language with the live model and filters. The score reports live and whole-file error against the subtitles, live minus whole-file, and the share of whole-file text never shown live, which does not depend on subtitle wording; also wrong language, stock or repetitive rows, forced locks and rolling timing with the machine's load. Development numbers, never a gate result; outputs stay under `private/`. `--smoke` replays the shortest recording per language | yes | no |
 | `pnpm eval:translation-cases` | Public fixtures and noisy variants through the live recognizer, frozen as translation cases in ignored `benchmarks/results/translation-cases.json` | yes | no |
 | `pnpm eval:translation` | Translation comparison; see below | local candidates only | paid only with `--paid` |
 | `pnpm docs:check` | Wiki freshness against sources, dead links, index coverage, leak scan of every commit-eligible file | no | no |

@@ -23,6 +23,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-10-27-capture-lanes.md](2026-10-27-capture-lanes.md) | Five usage lanes and the capture plan |
 | [2026-10-27-language-pair.md](2026-10-27-language-pair.md) | Language pair generalized, roadmap stage 0 |
 | [2026-10-28-japanese-gate.md](2026-10-28-japanese-gate.md) | Japanese gate targets, tooling and first public run |
+| [2026-10-28-development-corpus.md](2026-10-28-development-corpus.md) | Second machine for long runs and the YODAS2 development corpus |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

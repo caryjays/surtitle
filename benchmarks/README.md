@@ -36,3 +36,12 @@ Use these clips to compare models/settings and detect regressions. EN word error
   - Instrumental music: `music-fma-0001` to `0003`, from the album *Memory Bank* by Airglow on the Free Music Archive, CC BY, read from a bounded prefix of the original OpenSLR archive.
 
 Nothing from these sets is redistributed: audio stays in the ignored cache, and replay outputs go to ignored `results/`.
+
+## Development corpus
+
+`pnpm corpus:fetch` builds a longer development set from **YODAS2** (Li et al., *YODAS: Youtube-Oriented Dataset for Audio and Speech*, 2023, https://arxiv.org/abs/2406.00899; https://huggingface.co/datasets/espnet/yodas2), pinned to revision `631fc446cb1a41ee93a1d390a167c6e08c2597a3`. The dataset holds only YouTube videos published under CC BY 3.0. The script reads the `en000` and `ja000` subsets, whose subtitles were uploaded with the video, and never the `100` subsets, which hold YouTube's automatic captions; Whisper scored against automatic captions would understate its errors.
+
+Selection reads only the duration and subtitle files and keeps recordings in shard order that are 8 to 40 minutes long, with subtitles covering at least 60% of the time, in the expected script, without music marks or roll-up repeats, and at a plausible speaking rate. A reviewer reads an excerpt of each pick and lists exclusions, such as synthetic narration or subtitles that read as machine output, in `review.json` next to the manifest; selection then skips them and continues. Audio is streamed only for the final picks, from shards checked against their pinned SHA-256.
+
+Uploaded subtitles are not verbatim, so the corpus is development material with silver references and never gate material. The recordings, subtitles, manifest and review list are third-party material and stay under `private/`; nothing is redistributed. Each recording's YouTube ID, kept in the private manifest, is its attribution source.
+
