@@ -34,7 +34,7 @@
     "corpus:score": ".local/venv/bin/python scripts/local/corpus_eval.py score",
     "eval:translation-cases": ".local/venv/bin/python scripts/local/translation_cases.py",
     "eval:translation": "node --env-file-if-exists=.env --import tsx scripts/translation-eval.ts",
-    "test:local-unit": "python3 -m unittest discover -s scripts/local -p 'test_*.py'",
+    "test:local-unit": ".local/venv/bin/python -m unittest discover -s scripts/local -p 'test_*.py'",
     "start": "node --env-file-if-exists=.env dist/service.mjs",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
