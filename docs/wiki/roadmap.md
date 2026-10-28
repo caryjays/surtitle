@@ -1,6 +1,6 @@
 # Roadmap
 
-Verified: 2026-10-27 · Sources: none
+Verified: 2026-10-28 · Sources: none
 
 Where the project is going and in what order. What is done and open right now lives in [status](status.md); the reasons are in [decisions](decisions.md).
 
@@ -31,7 +31,7 @@ Through the medium term every pair includes English, and a session runs one pair
 
 ## Gates
 
-A language ships when it meets written criteria, measured through the real code path:
+A language ships when it meets written criteria, measured through the real code path. The targets are in [gates](gates.md):
 
 1. A public licensed fixture set, such as FLEURS or Common Voice, plus held-out recordings.
 2. Held-out error and deletion rates under targets set before the run.

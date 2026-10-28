@@ -1,6 +1,6 @@
 # Decisions
 
-Verified: 2026-10-27 · Sources: none
+Verified: 2026-10-28 · Sources: none
 
 Append-only, newest last. To reverse a decision, add a new entry and mark the old one superseded.
 
@@ -42,3 +42,5 @@ Append-only, newest last. To reverse a decision, add a new entry and mark the ol
 | 2026-10-27 | Rolling recognition locks whole Whisper segments; locking single words once two decodes agree was measured and rejected | Word locking raised held-out error from 1.4% to 2.6% in English and from 3.9% to 6.2% in Japanese for text about 1 to 3 s sooner, because later decodes often correct the first agreed words |
 | 2026-10-27 | Merging short pause-closed rolling rows is deferred until rehearsal | The held-out replay produced only 2 such rows in 176; lectures pause more than the recordings, so rehearsal decides |
 | 2026-10-27 | The language pair is configuration: `LANGUAGE_PAIR`, profiles in one `profiles/languages.json` read by Node and the Python worker, modes `auto` plus `source-target` directions, schemas that accept any language code while the controller enforces the pair, and Lecture as the other language into English | One file keeps both runtimes' rules in step; unchanged mode strings keep the wire format, diagnostics and the en-ja translation prompt identical, so existing evals stay comparable |
+| 2026-10-28 | Japanese gate targets are fixed in [gates](gates.md) before any gate run: held-out live CER at most 5.0% with deletions at most 2.0%, English WER at most 4.0% with deletions at most 1.0%, public FLEURS limits plus at most 1.5 points over the full-clip decode, no displayed text on non-speech, translation fidelity of at least 4.3 under two judges on correctly recognized inputs, and one field session without capture failure | Targets sit just above the rolling replay on silver references, so they demand that rolling hold on new material rather than improve on it. The seven recordings behind the rolling design are excluded, because they informed it |
+| 2026-10-28 | Gate streams level-match every public and non-speech clip to a 90th-percentile 50 ms RMS of 0.1 before replay; held-out recordings keep their level | 40 of the 60 English gate clips sit below the live gate's 0.004 floor, so unscaled they measure faint input, which is open problem 1 with its own sweep, rather than segmentation. Scaling non-speech to speech level makes the hallucination check stricter, since the gate opens and Silero and the filters must reject it |

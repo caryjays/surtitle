@@ -1,0 +1,82 @@
+# Language gates
+
+Verified: 2026-10-28 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json
+
+A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the five parts; this page sets the numbers. Japanese is the only gate so far. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
+
+## Rules for every gate run
+
+- Measured through the real code path: real-time replay with `scripts/replay-cases.ts`, listen-mode calibration on 1.5 s of silence before each stream, the Turbo Q4 worker, and the segmentation that is the default when the run happens. If rolling is still behind `LOCAL_SEGMENTATION`, both modes are measured and the gate applies to the one that becomes the default.
+- Scored with the units of `scripts/local/scoring.py`: NFKC, case folding and punctuation removed; English by word error rate, Japanese by character error rate. Deletions are reported separately because they are the live path's main failure.
+- Material that informed a design or tuning choice is not gate material. The tuning and noisy FLEURS clips, and the seven recordings behind the rolling design, are excluded.
+- Every target applies to each language on its own; English passing does not carry Japanese.
+- A failed gate is reported as failed with its numbers. Fixing the cause and rerunning is allowed; rerunning unchanged code to get a better draw is not.
+
+## Japanese gate
+
+### 1. Material
+
+| Set | Content | References |
+| --- | --- | --- |
+| Public | 60 English and 60 Japanese FLEURS test clips at the pinned revision, sentence IDs distinct from the tuning and noisy sets, chosen in archive order before recognition | The public transcripts, uncorrected |
+| Held-out | At least 20 minutes per language of speech new to the project: lecture-style, technical, at least half unscripted, including the maintainer's own Japanese and English talks. Third-party recordings need a public license or the speaker's permission, and stay in `private/` | The full-file decode corrected by hand. Spans a reviewer cannot resolve are marked and excluded from scoring, and their share is reported |
+| Non-speech | `pnpm local:silence`, plus at least 30 minutes of public licensed background noise, instrumental music and applause | none; any displayed text is an error |
+
+### 2. Accuracy
+
+| Measure | Japanese | English |
+| --- | --- | --- |
+| Held-out error rate, live path | ≤ 5.0% CER | ≤ 4.0% WER |
+| Held-out deletion rate, live path | ≤ 2.0% | ≤ 1.0% |
+| Public error rate, live path | ≤ 6.0% CER | ≤ 8.0% WER |
+| Public live error minus full-clip decode of the same clips | ≤ 1.5 points | ≤ 1.5 points |
+| Held-out rows rated major or hallucinated, by a read-through against references | ≤ 5% of rows | ≤ 5% of rows |
+| Rows given the wrong language in Auto, on single-language material | ≤ 2% of rows | ≤ 2% of rows |
+| Lock lag p90, segment end to locked text, rolling only | ≤ 3.0 s | ≤ 3.0 s |
+| Row start to first locked text p90, rolling only | ≤ 8.0 s | ≤ 8.0 s |
+
+The public set is read speech with numbers and names that the scorer counts strictly, so its absolute targets are looser; the difference from the full-clip decode isolates what live segmentation loses. Mixed-language rows, such as Japanese with English loanword phrases, are reported but not gated, because no reference convention for them exists yet.
+
+### 3. Stock phrases and repetition
+
+- No displayed row on any non-speech input.
+- No displayed row on the public or held-out sets whose whole text is a stock phrase from `profiles/languages.json` or fails the repetition check.
+- Every stock-phrase rejection on speech material is listed by count, and each new Japanese phrase seen in the sweep is added to the profile before the gate passes.
+
+### 4. Translation
+
+Run with `pnpm eval:translation` in both directions on cases frozen from the gate's public and held-out material, for the translator the listen profile will default to. It needs explicit authorization for paid calls.
+
+| Measure | Target, each direction |
+| --- | --- |
+| Mean judged fidelity on cases recognized without a meaning-changing error | ≥ 4.3 of 5 |
+| Cases on those inputs judged 2 or lower | 0 |
+| Translations flagged for invention, all cases | ≤ 2% |
+| Required terms present, on correctly recognized inputs | ≥ 95% |
+| Failed calls, wrong-direction or unresolved outputs | 0 |
+| Latency p90 on the network recorded in the log | ≤ 2.5 s |
+
+The score targets must hold under two judges from different model families. Cases with recognition errors are reported but not gated, since a translator is told not to invent repairs.
+
+### 5. Field session
+
+- The calibration warning is shipped: a calibration that leaves the gate above the speech that follows is visible to the operator.
+- One real session of at least 30 minutes with Japanese and English speech, diagnostics on, and the gate's chosen settings.
+- No capture failure and no manual restart other than an intentional stop.
+- The diagnostics download is summarized in a dated log entry with aggregate counts only.
+
+## Running a gate
+
+| Step | Command |
+| --- | --- |
+| Public material, once | `pnpm gate:fixtures`; see [benchmarks/README.md](../../benchmarks/README.md#language-gate-fixtures) |
+| Replay | `pnpm gate:run --segmentation rolling`, and again with `turns` while rolling is not the default. Add `--held-out private/<folder>/held-out.json` once the held-out set exists. Real time: about an hour without held-out material. `--smoke` checks the pipeline on three clips per stream and is never a gate result |
+| Rate held-out rows | Add `"rating"` to each case in the private results: `plausible`, `minor`, `major` or `hallucination` |
+| Score | `pnpm gate:score benchmarks/results/gate-<run>`, plus `--held-out <manifest> --held-out-results <private results folder>` |
+
+`gate:run` scales every clip so its 90th-percentile 50 ms RMS is 0.1 without clipping, as an operator sets input gain, then joins each language's public clips, and each non-speech category, into one stream with a second of silence between clips, replays it, runs `local:silence`, and decodes every public clip whole in Auto as the full-clip comparison. Public and non-speech outputs go to ignored `benchmarks/results/`; held-out outputs go next to their manifest under `private/`.
+
+A held-out manifest lists recordings as `{ "id", "audio", "language", "reference" }`, with `language` `en`, `ja` or `mixed` and paths relative to the manifest. A reference is the hand-corrected transcript; text inside `{{ }}` marks a span the reviewer could not resolve, which costs nothing when aligned and is reported as an excluded share. Mixed recordings count toward the stock-phrase check only. Held-out recordings are replayed at their recorded level.
+
+`gate:score` reads the targets from `benchmarks/gate-ja.json`, which a unit test keeps equal to the tables above, and prints aggregates only: each target as pass, fail or not measured, and a verdict for the recognition parts. Timing targets are scored on held-out rows. The stock-phrase review, translation and the field session are checked by hand.
+

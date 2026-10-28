@@ -24,3 +24,15 @@ These are **synthetic stress variants of read speech**, not authentic spontaneou
 `pnpm eval:translation-cases` runs the 16 FLEURS clips above and, when present, the noisy variants of the four targets through the live recognizer with automatic language, and freezes reference plus recognized text to ignored `results/translation-cases.json`. Recognized text keeps the recognizer's real mistakes, which is the point: translators are scored on what they were actually given. `translation-terms.json` lists spellings a correct translation must contain, chosen from the public references. `model-prices.json` holds retrieved list prices for cost estimates. See [testing](../docs/wiki/testing.md#translation-eval).
 
 Use these clips to compare models/settings and detect regressions. EN word error rate and JA character error rate are transcription metrics, not translation grades or a percentage of understood meaning. Do not compare their percentages directly. A held-out, larger sample and representative spontaneous/mixed-language speech are needed before choosing event settings.
+
+## Language gate fixtures
+
+`pnpm gate:fixtures` prepares the public material for the [language gates](../docs/wiki/gates.md). The first run selected clips by fixed rules before any recognition and wrote the manifests; later runs only verify the ignored cache in `.local/fixtures/gate/` against them and refuse a manifest that would change.
+
+- `gate-fleurs.json`: 60 English and 60 Japanese clips from **Google FLEURS** at the same pinned revision, CC BY 4.0, attribution above. Selection: the first distinct sentence IDs in test-archive order, 4 to 16 seconds, excluding every ID in `fleurs.json` and `noisy-ja.json`. References are the raw public transcripts, uncorrected.
+- `gate-nonspeech.json`: about 37 minutes from **MUSAN** (Snyder, Chen and Povey, *MUSAN: A Music, Speech, and Noise Corpus*, 2015, https://arxiv.org/abs/1510.08484; https://www.openslr.org/17/). Licenses are per file, from the corpus's own LICENSE files:
+  - Background noise: every file in `noise/free-sound` that the corpus annotates as a background noise and that the pinned Hugging Face mirror `FluidInference/musan` holds; marked public domain on Freesound. Checksums are the mirror's, pinned by revision; that the mirror matches the original archive file for file is not verified.
+  - Applause: `noise-sound-bible-0003`, "Audience Applause" by Matthiew11 on SoundBible, CC BY 3.0.
+  - Instrumental music: `music-fma-0001` to `0003`, from the album *Memory Bank* by Airglow on the Free Music Archive, CC BY, read from a bounded prefix of the original OpenSLR archive.
+
+Nothing from these sets is redistributed: audio stays in the ignored cache, and replay outputs go to ignored `results/`.

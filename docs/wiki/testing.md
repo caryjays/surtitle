@@ -1,19 +1,20 @@
 # Testing and benchmarks
 
-Verified: 2026-10-28 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md
+Verified: 2026-10-28 · Sources: package.json, tests, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md, scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py
 
 Ordinary tests never read `.env`, never call a provider and never touch a physical microphone. Real-model checks are explicit commands.
 
 | Command | Covers | Real model | Network |
 | --- | --- | --- | --- |
 | `pnpm check` | TypeScript; Node tests with fake providers and a fake worker covering segmentation, direction, out-of-order results, failures, clear and session invalidation, queue bounds, server origin rules, telemetry schemas and diagnostics export; docs check; build | no | no |
-| `pnpm test:local-unit` | Python: scoring, decoder filters, worker RPC with a fake engine, experiment DSP and guards | no | no |
+| `pnpm test:local-unit` | Python: scoring, gate alignment and the gate targets against the wiki table, decoder filters, worker RPC with a fake engine, experiment DSP and guards | no | no |
 | `pnpm test:browser` | Headless Chrome with a synthetic microphone and fake providers: continuous EN/JA, preset switch, history, preview, diagnostics download, overlay, clear, pause, denied microphone | no | no |
 | `pnpm test:local-browser` | Public EN then JA fixtures through Chrome, the worklet and the real Turbo Q4 worker to the original-only overlay | yes | no |
 | `pnpm test:listen-browser` | Noise prelude plus fixtures through the real gate and model with previews into a fake translator | yes | no |
 | `pnpm local:silence` | Synthetic silence, noise and hum through the real engine must yield no text | yes | no |
 | `pnpm local:bench`, `pnpm local:stream` | Full-clip and real-time replay accuracy and timing on the tuning fixtures; metrics to ignored `benchmarks/results/` | yes | no |
 | `pnpm local:noisy-fixtures`, `local:noisy-prepare`, `local:noisy-screen`, `local:noisy-replay` | Controlled noisy Japanese experiment; fixture setup downloads bounded public data once | yes | fixtures only |
+| `pnpm gate:fixtures`, `gate:run`, `gate:score` | Language gate: public FLEURS and MUSAN non-speech streams, and private held-out recordings, replayed in real time and scored against the targets in [gates](gates.md); fixture setup downloads bounded public data once | yes | fixtures only |
 | `pnpm eval:translation-cases` | Public fixtures and noisy variants through the live recognizer, frozen as translation cases in ignored `benchmarks/results/translation-cases.json` | yes | no |
 | `pnpm eval:translation` | Translation comparison; see below | local candidates only | paid only with `--paid` |
 | `pnpm docs:check` | Wiki freshness against sources, dead links, index coverage, leak scan of every commit-eligible file | no | no |
