@@ -62,8 +62,43 @@ The Japanese subtitle track diverges from the speech enough that the whole-file 
 
 The laptop's load during the smoke also means today's gate runs may have run under load; their run metadata did not record it. Gate runs now record the load average, and [gates](../wiki/gates.md) asks for a machine without other heavy work.
 
+## First full run, 2026-10-30 and 31
+
+On the laptop overnight, at commit `08f1449`, in this order: corpus rolling, corpus turns, gate rolling, gate turns. Load average medians were 1.4 to 2.1 and maxima at most 4.4. The laptop ran from its internal battery for about four and a half hours in the middle of the rolling corpus run, through most of its Japanese recordings, with Low Power Mode off; every replay's wall time matched its audio length, so nothing paused. No replay failed.
+
+Two recordings are corpus defects and are left out below: one English pick is Russian speech with translated English subtitles, which the script check on subtitles cannot see, and one Japanese pick has text captions over music and no speech, where both modes and the whole-file decode correctly produced nothing. A third Japanese pick has subtitles that paraphrase heavily, so its error against subtitles is high in every mode; it stays in.
+
+| Development corpus | Rolling EN | Turns EN | Rolling JA | Turns JA |
+| --- | --- | --- | --- | --- |
+| Recordings, minutes | 11, 154.7 | 11, 154.7 | 12, 170.2 | 12, 170.2 |
+| Live error against subtitles | 8.5% | 9.1% | 21.8% | 22.8% |
+| Whole-file error against subtitles | 7.4% | 7.4% | 22.3% | 22.3% |
+| Live minus whole-file | +1.1 pts | +1.7 pts | −0.5 pts | +0.5 pts |
+| Whole-file text never shown live | 1.7% | 1.7% | 4.4% | 3.8% |
+| Wrong language | 0.0% | 0.0% | 0.7% | 0.2% |
+| Lock lag p90, first text p90 | 3.1 s, 8.8 s | | 2.9 s, 8.1 s | |
+
+Forced locks: one per language in rolling. Stock or repetitive rows: none in either mode.
+
+| Gate public set, rerun | Rolling JA | Turns JA | Rolling EN | Turns EN |
+| --- | --- | --- | --- | --- |
+| Public error | 9.11% | 6.23% | 4.87% | 4.47% |
+| Live minus full-clip | 4.00 pts | 1.12 pts | 0.56 pts | 0.16 pts |
+| Non-speech rows | 3 | 1 | | |
+
+Turns reproduced its first gate run exactly; rolling did not (10.48% and 5.37 points on the first run), as expected from a mode whose output depends on decode timing. Rolling's non-speech rows were "You" on background noise and "Thank you." twice on instrumental music, rows of 3.2 to 4.0 s, under the 6 s minimum at which the stock-phrase rule applies to a rolling row.
+
+### Where rolling loses Japanese
+
+Aligning each public stream's live text against the concatenated whole-clip decodes and attributing every lost character to its clip: rolling lost 103 of 2,753 Japanese characters, 82 of them in the first quarter of a clip, across 12 of 60 clips; turns lost 6. The first rolling run showed the same pattern, 101 of 142 at clip starts. The affected clips are 10.5 to 14.7 s sentences without a pause, and what is missing is the opening phrase, 4 to 25 characters. English lost 7 of 1,245 words.
+
+Untested mechanism: when a decode returns no accepted segment and the open window exceeds `ROLLING.noiseMs` (3 s), rolling treats the window as noise and drops all but its last second (`packages/providers/local.ts`). Early decodes of a long Japanese sentence, which Whisper returns as one segment, may come back empty or filtered, so the opening is discarded. English yields segments sooner. On the corpus the same effect is diluted, since long recordings hold fewer sentence openings per minute: rolling's never-shown share is 0.6 points above turns in Japanese and equal in English.
+
 ## Open
 
-- Run `corpus:run` in both modes on a quiet machine, plus `gate:run` in both modes there to compare with the laptop's public-set numbers: about 14 hours of real time.
+- Confirm the rolling noise-drop mechanism with per-decode logging on the public Japanese stream, fix it, and rerun the gate and corpus in rolling mode.
+- Rolling non-speech rows under the 6 s stock-phrase minimum.
+- Script checks see only subtitles: add a whole-file language check, or review audio language, before picks are final; replace the two defective picks.
+- Rows for a third language are displayed with an unknown language; whether to reject them is a product question.
 - More lecture-style material: the shard-order picks are mostly casual. Raising the minimum length or scanning more shards would tilt toward talks.
 - Uploaded Japanese subtitles sometimes split words with spaces or paraphrase; the whole-file comparison absorbs this, but absolute rates do not.
