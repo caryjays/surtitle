@@ -188,8 +188,10 @@ export class LocalTranscriber implements Transcriber {
     const row = job.kind === 'close' ? job.row! : stretch!.row;
     const windowMs = job.audio.length / BYTES_PER_MS;
     row.decodes++; row.quality = mergeQuality(row.quality, message.measurement?.quality);
-    if (!row.language && inPair(this.pair, message.language)) row.language = message.language; // Auto: once per row
     const segments: WorkerSegment[] = rejected ? [] : message.segments ?? [];
+    // Auto: once per row, from a decode with accepted text. A short opening misheard as the other language decodes as a
+    // filtered translation, and keeping that language would force it on every later decode of the row.
+    if (!row.language && segments.length && inPair(this.pair, message.language)) row.language = message.language;
     if (job.kind === 'close') {
       // Everything left locks. An older worker without segments still returns its text.
       row.text = joinText(row.text, rejected ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);

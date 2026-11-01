@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-01 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-02 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one HTTPS request per finalized turn.
 

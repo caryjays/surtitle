@@ -40,7 +40,7 @@ test('stock sign-offs match only when they are the whole text', () => {
 });
 
 // Frames carry their absolute index in the first sample; see tests/fixtures/fake-local-worker.mjs.
-function fixture(behavior: string, extra: Partial<LocalOptions> = {}) {
+function fixture(behavior: string, extra: Partial<ConstructorParameters<typeof LocalTranscriber>[0]> = {}) {
   const events: TranscriptEvent[] = []; const measurements: { id: string; value: TurnMeasurement }[] = [];
   const requests: number[] = []; let replies = 0; let failures = 0; let index = 0;
   const stream = new LocalTranscriber({ model: 'small-q4', mode: 'ja-en', segmentation: 'rolling',
@@ -118,6 +118,13 @@ test('rolling trims a window that held no speech and reports the stretch as reje
   assert(Math.max(...f.requests) <= 4000);
   assert.deepEqual(f.events.map(e => e.type), ['begin', 'final']);
   assert.equal(finals(f.events)[0]!.rejected, true);
+});
+test('in Auto a row takes its language from a decode with accepted text, not from a misheard filtered opening', async t => {
+  const f = fixture('rolling-misheard', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6); f.quiet(); await f.stream.finish();
+  const rows = finals(f.events);
+  assert.equal(rows[0]!.language, 'ja');
+  assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
 });
 test('a decode in flight when its stretch closes is ignored; the closing decode alone finalizes', async t => {
   const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();

@@ -13,13 +13,15 @@ function rolling(request) {
   while (ms * 48 + 2400 <= pcm.length && pcm.readInt16LE(ms * 48 + 2) === 6000) ms += 50;
   decodes++;
   const segments = [];
-  if (behavior !== 'rolling-noise') {
+  // misheard: Auto detection on under 2.5 s of speech picks English, and decoding in English yields only filtered text.
+  const misheard = behavior === 'rolling-misheard' && (request.language === 'en' || (!request.language && ms < 2500));
+  if (behavior !== 'rolling-noise' && !misheard) {
     for (let k = 0; (k + 1) * 1000 <= ms; k++) {
       segments.push({ endMs: (k + 1) * 1000, text: ` w${start + 20 * k}${behavior === 'rolling-unstable' ? `x${decodes}` : ''}` });
     }
     if (ms % 1000) segments.push({ endMs: Math.floor(ms), text: ` t${decodes}` });
   }
-  return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: request.language ?? 'ja',
+  return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: misheard ? 'en' : request.language ?? 'ja',
     inferenceMs: 1, rejected: !segments.length, segments };
 }
 lines.on('line', line => {

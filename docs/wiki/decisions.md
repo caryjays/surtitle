@@ -1,6 +1,6 @@
 # Decisions
 
-Verified: 2026-10-28 · Sources: none
+Verified: 2026-11-02 · Sources: none
 
 Append-only, newest last. To reverse a decision, add a new entry and mark the old one superseded.
 
@@ -47,3 +47,5 @@ Append-only, newest last. To reverse a decision, add a new entry and mark the ol
 | 2026-10-28 | Long development runs come from YODAS2's CC BY 3.0 subsets with uploaded subtitles, fetched from the pinned dataset, with an agent-reviewed exclusion list kept in `private/`; nothing is downloaded from YouTube directly and JTubeSpeech is not used | The dataset gives licensed long-form speech without YouTube's download terms, while JTubeSpeech is a list of video IDs to download from YouTube. Automatic-caption subsets would score Whisper against similar machine output. Uploaded subtitles are not verbatim, so the corpus is for development and never for the gate |
 | 2026-10-28 | Long and exploratory runs may run on a second, faster Mac; gate results that decide a default come from the target laptop | Real-time replay output depends on how many decodes fit in a second, so a faster or cooler machine locks text differently. The fanless laptop is the primary standalone target, and every run records its platform |
 
+| 2026-11-02 | Speech in a language outside the session pair is rejected, not shown with an unknown language | The maintainer's call: a pair session captions two languages, and a row in a third would be neither translated nor checkable. Not yet enforced; rolling rows in a third language still display. How to detect it reliably on short windows is open, see [language arbitration](../log/2026-11-02-language-arbitration.md) |
+| 2026-11-02 | Rules that choose a rolling row's language are compared offline first, with cached decodes, and the real-time gate confirms the winner | Real-time replay results move with machine load and decode timing; cached decodes make rules comparable on identical windows and cheap to rerun |
