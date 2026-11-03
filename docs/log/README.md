@@ -26,6 +26,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-10-28-development-corpus.md](2026-10-28-development-corpus.md) | Second machine for long runs and the YODAS2 development corpus |
 | [2026-11-01-rolling-opening-loss.md](2026-11-01-rolling-opening-loss.md) | Rolling opening loss confirmed, a longer noise hold measured and reverted |
 | [2026-11-02-language-arbitration.md](2026-11-02-language-arbitration.md) | Rolling row language traced as the cause of lost openings, adapter fix, offline language-rule simulator |
+| [2026-11-04-language-rules.md](2026-11-04-language-rules.md) | Retry's English loss traced to the noise trim, settling at lock, third-language fixtures, clean gate of the 11-02 fix |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

@@ -89,6 +89,7 @@ def held_out(manifest_path):
 def run(args):
     fleurs = json.loads((ROOT / 'benchmarks/gate-fleurs.json').read_text())['fixtures']
     nonspeech = json.loads((ROOT / 'benchmarks/gate-nonspeech.json').read_text())['fixtures']
+    other = json.loads((ROOT / 'benchmarks/gate-other.json').read_text())['fixtures']
     stamp = time.strftime('%Y%m%dT%H%M%S')
     out = ROOT / 'benchmarks/results' / f"gate-{'smoke-' if args.smoke else ''}{args.segmentation}-{stamp}"
     out.mkdir(parents=True)
@@ -99,6 +100,8 @@ def run(args):
     streams = {f'public-{language}': [f for f in fleurs if f['language'] == language] for language in ('en', 'ja')}
     streams |= {f'nonspeech-{category}': [f for f in nonspeech if f['category'] == category][:keep]
                 for category in sorted({f['category'] for f in nonspeech})}
+    # Speech outside the pair is reported, not yet gated.
+    streams['third-language'] = other[:keep]
     gains, loads = {}, []
     for name, clips in streams.items():
         loads.append(os.getloadavg()[0])
@@ -208,6 +211,10 @@ def score(args):
 
     nonspeech = sum(len(load_cases(path)) for path in run_dir.glob('nonspeech-*.json'))
     measured['nonspeechRows'] = {'all': nonspeech + (0 if meta['silenceCheckPassed'] else 1)}
+    third = run_dir / 'third-language.json'
+    third_rows = {}
+    for case in load_cases(third) if third.exists() else []:
+        third_rows[case['detectedLanguage']] = third_rows.get(case['detectedLanguage'], 0) + 1
 
     if args.held_out:
         folder, entries = held_out(args.held_out)
@@ -268,6 +275,10 @@ def score(args):
     info = {key: measured[key] for key in ('publicFullClipRate', 'heldoutExcludedShare') if key in measured}
     for key, values in info.items():
         print(f"{'info':14} {key:22} " + ', '.join(f'{k} {v * 100:.2f}%' for k, v in values.items()))
+    if third.exists():
+        print(f"{'info':14} {'thirdLanguageRows':22} {sum(third_rows.values())} rows, by row language "
+              + (', '.join(f'{k} {v}' for k, v in sorted(third_rows.items())) or 'none'))
+        info['thirdLanguageRows'] = third_rows
     print('Not scored here: the stock-phrase review of new Japanese phrases, translation (pnpm eval:translation) and the field session.')
     verdict = 'FAIL' if failed else 'INCOMPLETE' if missing else 'PASS on the measured parts'
     print(f'Recognition parts: {verdict}')

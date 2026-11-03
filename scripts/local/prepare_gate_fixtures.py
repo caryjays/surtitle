@@ -1,4 +1,4 @@
-"""Bounded download of the public language-gate fixtures: FLEURS speech and MUSAN non-speech.
+"""Bounded download of the public language-gate fixtures: FLEURS speech in and outside the pair, and MUSAN non-speech.
 
 The first run selects clips by fixed rules before any recognition and writes the manifests;
 later runs only verify the cache against them and refuse a manifest that would change.
@@ -19,6 +19,9 @@ CACHE = ROOT / '.local/fixtures/gate'
 FLEURS_REVISION = '70bb2e84b976b7e960aa89f1c648e09c59f894dd'
 FLEURS = f'https://huggingface.co/datasets/google/fleurs/resolve/{FLEURS_REVISION}/data/'
 FLEURS_LOCALES = {'en': 'en_us', 'ja': 'ja_jp'}
+# Speech outside the pair, which Auto should reject: a kanji language and three Latin-script ones.
+OTHER_LOCALES = {'zh': 'cmn_hans_cn', 'ko': 'ko_kr', 'es': 'es_419', 'de': 'de_de'}
+PER_OTHER = 10
 MUSAN_REVISION = '3edcfdf89b56dbe6a395ff29f9c29489e03d1321'
 MUSAN_MIRROR = f'https://huggingface.co/datasets/FluidInference/musan/resolve/{MUSAN_REVISION}/'
 MUSAN_ARCHIVE = 'https://www.openslr.org/resources/17/musan.tar.gz'
@@ -110,39 +113,57 @@ def write_manifest(path, manifest):
     path.write_text(content)
 
 
+def fleurs_references(locale):
+    rows = list(csv.reader(io.StringIO(fetch(f'{FLEURS}{locale}/test.tsv', 4 * 1024 * 1024).decode('utf-8')), delimiter='\t'))
+    # Column 2 is the raw transcript; the tuning manifest was copied from it.
+    return {row[1]: row for row in rows if len(row) >= 6 and row[0].isdigit() and '/' not in row[1]}
+
+
+def first_clips(language, locale, references, used, count):
+    """The first count distinct sentence IDs in test-archive order, 4 to 16 s, not in used."""
+    taken = set(used)
+    selected = []
+    for name, data in members(f'{FLEURS}{locale}/audio/test.tar.gz'):
+        row = references.get(name.removeprefix('test/'))
+        if not row or row[0] in taken or not SECONDS[0] <= seconds(data) <= SECONDS[1]:
+            continue
+        fixture = {'id': f'gate-{language}-{row[0]}', 'language': language,
+                   'archive': f'{FLEURS}{locale}/audio/test.tar.gz', 'member': name, 'sha256': digest(data),
+                   'seconds': round(seconds(data), 2), 'reference': row[2]}
+        store(fixture, data)
+        selected.append(fixture)
+        taken.add(row[0])
+        if len(selected) == count:
+            return selected
+    raise ValueError('Insufficient fixtures in bounded prefix')
+
+
 def select_fleurs():
     """First distinct sentence IDs in archive order, 4 to 16 s, unused by any earlier fixture set."""
     used = {f['id'].split('-')[-1] for f in json.loads((ROOT / 'benchmarks/fleurs.json').read_text())}
     used |= {f['id'].split('-')[-1] for f in json.loads((ROOT / 'benchmarks/noisy-ja.json').read_text())['fixtures']}
     fixtures = []
     for language, locale in FLEURS_LOCALES.items():
-        rows = list(csv.reader(io.StringIO(fetch(f'{FLEURS}{locale}/test.tsv', 4 * 1024 * 1024).decode('utf-8')), delimiter='\t'))
-        # Column 2 is the raw transcript; the tuning manifest was copied from it.
-        references = {row[1]: row for row in rows if len(row) >= 6 and row[0].isdigit() and '/' not in row[1]}
+        references = fleurs_references(locale)
         for tuning in json.loads((ROOT / 'benchmarks/fleurs.json').read_text()):
             row = references.get(tuning['member'].removeprefix('test/'))
             if tuning['language'] == language and (not row or row[2] != tuning['reference']):
                 raise ValueError('Reference schema changed')
-        taken = set(used)
-        selected = []
-        for name, data in members(f'{FLEURS}{locale}/audio/test.tar.gz'):
-            row = references.get(name.removeprefix('test/'))
-            if not row or row[0] in taken or not SECONDS[0] <= seconds(data) <= SECONDS[1]:
-                continue
-            fixture = {'id': f'gate-{language}-{row[0]}', 'language': language,
-                       'archive': f'{FLEURS}{locale}/audio/test.tar.gz', 'member': name, 'sha256': digest(data),
-                       'seconds': round(seconds(data), 2), 'reference': row[2]}
-            store(fixture, data)
-            selected.append(fixture)
-            taken.add(row[0])
-            if len(selected) == PER_LANGUAGE:
-                break
-        if len(selected) != PER_LANGUAGE:
-            raise ValueError('Insufficient fixtures in bounded prefix')
-        fixtures += selected
+        fixtures += first_clips(language, locale, references, used, PER_LANGUAGE)
     return {'dataset': 'Google FLEURS', 'revision': FLEURS_REVISION, 'license': 'CC-BY-4.0',
             'scope': f'Language-gate public set: the first {PER_LANGUAGE} distinct sentence IDs per language in test-archive order, '
                      f'{SECONDS[0]} to {SECONDS[1]} s, excluding every ID in fleurs.json and noisy-ja.json; chosen before recognition.',
+            'fixtures': fixtures}
+
+
+def select_other():
+    """Speech outside the pair, which should display nothing: the first FLEURS test clips of each other language."""
+    fixtures = [f for language, locale in OTHER_LOCALES.items()
+                for f in first_clips(language, locale, fleurs_references(locale), set(), PER_OTHER)]
+    return {'dataset': 'Google FLEURS', 'revision': FLEURS_REVISION, 'license': 'CC-BY-4.0',
+            'scope': f'Third-language set: the first {PER_OTHER} distinct sentence IDs per language in test-archive order, '
+                     f'{SECONDS[0]} to {SECONDS[1]} s, chosen before recognition. Any displayed row is an error. These IDs are '
+                     'excluded from a future gate in their own language.',
             'fixtures': fixtures}
 
 
@@ -205,7 +226,8 @@ def restore(manifest):
 
 def main():
     CACHE.mkdir(parents=True, exist_ok=True)
-    for name, select in (('gate-fleurs.json', select_fleurs), ('gate-nonspeech.json', select_nonspeech)):
+    for name, select in (('gate-fleurs.json', select_fleurs), ('gate-nonspeech.json', select_nonspeech),
+                         ('gate-other.json', select_other)):
         path = ROOT / 'benchmarks' / name
         if path.exists():
             manifest = json.loads(path.read_text())

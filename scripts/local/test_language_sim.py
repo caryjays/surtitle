@@ -51,9 +51,40 @@ class LanguageRuleTests(unittest.TestCase):
         self.assertEqual(language, 'en')
         self.assertAlmostEqual(seconds, 0.3)  # no second decode when the first passes
 
+    def test_retry_uncertain_decodes_the_other_language_only_on_an_uncertain_detection(self):
+        texts = {'en': ('', -1.3), 'ja': ('ご視聴ありがとうございました', -0.3)}
+        segments, language, seconds = choose('retry-uncertain', Stub({'en': 0.6, 'ja': 0.01}, texts), b'', 0, RATE * 2)
+        self.assertEqual((segments, language), ([], None))
+        self.assertAlmostEqual(seconds, 0.3)
+        texts = {'en': ('', -1.3), 'ja': ('ビデオ録画の利用は', -0.4)}
+        self.assertEqual(choose('retry-uncertain', Stub({'en': 0.15, 'ja': 0.03}, texts), b'', 0, RATE * 2)[1], 'ja')
+
+    def test_a_filtered_decode_keeps_agreed_text_only_with_keep_agreed(self):
+        class Looping(Stub):
+            # One sentence-long segment that never settles, with one decode lost to a repetition loop. After a
+            # trim only the sentence's tail is left in the window.
+            def decode(self, pcm, a, b, language):
+                d = super().decode(pcm, a, b, language)
+                if 4 * RATE <= b - a < 5 * RATE:
+                    d['segments'] = []
+                elif a:
+                    d['segments'][0]['text'] = 'accurately'
+                return d
+        stub = Looping({'en': 0.9, 'ja': 0.1}, dict.fromkeys((None, 'en'), ('Oliver Sacks assesses sincerity accurately', -0.3)))
+        self.assertEqual(stretch('auto', stub, b'', 0, RATE * 6, 0.0)[0], [('en', 'accurately')])
+        self.assertEqual(stretch('auto', stub, b'', 0, RATE * 6, 0.0, keep_agreed=True)[0],
+                         [('en', 'Oliver Sacks assesses sincerity accurately')])
+
     def test_third_language_is_rejected(self):
         stub = Stub({'zh': 0.8, 'ja': 0.1, 'en': 0.05}, {'ja': ('如果有些人', -0.5), 'en': ('If some people', -0.5)})
         self.assertEqual(choose('candidates', stub, b'', 0, RATE * 3)[:2], ([], None))
+
+    def test_a_row_in_a_third_language_is_dropped_only_with_third_row(self):
+        stub = Stub({'zh': 0.8, 'ja': 0.15, 'en': 0.05}, dict.fromkeys((None, 'ja'), ('如果有些人', -0.3)))
+        self.assertEqual(stretch('auto', stub, b'', 0, RATE * 3, 0.0)[0], [(None, '如果有些人')])
+        self.assertEqual(stretch('auto', stub, b'', 0, RATE * 3, 0.0, third_row=True)[0], [])
+        stub.probs = {'ja': 0.6, 'zh': 0.3, 'en': 0.1}
+        self.assertEqual(stretch('auto', stub, b'', 0, RATE * 3, 0.0, third_row=True)[0], [('ja', '如果有些人')])
 
     def test_a_stretch_locks_agreed_text_into_one_row(self):
         stub = Stub({'ja': 0.9, 'en': 0.1}, {'ja': ('今日は', -0.2)})

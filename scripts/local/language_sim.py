@@ -5,18 +5,27 @@ audio like live rolling mode, with its locking, row closing and noise trim. Only
 language differs:
 
   auto         Whisper detects the language on each decode until one returns accepted text (the live rule).
+  auto-lock    as auto, but the row's language is settled only when its first text locks.
   pair-detect  Whisper's detection restricted to the session pair; decode in the most likely of the two.
   retry        decode in the pair language detection prefers and, only if every segment is filtered or in the
                wrong script, again in the other; the row's language is settled when its first text locks.
+  retry-uncertain  as retry, but the second decode runs only when detection gives the preferred pair language
+               less than UNCERTAIN probability.
   candidates   decode in every pair language and keep the best candidate that passes the live filters and is
                written in its language's script; none passing rejects the window. A detection that puts most of
                its probability outside the pair rejects the window as third-language speech.
+
+With --keep-agreed, a decode whose every segment is filtered no longer trims a window whose earlier decodes
+returned text; it is skipped, so the accepted decodes on either side of it can still agree.
+
+With --third-row, a closing row is dropped when detection over its whole audio puts more than THIRD of its
+probability outside the pair: third-language rejection over a row rather than a short window.
 
 Every decode is cached by stream, window and language under benchmarks/results/language-sim/, so rules that
 share windows decode them once and reruns are cheap. Decode times come from the cache, so virtual timing stays
 realistic. Public licensed fixtures only; no API or .env use.
 
-  run [--rules auto,candidates] [--streams public-ja,...]
+  run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row]
 """
 import argparse
 import json
@@ -31,6 +40,8 @@ PAIR = ('ja', 'en')
 INTERVAL, MIN_WINDOW, SETTLE, FORCE, NOISE, KEEP = 1.0, 0.5, 1.0, 25.0, 3.0, 1.0
 SENTENCE_ROW, MAX_ROW = 3.0, 8.0
 THIRD = 0.5  # detection probability outside the pair that rejects a window as another language
+UNCERTAIN = 0.2  # below this, retry-uncertain also decodes the other pair language
+SETTLE_AT_LOCK = {'auto-lock', 'retry', 'retry-uncertain'}
 OUT = ROOT / 'benchmarks/results/language-sim'
 
 
@@ -97,7 +108,7 @@ class Decoder:
 
 def choose(rule, decoder, pcm, a, b):
     """Decode a window of a row with no language yet: (segments, language or None, seconds)."""
-    if rule == 'auto':
+    if rule in ('auto', 'auto-lock'):
         d = decoder.decode(pcm, a, b, None)
         return d['segments'], d['language'] if d['segments'] and d['language'] in PAIR else None, d['seconds']
     detection = decoder.detect(pcm, a, b)
@@ -106,8 +117,11 @@ def choose(rule, decoder, pcm, a, b):
         language = max(PAIR, key=lambda k: probs[k])
         d = decoder.decode(pcm, a, b, language)
         return d['segments'], language if d['segments'] else None, seconds + d['seconds']
-    if rule == 'retry':
-        for language in sorted(PAIR, key=lambda k: -probs[k]):
+    if rule in ('retry', 'retry-uncertain'):
+        order = sorted(PAIR, key=lambda k: -probs[k])
+        if rule == 'retry-uncertain' and probs[order[0]] >= UNCERTAIN:
+            order = order[:1]
+        for language in order:
             d = decoder.decode(pcm, a, b, language)
             seconds += d['seconds']
             if d['segments'] and script_ok(''.join(s['text'] for s in d['segments']), language):
@@ -160,9 +174,19 @@ def join(row, text):
     return f'{row} {text}' if row[-1].isascii() and row[-1] not in '。' and text[:1].isascii() and text[:1].isalnum() else row + text
 
 
-def stretch(rule, decoder, pcm, a, b, clock):
+def third_language(decoder, pcm, a, b):
+    probs = decoder.detect(pcm, a, min(b, a + 29 * RATE))['probs']
+    return sum(probs[k] for k in PAIR) < 1 - THIRD
+
+
+def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False):
     """One stretch of speech, samples a to b. Returns rows [(language, text)], the clock, and decode count."""
-    rows, row = [], {'language': None, 'text': '', 'audio': 0.0}
+    rows, row = [], {'language': None, 'text': '', 'audio': 0.0, 'start': a}
+
+    def close(end):
+        if not third_row or not third_language(decoder, pcm, row['start'], end):
+            rows.append((row['language'], row['text']))
+
     win, previous, decodes = a, '', 0
     t = a / RATE + INTERVAL
     while True:
@@ -176,14 +200,14 @@ def stretch(rule, decoder, pcm, a, b, clock):
                 segments, seconds = d['segments'], d['seconds']
             else:
                 segments, language, seconds = choose(rule, decoder, pcm, win, until)
-                # auto keeps the live rule; retry settles the row's language only when its text locks.
-                row['language'] = language if rule != 'retry' else None
+                # auto keeps the live rule; the others settle the row's language only when its text locks.
+                row['language'] = None if rule in SETTLE_AT_LOCK else language
             decodes += 1
             clock = start + seconds
             window_ms = (until - win) / RATE * 1000
             count, _ = lock_count(segments, stable_prefix(previous, hypothesis(segments)), window_ms, final)
             if count:
-                if rule == 'retry' and not row['language']:
+                if rule in SETTLE_AT_LOCK and not row['language']:
                     row['language'] = language
                 locked = segments[:count]
                 end = int(locked[-1]['endMs'] * RATE / 1000)
@@ -192,8 +216,10 @@ def stretch(rule, decoder, pcm, a, b, clock):
                 row['audio'] += end / RATE
                 win += end
                 if not final and (row['audio'] >= MAX_ROW or (row['audio'] >= SENTENCE_ROW and row['text'].rstrip()[-1:] in '.!?。！？')):
-                    rows.append((row['language'], row['text']))
-                    row = {'language': None, 'text': '', 'audio': 0.0}
+                    close(win)
+                    row = {'language': None, 'text': '', 'audio': 0.0, 'start': win}
+            elif not segments and keep_agreed and previous:
+                pass
             elif not segments and window_ms > NOISE * 1000 and not final:
                 win = until - int(KEEP * RATE)
                 previous = ''
@@ -205,7 +231,7 @@ def stretch(rule, decoder, pcm, a, b, clock):
             break
         t = max(t + INTERVAL, clock)
     if row['text']:
-        rows.append((row['language'], row['text']))
+        close(b)
     return rows, clock, decodes
 
 
@@ -213,6 +239,8 @@ def layout(stream):
     fixtures = json.loads((ROOT / 'benchmarks/gate-fleurs.json').read_text())['fixtures']
     if stream.startswith('public-'):
         clips = [f for f in fixtures if f['language'] == stream.split('-')[1]]
+    elif stream == 'third-language':
+        clips = json.loads((ROOT / 'benchmarks/gate-other.json').read_text())['fixtures']
     else:
         category = stream.split('-', 1)[1]
         clips = [f for f in json.loads((ROOT / 'benchmarks/gate-nonspeech.json').read_text())['fixtures'] if f['category'] == category]
@@ -237,7 +265,7 @@ def run(args):
             for clip, a, b in layout(stream):
                 clock = max(clock, a / RATE)
                 before = clock
-                found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock)
+                found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row)
                 rows += [(clip.get('id'), language, text) for language, text in found]
                 decodes += n
                 busy += clock - before
@@ -252,10 +280,11 @@ def run(args):
                 result['wrongLanguageRows'] = sum(lang != language for _, lang, _ in rows)
             else:
                 result['texts'] = [text for _, _, text in rows]
-            report.setdefault(stream, {})[rule] = result
-            print(stream, rule, json.dumps({k: v for k, v in result.items() if k != 'score'} | (
+            name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '')
+            report.setdefault(stream, {})[name] = result
+            print(stream, name, json.dumps({k: v for k, v in result.items() if k != 'score'} | (
                 {'deletions': result['score']['deletions']} if 'score' in result else {}), ensure_ascii=False), flush=True)
-            (OUT / f'rows-{stream}-{rule}.json').write_text(json.dumps(rows, ensure_ascii=False, indent=1) + '\n')
+            (OUT / f'rows-{stream}-{name}.json').write_text(json.dumps(rows, ensure_ascii=False, indent=1) + '\n')
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f'report-{time.strftime("%Y%m%dT%H%M%S")}.json').write_text(json.dumps(report, ensure_ascii=False, indent=1) + '\n')
 
@@ -265,7 +294,10 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     run_parser = commands.add_parser('run')
     run_parser.add_argument('--rules', default='auto,pair-detect,candidates')
-    run_parser.add_argument('--streams', default='public-ja,public-en,nonspeech-music,nonspeech-background-noise,nonspeech-applause')
+    run_parser.add_argument('--streams', default='public-ja,public-en,nonspeech-music,nonspeech-background-noise,nonspeech-applause,'
+                                                'third-language')
+    run_parser.add_argument('--keep-agreed', action='store_true')
+    run_parser.add_argument('--third-row', action='store_true')
     run(parser.parse_args())
 
 

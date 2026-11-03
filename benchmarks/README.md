@@ -35,6 +35,8 @@ Use these clips to compare models/settings and detect regressions. EN word error
   - Applause: `noise-sound-bible-0003`, "Audience Applause" by Matthiew11 on SoundBible, CC BY 3.0.
   - Instrumental music: `music-fma-0001` to `0003`, from the album *Memory Bank* by Airglow on the Free Music Archive, CC BY, read from a bounded prefix of the original OpenSLR archive.
 
+- `gate-other.json`: 10 clips each of Mandarin Chinese, Korean, Spanish and German from **Google FLEURS** at the same pinned revision, CC BY 4.0, about 7 minutes. Selection: the first distinct sentence IDs in each language's test-archive order, 4 to 16 seconds. Speech outside the session pair, on which any displayed row is an error. These IDs are excluded from a future gate in their own language.
+
 Nothing from these sets is redistributed: audio stays in the ignored cache, and replay outputs go to ignored `results/`.
 
 ## Development corpus

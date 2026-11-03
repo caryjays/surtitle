@@ -1,0 +1,368 @@
+{
+  "dataset": "Google FLEURS",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "scope": "Third-language set: the first 10 distinct sentence IDs per language in test-archive order, 4 to 16 s, chosen before recognition. Any displayed row is an error. These IDs are excluded from a future gate in their own language.",
+  "fixtures": [
+    {
+      "id": "gate-zh-1906",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10026684690566417990.wav",
+      "sha256": "a72c0b59fdba80850552af7991de07f9f4940846d2d70f0890eeb153c40f164b",
+      "seconds": 10.38,
+      "reference": "“这并不是告别。这是一个篇章的结束，也是新篇章的开始。”"
+    },
+    {
+      "id": "gate-zh-2006",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10040380210557600780.wav",
+      "sha256": "b39d2c84aefada280b73a9ab439726d370d45e5a75bd05f0a90153288ea4561b",
+      "seconds": 8.28,
+      "reference": "钙、钾等元素属于金属，银和金等元素当然也是金属。"
+    },
+    {
+      "id": "gate-zh-1883",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10048525650290665384.wav",
+      "sha256": "aeb95366f4907daf8797d66797c87f6e002f10704e78e87a0c4b4521756a1616",
+      "seconds": 13.86,
+      "reference": "桥下垂直净空 15 米。该项目于 2011 年 8 月完工，但直到 2017 年 3 月才开始通车。"
+    },
+    {
+      "id": "gate-zh-1852",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10053956375630517392.wav",
+      "sha256": "d1274fd5e5ce0029473faa0df42bd714094428b853029d6f6c64ffd3f36a8afe",
+      "seconds": 15.42,
+      "reference": "适当使用博客，可以使学生变得更善于分析和进行思辨；通过积极回应网络材料，学生们可以在他人文章的上下文语境中找到自己的立场，并能够针对特定问题提出自己的观点（Oravec, 2002）。\""
+    },
+    {
+      "id": "gate-zh-1734",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10056338555786085046.wav",
+      "sha256": "7cc0e10d7c4ad3297d1803ac968c996a747117edd75a6cec59e485a93bbe0fe9",
+      "seconds": 12.9,
+      "reference": "科学家们可以得出结论，暗物质对其他暗物质的影响方式与普通物质相同。"
+    },
+    {
+      "id": "gate-zh-1890",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10073099671796350432.wav",
+      "sha256": "e07c342ae53173bec1c3d5f534073fa6368713f76e7b5ab9497b015b1020167f",
+      "seconds": 13.74,
+      "reference": "大多数现代科研望远镜都是巨型设施，位于大气条件优良的偏远地区。"
+    },
+    {
+      "id": "gate-zh-1721",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10081186303620187437.wav",
+      "sha256": "379999ca5e729d35f81b0d62087e78f23481e0eb47bf8aca2c66208e90a072ce",
+      "seconds": 15.18,
+      "reference": "1963 年大坝建成后，季节性洪水被控制住了，沉积物不再冲散到河流里。"
+    },
+    {
+      "id": "gate-zh-1869",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10104380129516909856.wav",
+      "sha256": "cd509460412479ebc989b962938881b47aad636eca388e890e3fd219e999b60d",
+      "seconds": 15.46,
+      "reference": "它的长下颚上布满了 70 多颗剃刀般锋利的牙齿，上颚上还有一排。这意味着任何与它相遇的东西都无路可逃。"
+    },
+    {
+      "id": "gate-zh-1805",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10112798408996336578.wav",
+      "sha256": "714a1785c636060d6a8f284abcf786c876f70b07e0a8ea966c476abf1e890fe7",
+      "seconds": 7.62,
+      "reference": "Scotturb 403 路公共汽车定期发车前往辛特拉 (Sintra)，在罗卡角停靠。"
+    },
+    {
+      "id": "gate-zh-1965",
+      "language": "zh",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/cmn_hans_cn/audio/test.tar.gz",
+      "member": "test/10134195680525011353.wav",
+      "sha256": "52cd9b630b984ed486d69f8ee8dd841a57f875c752e1af411e0a39dabd3e00cb",
+      "seconds": 6.84,
+      "reference": "这里几乎都是沙滩，游泳很安全，大部分地方都有新西兰圣诞树的树荫。"
+    },
+    {
+      "id": "gate-ko-1883",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10015989594226850325.wav",
+      "sha256": "e6bc095e55046de927d7c937f036f96ebb506570648ad9ae7c6576febfc4746a",
+      "seconds": 12.48,
+      "reference": "다리 밑 수직 간격은 15미터이며, 공사는 2011년 8월에 마무리되었으며, 해당 다리의 통행금지는 2017년 3월까지이다."
+    },
+    {
+      "id": "gate-ko-1929",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/1007237877117014760.wav",
+      "sha256": "a5a400dda19a17f0ceb0c4a2542387ae376e3f0518ba0f9769564402df55affd",
+      "seconds": 10.8,
+      "reference": "델 포트로가 2세트에서 먼저 어드밴티지를 얻었지만 6 대 6이 된 후 다시 타이 브레이크가 필요했다."
+    },
+    {
+      "id": "gate-ko-1701",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10107571163062229727.wav",
+      "sha256": "989020dedbda7fa529b0b4e876f236e79b25a2915d093e23de94c8456e72b7b4",
+      "seconds": 8.94,
+      "reference": "염소 사육은 대략 일만 년 전에 이란의 자그로스산맥에서 시작한 것으로 보입니다."
+    },
+    {
+      "id": "gate-ko-2000",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10107840715193359973.wav",
+      "sha256": "3f9cef47c3ab213f3d35a47b18751915cd25d59dcf8e6d4a53733bd92c478bca",
+      "seconds": 12.54,
+      "reference": "겨울에 북발트해를 건널 경우에는 빙판을 통과하면서 꽤 끔찍한 소음이 발생하기 때문에, 객실의 위치를 확인하는 것이 좋다."
+    },
+    {
+      "id": "gate-ko-1801",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10111865575098096607.wav",
+      "sha256": "459b5666b2d4e54055d9d28463522f2f0f8ccb14fea27c0e1d1a5fe450377754",
+      "seconds": 12.12,
+      "reference": "홍콩의 스카이라인을 이루는 빌딩 행렬은 빅토리아 항구의 수면에 선명히 비치는 모습 때문에 반짝이는 막대그래프에 비유된다."
+    },
+    {
+      "id": "gate-ko-1662",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10115200572671025618.wav",
+      "sha256": "6cc9c1cb9637a448663ac2979a8541cfb255a9da99cb951c25717d33a02b8b9e",
+      "seconds": 9.9,
+      "reference": "합금은 기본적으로 금속 두 개 이상의 혼합물이다. 주기율표 상에 원소가 많이 있다는 것을 잊지 마라."
+    },
+    {
+      "id": "gate-ko-1705",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10137428678292478399.wav",
+      "sha256": "767df963734516f0586c3ac953729415b5ffdec51743526bfa897eb8d145b7c9",
+      "seconds": 13.62,
+      "reference": "1940년 8월 15일, 연합군은 프랑스 남부를 침략했고, 이 침략은 \"드래군 작전\"이라 불렸다. "
+    },
+    {
+      "id": "gate-ko-1959",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10162998993480425742.wav",
+      "sha256": "61ed57382352c83a8a0f1799854237e00204df6c3e1c37f93d8231d0a07738d4",
+      "seconds": 7.02,
+      "reference": "그래도 관계자의 조언을 듣고 모든 표지판을 지키고, 안전 경고에 세심한 주의를 기울여야 합니다."
+    },
+    {
+      "id": "gate-ko-1907",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10231261934313595333.wav",
+      "sha256": "1a1cdbd21cf2c41cc7bc500bd7d8b93fad990b9c11fc87c9d5462014c0ed70e2",
+      "seconds": 4.8,
+      "reference": "교전이 발발한 직후 영국은 독일에 대한 해상 봉쇄를 시작한다."
+    },
+    {
+      "id": "gate-ko-1702",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10295993752491019701.wav",
+      "sha256": "d77b1378452f6c1d849a21be577c261c14ea27983d8c86bd3d1c7ec3619864d4",
+      "seconds": 12.48,
+      "reference": "겨우 2주 만에 미군과 자유 프랑스군은 프랑스 남부를 해방시키고 독일로 진격 방향을 틀고 있었다."
+    },
+    {
+      "id": "gate-es-2001",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/1001146817223348054.wav",
+      "sha256": "861ceedc4d50fbe52fc89b6d0c0fa740b9cd6fa668388e754064847386af0faf",
+      "seconds": 12.84,
+      "reference": "Se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el área que visitan, dado que ello puede afectar sus planes de viaje."
+    },
+    {
+      "id": "gate-es-1764",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/1008205615316519958.wav",
+      "sha256": "0576e73da35ef17b6ce6396d31b32830b7ab19cea98f9f5db68de3756dc3d4fc",
+      "seconds": 9.72,
+      "reference": "Fue tanta la cantidad de gente que se concentró, que no todos pudieron acceder al funeral en la Plaza de San Pedro."
+    },
+    {
+      "id": "gate-es-1770",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10084850086754329587.wav",
+      "sha256": "275d5d9dcbfb7099b9aac08ea81fc7383b94e085a683d127ce4d8ff742cb3961",
+      "seconds": 8.58,
+      "reference": "Esto parece tener sentido, ya que en la Tierra no se percibe su movimiento, ¿cierto?"
+    },
+    {
+      "id": "gate-es-1799",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10107325335956726764.wav",
+      "sha256": "675d977de02f4ae1314252277c44375f9969732cb80db56e024b853fbbb939f7",
+      "seconds": 10.62,
+      "reference": "Carpanedo participó en dos carreras individuales del campeonato aparte de la competencia del miércoles."
+    },
+    {
+      "id": "gate-es-1820",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/1013662909103347734.wav",
+      "sha256": "27c060cfd8abfffe6f31dc41b3e1fb8ab0adef25ac8347a038c6ef1e536077f8",
+      "seconds": 9.78,
+      "reference": "Hoy en día, las personas escriben mensajes en las pantallas de sus computadoras. No tienen la necesidad de, siquiera, aproximarse a un sacapuntas."
+    },
+    {
+      "id": "gate-es-1747",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10149016836336603986.wav",
+      "sha256": "13b06188bd62a1a63ed350e6fe1a1ee8518db1ea7bc8f75d72849ca023de7c32",
+      "seconds": 5.64,
+      "reference": "Los luchadores compañeros de Luna también le rindieron homenaje."
+    },
+    {
+      "id": "gate-es-1816",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10150624747569080019.wav",
+      "sha256": "41b0e8fe385400d1d4653717d017c4b6f6666b63a21e5b13eb7e3d4d6149c3d4",
+      "seconds": 10.26,
+      "reference": "Duvall, que está casado y tiene dos hijos adultos, no causó una buena impresión a Miller, que fue a quien le relató la historia."
+    },
+    {
+      "id": "gate-es-1783",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10155332265364188477.wav",
+      "sha256": "7459d655bf0ff1c24e46df4d94a0fbf02ebcd2b86eaa9c38f54f8e8ee7ac6273",
+      "seconds": 10.68,
+      "reference": "Entre los fenómenos climáticos regionales y estacionales extremos encontramos los ventarrones, las tormentas de nieve, hielo o polvo."
+    },
+    {
+      "id": "gate-es-1794",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10192388533260519980.wav",
+      "sha256": "14f6bbd87ddcf98ade6364dc21f7dff9d5d826429c1e1bd17ef12d2bebad0b8d",
+      "seconds": 12.12,
+      "reference": "Se puede definir a una civilización como una cultura específica de la que forma parte un extenso grupo de personas que viven y trabajan en conjunto; es decir, una sociedad."
+    },
+    {
+      "id": "gate-es-1965",
+      "language": "es",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/es_419/audio/test.tar.gz",
+      "member": "test/10206659851013694932.wav",
+      "sha256": "158131b86fbcf2524a8153c810c8e4e10a39a4c6ec1d544ef6b4e7ce5828a5f4",
+      "seconds": 12.18,
+      "reference": "Las playas son casi todas de arena con lugares seguros para nadar y en su mayoría tienen árboles pohutukawa que ofrecen lugares de sombra."
+    },
+    {
+      "id": "gate-de-1738",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10009182821551087671.wav",
+      "sha256": "90d0470adf728783e98cc8dddd51e2c2cbf0d6bf360da65f7d2ac5c3e65876aa",
+      "seconds": 11.16,
+      "reference": "Er griff auch alles an, was ins Wasser kam; selbst ein großer Dinosaurier wie der T. Rex war ihm nicht gewachsen."
+    },
+    {
+      "id": "gate-de-1849",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10014044777125235464.wav",
+      "sha256": "13041e21e6a44d30da9595905fbb4367056191a513245b84e64a13449c8d08ea",
+      "seconds": 12.42,
+      "reference": "Wenn Sie den Film „Das Vermächtnis der Tempelritter“ gesehen haben, denken Sie vielleicht, dass auf die Rückseite der Unabhängigkeitserklärung eine Schatzkarte gezeichnet wurde."
+    },
+    {
+      "id": "gate-de-1683",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10030056357041867775.wav",
+      "sha256": "fda294888110e8bc13a0e468033a21f3b0f2f6a6e7efe40c32583c4760a58f0e",
+      "seconds": 10.68,
+      "reference": "Es leben noch viele Männer und Frauen, die ihre Zeit hier überlebt haben, und viele weitere mit Angehörigen, die dort ermordet wurden oder sich zu Tode arbeiteten, Juden und Nichtjuden gleichermaßen."
+    },
+    {
+      "id": "gate-de-1739",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10058186628567796965.wav",
+      "sha256": "8859c90aaeeb54915cc3a7d0010aba564f996f1bc6f393f184a06825d0940090",
+      "seconds": 9.9,
+      "reference": "Die Höhle befindet sich auf der Spitze eines der Berge nördlich von Mekka und ist vom Rest der Welt völlig isoliert."
+    },
+    {
+      "id": "gate-de-1796",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10058299886985225661.wav",
+      "sha256": "4dba8160f102695aa4f5b5407241037e9d91bb6febd1854e7cda499e953abb7a",
+      "seconds": 8.4,
+      "reference": "Dieses Sediment war nötig, um Sandbänke und Strände zu bilden, die als Lebensräume für Wildtiere dienten."
+    },
+    {
+      "id": "gate-de-1990",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10095057775426831514.wav",
+      "sha256": "fd254f62c724d0db0c1e0d288dbe121a4770ecb5b5547fad91d28a967d454499",
+      "seconds": 12.96,
+      "reference": "Blogs können auch dazu beitragen, die Schreibfertigkeiten von Schülern zu verbessern. Zwar haben Schüler am Anfang ihrer Blogerfahrung oft eine schlampige Grammatik und Rechtschreibung, aber das ändert sich normalerweise, wenn es ein Publikum gibt."
+    },
+    {
+      "id": "gate-de-1884",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10166547362714956625.wav",
+      "sha256": "adf91db1187ebac0228f3cabe0be4f18c47c34702a8027793462e5f8485be7dc",
+      "seconds": 11.04,
+      "reference": "Insbesondere wird behauptet, dass man erkennen kann, ob jemand lügt, indem man minimale Veränderungen des Gesichtsausdrucks richtig deutet.x"
+    },
+    {
+      "id": "gate-de-1797",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10229344228128634115.wav",
+      "sha256": "bd32736573baee445faef9d586796c76adfc105dde0c666120e778f5b4ff5838",
+      "seconds": 7.14,
+      "reference": "Jeder nimmt an der Gesellschaft teil und benutzt Transportsysteme. Fast jeder beklagt sich über die Transportsysteme.x"
+    },
+    {
+      "id": "gate-de-1777",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10243976286554101786.wav",
+      "sha256": "d202053a0385cd44a3fab0d5d7b8df0d9eb8a3518f2e5fdde73d1eedc0c2ba3a",
+      "seconds": 14.88,
+      "reference": "Ottawa ist Kanadas bezaubernde, zweisprachige Hauptstadt und zeichnet sich durch eine Reihe von Kunstgalerien und Museen aus, die Kanadas Vergangenheit und Gegenwart präsentieren."
+    },
+    {
+      "id": "gate-de-1869",
+      "language": "de",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/de_de/audio/test.tar.gz",
+      "member": "test/10287357790080034783.wav",
+      "sha256": "214663802b17d4595d399187d7e54224839abeaa06f439da601803baebef0f6c",
+      "seconds": 11.04,
+      "reference": "Seine langen Kiefer waren mit mehr als 70 messerscharfen Zähnen ausgestattet, zuzüglich eines weiteren Satzes am Gaumen, was bedeutete, dass es kein Entkommen für irgendein Tier gab, das seinen Weg kreuzte."
+    }
+  ]
+}
