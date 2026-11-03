@@ -218,7 +218,7 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False)
                 if not final and (row['audio'] >= MAX_ROW or (row['audio'] >= SENTENCE_ROW and row['text'].rstrip()[-1:] in '.!?。！？')):
                     close(win)
                     row = {'language': None, 'text': '', 'audio': 0.0, 'start': win}
-            elif not segments and keep_agreed and previous:
+            elif not segments and keep_agreed and previous and window_ms < FORCE * 1000:
                 pass
             elif not segments and window_ms > NOISE * 1000 and not final:
                 win = until - int(KEEP * RATE)

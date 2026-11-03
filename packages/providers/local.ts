@@ -189,10 +189,11 @@ export class LocalTranscriber implements Transcriber {
     const windowMs = job.audio.length / BYTES_PER_MS;
     row.decodes++; row.quality = mergeQuality(row.quality, message.measurement?.quality);
     const segments: WorkerSegment[] = rejected ? [] : message.segments ?? [];
-    // Auto: once per row, from a decode with accepted text. A short opening misheard as the other language decodes as a
-    // filtered translation, and keeping that language would force it on every later decode of the row.
-    if (!row.language && segments.length && inPair(this.pair, message.language)) row.language = message.language;
+    // Auto: once per row, from the decode whose text locks first; the closing decode locks all it returns. A short opening
+    // misheard as the other language can pass the filters once, and keeping that language would force it on every later decode.
+    const settle = () => { if (!row.language && inPair(this.pair, message.language)) row.language = message.language; };
     if (job.kind === 'close') {
+      if (segments.length) settle();
       // Everything left locks. An older worker without segments still returns its text.
       row.text = joinText(row.text, rejected ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
       row.audioMs += windowMs;
@@ -208,6 +209,7 @@ export class LocalTranscriber implements Transcriber {
     const current = hypothesis(segments);
     const { count, forced } = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false);
     if (count) {
+      settle();
       const locked = segments.slice(0, count);
       const endMs = locked.at(-1)!.endMs;
       stretch!.previous = current.slice(hypothesis(locked).length).trimStart();
@@ -222,6 +224,9 @@ export class LocalTranscriber implements Transcriber {
         this.closeRow(row, 'length', {}, false);
         stretch!.row = this.row();
       }
+    } else if (!segments.length && stretch!.previous && windowMs < ROLLING.forceMs) {
+      // One wholly filtered decode, such as a repetition loop, inside text the previous decode returned: skip it, so the
+      // decodes on either side can still agree, rather than trim the unlocked speech.
     } else if (!segments.length && windowMs > ROLLING.noiseMs) {
       // Noise held the gate open: keep only the last second, and in Auto relearn the language.
       const dropMs = windowMs - ROLLING.keepMs;

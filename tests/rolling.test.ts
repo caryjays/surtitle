@@ -126,6 +126,21 @@ test('in Auto a row takes its language from a decode with accepted text, not fro
   assert.equal(rows[0]!.language, 'ja');
   assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
 });
+test('in Auto a short opening misheard as accepted text does not settle the row; the language of the first locked text does', async t => {
+  const f = fixture('rolling-misheard-pass', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6); f.quiet(); await f.stream.finish();
+  const rows = finals(f.events);
+  assert.equal(rows[0]!.language, 'ja');
+  assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
+});
+test('one wholly filtered decode inside unlocked speech is skipped, not trimmed', async t => {
+  const f = fixture('rolling-loop'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(7); f.quiet(); await f.stream.finish();
+  const rows = finals(f.events);
+  assert.equal(rows.length, 1);
+  assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
+  assert.equal(f.failures(), 0);
+});
 test('a decode in flight when its stretch closes is ignored; the closing decode alone finalizes', async t => {
   const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();
   f.push(1); // the first request is in flight now

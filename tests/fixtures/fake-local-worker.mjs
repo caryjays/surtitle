@@ -14,7 +14,19 @@ function rolling(request) {
   decodes++;
   const segments = [];
   // misheard: Auto detection on under 2.5 s of speech picks English, and decoding in English yields only filtered text.
-  const misheard = behavior === 'rolling-misheard' && (request.language === 'en' || (!request.language && ms < 2500));
+  // misheard-pass: the same, except the short opening decodes once to an accepted English word that never settles.
+  const misheard = (behavior === 'rolling-misheard' || behavior === 'rolling-misheard-pass')
+    && (request.language === 'en' || (!request.language && ms < 2500));
+  if (behavior === 'rolling-misheard-pass' && misheard && !request.language) {
+    return { type: 'final', id: request.id, text: 'It', language: 'en', inferenceMs: 1, rejected: false, segments: [{ endMs: ms, text: ' It' }] };
+  }
+  // loop: the whole speech is one segment that never settles, and the decode of a 4 to 5 s window loops and is filtered.
+  if (behavior === 'rolling-loop') {
+    const words = Array.from({ length: Math.ceil(ms / 1000) }, (_, k) => ` w${start + 20 * k}`).join('');
+    const loop = ms >= 4000 && ms < 5000;
+    return { type: 'final', id: request.id, text: loop ? '' : words.trim(), language: request.language ?? 'ja', inferenceMs: 1,
+      rejected: loop || !words, segments: loop || !words ? [] : [{ endMs: Math.floor(ms), text: words }] };
+  }
   if (behavior !== 'rolling-noise' && !misheard) {
     for (let k = 0; (k + 1) * 1000 <= ms; k++) {
       segments.push({ endMs: (k + 1) * 1000, text: ` w${start + 20 * k}${behavior === 'rolling-unstable' ? `x${decodes}` : ''}` });
