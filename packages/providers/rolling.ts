@@ -12,6 +12,9 @@ export const ROLLING = {
   maxWindowMs: 29_000,
   noiseMs: 3000, // no segments over this long a window means noise; keep only the last second
   keepMs: 1000,
+  // After a noise trim, the next lock needs a decode this confident: a stretch held open by music or noise otherwise
+  // locks the first time two hallucinated decodes happen to agree.
+  noiseConfirmLogprob: -0.5,
   sentenceRowMs: 3000, // a row closes at sentence punctuation once it holds this much locked audio
   maxRowMs: 8000, // or at this much, which is what closes Japanese rows in continuous speech
   stockMs: 6000,

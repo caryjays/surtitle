@@ -33,7 +33,7 @@ type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' |
   stretch?: Stretch; row?: Row; detail?: { boundary: Boundary; trailingQuietMs: number } };
 // A caption row in rolling mode: locked text only grows. Its begin event waits for its first locked text.
 type Row = { id: string; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
-  decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality };
+  decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean };
 // One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
 type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
 type RecognitionQuality = z.infer<typeof Quality>;
@@ -188,28 +188,33 @@ export class LocalTranscriber implements Transcriber {
     const row = job.kind === 'close' ? job.row! : stretch!.row;
     const windowMs = job.audio.length / BYTES_PER_MS;
     row.decodes++; row.quality = mergeQuality(row.quality, message.measurement?.quality);
-    const segments: WorkerSegment[] = rejected ? [] : message.segments ?? [];
+    // A lock after a noise trim needs a confident decode; a reply without confidence is not one.
+    const unconfirmed = row.afterNoise === true
+      && !((message.measurement?.quality?.logprobMin ?? -Infinity) >= ROLLING.noiseConfirmLogprob);
+    const segments: WorkerSegment[] = rejected || (unconfirmed && job.kind === 'close') ? [] : message.segments ?? [];
     // Auto: once per row, from the decode whose text locks first; the closing decode locks all it returns. A short opening
     // misheard as the other language can pass the filters once, and keeping that language would force it on every later decode.
     const settle = () => { if (!row.language && inPair(this.pair, message.language)) row.language = message.language; };
     if (job.kind === 'close') {
       if (segments.length) settle();
       // Everything left locks. An older worker without segments still returns its text.
-      row.text = joinText(row.text, rejected ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
+      row.text = joinText(row.text, rejected || unconfirmed ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
       row.audioMs += windowMs;
       this.closeRow(row, job.detail!.boundary, { trailingQuietMs: job.detail!.trailingQuietMs,
         recognitionQueueMs: Math.round(job.sent! - job.queued), recognitionInferenceMs: message.inferenceMs,
         commitToFinalMs: Math.round(performance.now() - job.queued), adapterRepetitionRejected: repeated,
         ...(message.measurement?.recognitionLanguage ? { recognitionLanguage: message.measurement.recognitionLanguage } : {}),
-      }, rejected);
+      }, rejected || unconfirmed);
       this.options.onTiming?.({ id: row.id, audioMs: row.audioMs, queueMs: job.sent! - job.queued,
         inferenceMs: message.inferenceMs, commitToFinalMs: performance.now() - job.queued });
       return;
     }
     const current = hypothesis(segments);
-    const { count, forced } = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false);
+    const locks = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false);
+    const { count, forced } = unconfirmed ? { count: 0, forced: false } : locks;
     if (count) {
       settle();
+      row.afterNoise = false;
       const locked = segments.slice(0, count);
       const endMs = locked.at(-1)!.endMs;
       stretch!.previous = current.slice(hypothesis(locked).length).trimStart();
@@ -231,7 +236,7 @@ export class LocalTranscriber implements Transcriber {
       // Noise held the gate open: keep only the last second, and in Auto relearn the language.
       const dropMs = windowMs - ROLLING.keepMs;
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(dropMs * BYTES_PER_MS)];
-      stretch!.windowMs -= dropMs; stretch!.previous = '';
+      stretch!.windowMs -= dropMs; stretch!.previous = ''; row.afterNoise = true;
       if (!row.text && this.options.mode === 'auto') row.language = null;
     } else {
       stretch!.previous = current;

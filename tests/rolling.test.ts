@@ -141,6 +141,17 @@ test('one wholly filtered decode inside unlocked speech is skipped, not trimmed'
   assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
   assert.equal(f.failures(), 0);
 });
+test('after a noise trim, two low-confidence decodes that agree do not lock, even in the closing decode', async t => {
+  const f = fixture('rolling-after-noise-hallucination'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(12); f.quiet(); await f.stream.finish();
+  assert(!f.events.some(e => e.type === 'partial' && e.text), 'no text displayed');
+  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected]), [['', true]]);
+});
+test('after a noise trim, confident decodes that agree lock as usual', async t => {
+  const f = fixture('rolling-after-noise-speech'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(12); f.quiet(); await f.stream.finish();
+  assert(finals(f.events)[0]!.text.startsWith('Period.'), finals(f.events)[0]!.text);
+});
 test('a decode in flight when its stretch closes is ignored; the closing decode alone finalizes', async t => {
   const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();
   f.push(1); // the first request is in flight now

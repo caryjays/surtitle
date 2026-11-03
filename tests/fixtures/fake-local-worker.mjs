@@ -20,6 +20,16 @@ function rolling(request) {
   if (behavior === 'rolling-misheard-pass' && misheard && !request.language) {
     return { type: 'final', id: request.id, text: 'It', language: 'en', inferenceMs: 1, rejected: false, segments: [{ endMs: ms, text: ' It' }] };
   }
+  // after-noise-*: the first 5 s of a stretch are noise with no segments; then two decodes agree on a word, with the
+  // confidence of a hallucination (-0.7) or of speech (-0.2).
+  if (behavior.startsWith('rolling-after-noise')) {
+    const noise = start < 100; const logprobMin = behavior.endsWith('hallucination') ? -0.7 : -0.2;
+    const segments = noise ? [] : [{ endMs: Math.max(0, Math.floor(ms) - 1500), text: ' Period.' }];
+    return { type: 'final', id: request.id, text: noise ? '' : 'Period.', language: request.language ?? 'en', inferenceMs: 1,
+      rejected: noise, segments, measurement: { quality: { speechGateRejected: false, decodedSegments: segments.length,
+        droppedSegments: 0, noSpeechDrops: 0, lowConfidenceDrops: 0, repetitionDrops: 0, stockPhraseDrops: 0, invalidScoreDrops: 0,
+        noSpeechMax: 0, logprobMin: noise ? null : logprobMin } } };
+  }
   // loop: the whole speech is one segment that never settles, and the decode of a 4 to 5 s window loops and is filtered.
   if (behavior === 'rolling-loop') {
     const words = Array.from({ length: Math.ceil(ms / 1000) }, (_, k) => ` w${start + 20 * k}`).join('');

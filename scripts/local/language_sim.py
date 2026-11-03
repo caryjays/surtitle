@@ -21,11 +21,18 @@ returned text; it is skipped, so the accepted decodes on either side of it can s
 With --third-row, a closing row is dropped when detection over its whole audio puts more than THIRD of its
 probability outside the pair: third-language rejection over a row rather than a short window.
 
+With --noise-confirm T, after a noise trim the next lock in the stretch needs a decode whose lowest segment log
+probability is at least T, so a stretch held open by music or noise cannot lock a chance agreement of two hallucinations.
+
+Stress streams, stress-<en|ja>-<prefix|under>, put each tuning and noisy-set clip, none of them gate material, in one
+stretch behind STRESS_BED seconds of the gate's music or noise streams: at full level before clean speech (prefix), or
+at -12 dB before and under the speech (under). They measure whether a rule loses real speech after noise.
+
 Every decode is cached by stream, window and language under benchmarks/results/language-sim/, so rules that
 share windows decode them once and reruns are cheap. Decode times come from the cache, so virtual timing stays
 realistic. Public licensed fixtures only; no API or .env use.
 
-  run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row]
+  run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row] [--noise-confirm -0.5]
 """
 import argparse
 import json
@@ -179,7 +186,7 @@ def third_language(decoder, pcm, a, b):
     return sum(probs[k] for k in PAIR) < 1 - THIRD
 
 
-def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False):
+def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False, noise_confirm=None):
     """One stretch of speech, samples a to b. Returns rows [(language, text)], the clock, and decode count."""
     rows, row = [], {'language': None, 'text': '', 'audio': 0.0, 'start': a}
 
@@ -187,7 +194,7 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False)
         if not third_row or not third_language(decoder, pcm, row['start'], end):
             rows.append((row['language'], row['text']))
 
-    win, previous, decodes = a, '', 0
+    win, previous, decodes, after_noise = a, '', 0, False
     t = a / RATE + INTERVAL
     while True:
         start = max(clock, t)
@@ -195,18 +202,24 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False)
         final = until >= b
         win = max(win, until - int(29 * RATE))  # live rolling never sends Whisper more than its 30 s input
         if (until - win) / RATE >= MIN_WINDOW or (final and until - win >= RATE // 10):
+            logprob = None
             if row['language']:
                 d = decoder.decode(pcm, win, until, row['language'])
-                segments, seconds = d['segments'], d['seconds']
+                segments, seconds, logprob = d['segments'], d['seconds'], d['logprob']
             else:
                 segments, language, seconds = choose(rule, decoder, pcm, win, until)
+                if rule in ('auto', 'auto-lock'):
+                    logprob = decoder.decode(pcm, win, until, None)['logprob']
                 # auto keeps the live rule; the others settle the row's language only when its text locks.
                 row['language'] = None if rule in SETTLE_AT_LOCK else language
             decodes += 1
             clock = start + seconds
             window_ms = (until - win) / RATE * 1000
             count, _ = lock_count(segments, stable_prefix(previous, hypothesis(segments)), window_ms, final)
+            if count and after_noise and noise_confirm is not None and (logprob is None or logprob < noise_confirm):
+                count = 0
             if count:
+                after_noise = False
                 if rule in SETTLE_AT_LOCK and not row['language']:
                     row['language'] = language
                 locked = segments[:count]
@@ -222,7 +235,7 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False)
                 pass
             elif not segments and window_ms > NOISE * 1000 and not final:
                 win = until - int(KEEP * RATE)
-                previous = ''
+                previous, after_noise = '', True
                 if not row['text']:
                     row['language'] = None
             else:
@@ -235,7 +248,42 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False)
     return rows, clock, decodes
 
 
+STRESS_BED, STRESS_UNDER = 8.0, 0.25
+
+
+def stress(stream):
+    """Write a stress stream and return its spans; see the module docstring."""
+    from gate import level, pcm as read_pcm
+    _, language, variant = stream.split('-')
+    clips = [f for f in json.loads((ROOT / 'benchmarks/fleurs.json').read_text()) if f['language'] == language]
+    clips += [f for f in json.loads((ROOT / 'benchmarks/noisy-ja.json').read_text())['fixtures'] if f['language'] == language]
+    beds = [np.frombuffer(read_pcm(STREAMS / f'{name}.wav'), dtype='<i2').astype(np.float32)
+            for name in ('nonspeech-music', 'nonspeech-background-noise')]
+    parts, spans, position, offset = [], [], 0, 0
+    for i, clip in enumerate(clips):
+        speech = np.frombuffer(level(read_pcm(ROOT / '.local/fixtures' / f"{clip['id']}.wav"))[0], dtype='<i2').astype(np.float32)
+        bed = beds[i % 2]
+        n = int(STRESS_BED * RATE) + (len(speech) if variant == 'under' else 0)
+        noise = np.resize(bed[offset % len(bed):], n)
+        offset += n
+        if variant == 'under':
+            item = noise * STRESS_UNDER
+            item[-len(speech):] += speech
+        else:
+            item = np.concatenate([noise, speech])
+        spans.append((clip, position, position + len(item)))
+        parts += [item, np.zeros(RATE, dtype=np.float32)]
+        position += len(item) + RATE
+    audio = np.clip(np.concatenate(parts), -32768, 32767).astype('<i2').tobytes()
+    import subprocess
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 's16le', '-ar', str(RATE), '-ac', '1', '-i', 'pipe:0',
+                    str(STREAMS / f'{stream}.wav')], input=audio, check=True)
+    return spans
+
+
 def layout(stream):
+    if stream.startswith('stress-'):
+        return stress(stream)
     fixtures = json.loads((ROOT / 'benchmarks/gate-fleurs.json').read_text())['fixtures']
     if stream.startswith('public-'):
         clips = [f for f in fixtures if f['language'] == stream.split('-')[1]]
@@ -256,6 +304,8 @@ def run(args):
     import subprocess
     report = {}
     for stream in args.streams.split(','):
+        if stream.startswith('stress-'):
+            stress(stream)
         pcm = subprocess.run(['ffmpeg', '-v', 'error', '-i', str(STREAMS / f'{stream}.wav'), '-f', 's16le', '-ac', '1', '-ar', str(RATE),
                               'pipe:1'], check=True, capture_output=True).stdout
         decoder = Decoder(stream)
@@ -265,13 +315,13 @@ def run(args):
             for clip, a, b in layout(stream):
                 clock = max(clock, a / RATE)
                 before = clock
-                found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row)
+                found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row, args.noise_confirm)
                 rows += [(clip.get('id'), language, text) for language, text in found]
                 decodes += n
                 busy += clock - before
             decoder.save(force=True)
             result = {'rows': len(rows), 'decodes': decodes, 'wallSeconds': round(time.perf_counter() - started, 1)}
-            if stream.startswith('public-'):
+            if stream.startswith(('public-', 'stress-')):
                 language = stream.split('-')[1]
                 clips = layout(stream)
                 reference = ' '.join(c['reference'] for c, _, _ in clips)
@@ -280,7 +330,8 @@ def run(args):
                 result['wrongLanguageRows'] = sum(lang != language for _, lang, _ in rows)
             else:
                 result['texts'] = [text for _, _, text in rows]
-            name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '')
+            name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '') + (
+                f'+confirm{args.noise_confirm}' if args.noise_confirm is not None else '')
             report.setdefault(stream, {})[name] = result
             print(stream, name, json.dumps({k: v for k, v in result.items() if k != 'score'} | (
                 {'deletions': result['score']['deletions']} if 'score' in result else {}), ensure_ascii=False), flush=True)
@@ -298,6 +349,7 @@ def main():
                                                 'third-language')
     run_parser.add_argument('--keep-agreed', action='store_true')
     run_parser.add_argument('--third-row', action='store_true')
+    run_parser.add_argument('--noise-confirm', type=float)
     run(parser.parse_args())
 
 
