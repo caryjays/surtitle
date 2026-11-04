@@ -77,8 +77,8 @@ def inside(path, folder):
 
 def held_out(manifest_path):
     manifest_path = Path(manifest_path)
-    if not inside(manifest_path, 'private'):
-        raise ValueError('Held-out manifests and their results stay under private/')
+    if not (inside(manifest_path, 'private') or inside(manifest_path, '.local')):
+        raise ValueError('Held-out manifests and their results stay under private/ or the ignored .local/ cache')
     entries = json.loads(manifest_path.read_text())
     for entry in entries:
         if entry['language'] not in ('en', 'ja', 'mixed') or not re.fullmatch(r'[\w-]+', entry['id']):
@@ -219,7 +219,7 @@ def score(args):
     if args.held_out:
         folder, entries = held_out(args.held_out)
         results = Path(args.held_out_results) if args.held_out_results else None
-        if not results or not inside(results, 'private'):
+        if not results or not (inside(results, 'private') or inside(results, '.local')):
             raise ValueError('Pass --held-out-results, the private results folder of the run')
         totals = {language: {'errors': 0, 'deletions': 0, 'referenceUnits': 0, 'excludedUnits': 0} for language in ('en', 'ja')}
         for entry in entries:

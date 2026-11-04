@@ -27,6 +27,7 @@
     "local:noisy-replay": "tsx scripts/noisy-stream-experiment.ts --run",
     "local:silence": ".local/venv/bin/python scripts/local/silence_check.py",
     "gate:fixtures": "python3 scripts/local/prepare_gate_fixtures.py",
+    "gate:held-out-fixtures": "python3 scripts/local/prepare_held_out.py",
     "gate:run": ".local/venv/bin/python scripts/local/gate.py run",
     "gate:score": ".local/venv/bin/python scripts/local/gate.py score",
     "corpus:fetch": "python3 scripts/local/prepare_corpus.py",

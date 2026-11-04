@@ -1,6 +1,6 @@
 # Language gates
 
-Verified: 2026-11-04 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json
+Verified: 2026-11-05 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
 
 A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the five parts; this page sets the numbers. Japanese is the only gate so far. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
@@ -20,7 +20,7 @@ A language ships when it passes a gate written before any gate measurement is ta
 | Set | Content | References |
 | --- | --- | --- |
 | Public | 60 English and 60 Japanese FLEURS test clips at the pinned revision, sentence IDs distinct from the tuning and noisy sets, chosen in archive order before recognition | The public transcripts, uncorrected |
-| Held-out | At least 20 minutes per language of speech new to the project: lecture-style, technical, at least half unscripted, including the maintainer's own Japanese and English talks. Third-party recordings need a public license or the speaker's permission, and stay in `private/` | The full-file decode corrected by hand. Spans a reviewer cannot resolve are marked and excluded from scoring, and their share is reported |
+| Held-out | At least 30 minutes per language of unscripted public speech new to the project, chosen by fixed rules before recognition by `pnpm gate:held-out-fixtures`: English excerpts of whole speaker turns from the second half of Rev's Earnings-21 Eval-10 earnings calls, mostly analyst Q&A; Japanese excerpts of TEDxJP-10K's Japanese TEDx talks. The maintainer's own recordings may be added under `private/` | English: Rev's professional transcripts, fillers removed. Japanese: the talks' human subtitles, whose sentences the TEDxJP-10K authors checked by hand; the first and last subtitle of each excerpt are excluded from scoring |
 | Non-speech | `pnpm local:silence`, plus at least 30 minutes of public licensed background noise, instrumental music and applause | none; any displayed text is an error |
 
 ### 2. Accuracy
@@ -71,9 +71,10 @@ The score targets must hold under two judges from different model families. Case
 | Step | Command |
 | --- | --- |
 | Public material, once | `pnpm gate:fixtures`; see [benchmarks/README.md](../../benchmarks/README.md#language-gate-fixtures) |
-| Replay | `pnpm gate:run --segmentation rolling`, and again with `turns` while rolling is not the default. Add `--held-out private/<folder>/held-out.json` once the held-out set exists. Real time: about an hour without held-out material. `--smoke` checks the pipeline on three clips per stream and is never a gate result |
-| Rate held-out rows | Add `"rating"` to each case in the private results: `plausible`, `minor`, `major` or `hallucination` |
-| Score | `pnpm gate:score benchmarks/results/gate-<run>`, plus `--held-out <manifest> --held-out-results <private results folder>` |
+| Held-out material, once | `pnpm gate:held-out-fixtures`, which needs `yt-dlp`; it writes the gate's held-out manifest to `.local/fixtures/held-out/held-out.json` |
+| Replay | `pnpm gate:run --segmentation rolling`, and again with `turns` while rolling is not the default. Add `--held-out .local/fixtures/held-out/held-out.json` for the held-out set, or a manifest under `private/` for own recordings. Real time: about an hour without held-out material, about two with it. `--smoke` checks the pipeline on three clips per stream and is never a gate result |
+| Rate held-out rows | Add `"rating"` to each case in the held-out results: `plausible`, `minor`, `major` or `hallucination` |
+| Score | `pnpm gate:score benchmarks/results/gate-<run>`, plus `--held-out <manifest> --held-out-results <results folder next to it>` |
 
 `gate:run` scales every clip so its 90th-percentile 50 ms RMS is 0.1 without clipping, as an operator sets input gain, then joins each language's public clips, each non-speech category, and the third-language clips into one stream each with a second of silence between clips, replays it, runs `local:silence`, and decodes every public clip whole in Auto as the full-clip comparison. The third-language stream, 40 FLEURS clips in Chinese, Korean, Spanish and German, is reported as `thirdLanguageRows` and not gated: rejecting a third language is decided but not built, and a target for it needs its own entry in [decisions](decisions.md). Public, non-speech and third-language outputs go to ignored `benchmarks/results/`; held-out outputs go next to their manifest under `private/`.
 

@@ -37,6 +37,15 @@ Use these clips to compare models/settings and detect regressions. EN word error
 
 - `gate-other.json`: 10 clips each of Mandarin Chinese, Korean, Spanish and German from **Google FLEURS** at the same pinned revision, CC BY 4.0, about 7 minutes. Selection: the first distinct sentence IDs in each language's test-archive order, 4 to 16 seconds. Speech outside the session pair, on which any displayed row is an error. These IDs are excluded from a future gate in their own language.
 
+## Held-out gate material
+
+`pnpm gate:held-out-fixtures` selects the held-out set by fixed rules before recognition and records the selection and checksums in `gate-held-out.json`; audio and references stay in the ignored `.local/fixtures/held-out/`. It needs `yt-dlp`.
+
+- English: excerpts of six calls from **Earnings-21** (Del Rio et al., *Earnings-21: A Practical Benchmark for ASR in the Wild*, 2021, https://arxiv.org/abs/2104.11348; https://github.com/revdotcom/speech-datasets), CC BY-SA 4.0, pinned by commit. From each Eval-10 call in metadata order, whole speaker turns from the first turn starting at or after half the call, at least 5 minutes, mostly analyst Q&A. References are Rev's transcripts without fillers, cut-off words or tags; they keep spoken repetitions.
+- Japanese: excerpts of five talks from **TEDxJP-10K** (Ando and Fujihara, *Construction of a Large-scale Japanese ASR Corpus on TV Recordings*, 2021, https://arxiv.org/abs/2103.14736; https://github.com/laboroai/TEDxJP-10K), whose URL list and corrections are Apache 2.0, pinned by commit; the talks are TEDx videos under TED's CC BY-NC-ND 4.0 usage policy, downloaded from YouTube. From each talk of at least 8 minutes with manual Japanese subtitles, in list order, whole subtitle cues from 60 s, at least 6 minutes. References are the subtitles cleaned as the TEDxJP-10K authors clean them; the first and last cue are excluded from scoring. The authors checked every sentence of their 10,000-segment sample by hand and changed about a quarter, mostly to add fillers such as えー and まあ or to write numbers in kanji; the subtitles, without fillers, are closer to caption style.
+
+YouTube audio can change after selection; a cache that no longer matches the manifest is refused rather than refetched.
+
 Nothing from these sets is redistributed: audio stays in the ignored cache, and replay outputs go to ignored `results/`.
 
 ## Development corpus
