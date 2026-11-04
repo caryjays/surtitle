@@ -28,6 +28,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-02-language-arbitration.md](2026-11-02-language-arbitration.md) | Rolling row language traced as the cause of lost openings, adapter fix, offline language-rule simulator |
 | [2026-11-04-language-rules.md](2026-11-04-language-rules.md) | Retry's English loss traced to the noise trim, settling at lock, third-language fixtures, clean gate of the 11-02 fix |
 | [2026-11-04-settle-at-lock.md](2026-11-04-settle-at-lock.md) | Settling a rolling row's language at lock, shipped and gated: Japanese passes both public accuracy targets |
+| [2026-11-04-noise-confirm.md](2026-11-04-noise-confirm.md) | A confident first lock after a noise trim; rolling passes every measured gate target |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 
