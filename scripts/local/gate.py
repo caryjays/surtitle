@@ -83,7 +83,20 @@ def held_out(manifest_path):
     for entry in entries:
         if entry['language'] not in ('en', 'ja', 'mixed') or not re.fullmatch(r'[\w-]+', entry['id']):
             raise ValueError('Held-out manifest entry')
-    return manifest_path.parent, entries
+    return manifest_path.resolve().parent, entries
+
+
+def offline_decodes(folder, entries, results, engine):
+    """One-pass decodes of each held-out excerpt in its language: what the model alone gets wrong against these references."""
+    import numpy as np
+    from scipy.signal import resample_poly
+    offline = []
+    for entry in entries:
+        if entry['language'] == 'mixed':
+            continue
+        audio = np.frombuffer(pcm(folder / entry['audio']), dtype='<i2').astype(np.float32) / 32768
+        offline.append({'id': entry['id'], 'text': engine._decode(resample_poly(audio, 2, 3).astype(np.float32), entry['language'], None)['text']})
+    (results / 'offline.json').write_text(json.dumps(offline, ensure_ascii=False, indent=2) + '\n')
 
 
 def run(args):
@@ -116,11 +129,13 @@ def run(args):
             print(f'Replaying held-out {entry["id"]}', flush=True)
             loads.append(os.getloadavg()[0])
             replay(folder / entry['audio'], results / f'{entry["id"]}.json', args.segmentation, entry['id'])
-        print(f'Held-out results: {results.relative_to(ROOT)}')
     silence = subprocess.run([sys.executable, str(ROOT / 'scripts/local/silence_check.py')], capture_output=True, text=True)
     # Full-clip decodes of the same level-matched clips in Auto, the reference point for what segmentation loses.
     from engine import Engine
     engine = Engine('turbo-q4')
+    if args.held_out:
+        offline_decodes(folder, entries, results, engine)
+        print(f'Held-out results: {results.relative_to(ROOT)}')
     full = [{'id': f['id'], 'language': f['language'], 'text': engine.transcribe(level(pcm(CACHE / f"{f['id']}.wav"))[0], None)['text']}
             for f in fleurs]
     (out / 'full-clip.json').write_text(json.dumps(full, ensure_ascii=False, indent=2) + '\n')
@@ -222,6 +237,9 @@ def score(args):
         if not results or not (inside(results, 'private') or inside(results, '.local')):
             raise ValueError('Pass --held-out-results, the private results folder of the run')
         totals = {language: {'errors': 0, 'deletions': 0, 'referenceUnits': 0, 'excludedUnits': 0} for language in ('en', 'ja')}
+        offline_path = results / 'offline.json'
+        offline = {o['id']: o['text'] for o in json.loads(offline_path.read_text())} if offline_path.exists() else {}
+        offline_totals = {language: {'errors': 0, 'referenceUnits': 0} for language in ('en', 'ja')}
         for entry in entries:
             cases = load_cases(results / f"{entry['id']}.json")
             language = entry['language']
@@ -234,12 +252,19 @@ def score(args):
             for key in totals[language]:
                 totals[language][key] += counts[key]
             measured.setdefault('heldoutRows', {}).setdefault(language, []).extend(cases)
+            if entry['id'] in offline:
+                counts = edits((folder / entry['reference']).read_text(), offline[entry['id']], language)
+                for key in ('errors', 'referenceUnits'):
+                    offline_totals[language][key] += counts[key]
         for language, total in totals.items():
             if total['referenceUnits']:
                 measured.setdefault('heldoutErrorRate', {})[language] = total['errors'] / total['referenceUnits']
                 measured.setdefault('heldoutDeletionRate', {})[language] = total['deletions'] / total['referenceUnits']
                 measured.setdefault('heldoutExcludedShare', {})[language] = (
                     total['excludedUnits'] / (total['referenceUnits'] + total['excludedUnits']))
+        for language, total in offline_totals.items():
+            if total['referenceUnits']:
+                measured.setdefault('heldoutOfflineRate', {})[language] = total['errors'] / total['referenceUnits']
         for language, cases in measured.pop('heldoutRows', {}).items():
             if cases and all(c.get('rating') in RATINGS for c in cases):
                 measured.setdefault('heldoutMajorShare', {})[language] = (
@@ -272,7 +297,7 @@ def score(args):
             shown = '-' if value is None else (f'{value * 100:.2f}%' if target['unit'] in ('percent', 'points')
                                                else f'{value / 1000:.2f} s' if target['unit'] == 'seconds' else str(value))
             print(f"{status:14} {target['key']:22} {scope:4} {shown:>9}  (max {limit})")
-    info = {key: measured[key] for key in ('publicFullClipRate', 'heldoutExcludedShare') if key in measured}
+    info = {key: measured[key] for key in ('publicFullClipRate', 'heldoutOfflineRate', 'heldoutExcludedShare') if key in measured}
     for key, values in info.items():
         print(f"{'info':14} {key:22} " + ', '.join(f'{k} {v * 100:.2f}%' for k, v in values.items()))
     if third.exists():
