@@ -1,4 +1,4 @@
-import type { AudioGate, Mode, Pair, Source, TranslationInput, Translation, TurnMeasurement, TranslationDiagnostic } from '../protocol/index.ts';
+import type { AudioGate, Mode, Pair, Segmentation, Source, TranslationInput, Translation, TurnMeasurement, TranslationDiagnostic } from '../protocol/index.ts';
 
 export type TranscriptEvent =
   | { type: 'begin'; id: string; sequence: number; mode?: Mode }
@@ -16,7 +16,7 @@ export interface Transcriber {
   close(): void;
 }
 export type TranscriberFactory = (options: {
-  mode: Mode; pair?: Pair; onEvent: (event: TranscriptEvent) => void; onFailure: () => void;
+  mode: Mode; pair?: Pair; segmentation?: Segmentation; onEvent: (event: TranscriptEvent) => void; onFailure: () => void;
   onGate?: (gate: AudioGate) => void;
   onTurnDiagnostic?: (id: string, measurement: TurnMeasurement) => void;
 }) => Transcriber;

@@ -1,6 +1,6 @@
 # Security and privacy
 
-Verified: 2026-11-06 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
+Verified: 2026-11-06 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, apps/web/diagnostics.ts, apps/web/reading.ts, apps/web/console.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
 
 ## Boundary
 
@@ -19,7 +19,7 @@ This boundary protects against arbitrary web origins. A hostile local process or
 
 ## Retention
 
-The application writes nothing to disk: no audio, no transcripts, no server logs with content. Browser storage holds only validated display preferences. Diagnostics are opt-in, content-free, in tab memory, and leave the machine only by explicit download. Benchmarks write metrics to ignored `benchmarks/results/`; `--review` adds public-fixture text only. Downloaded models and fixtures live under ignored `.local/`.
+The application writes nothing to disk: no audio, no transcripts, no server logs with content. Browser storage holds only validated display preferences: reading settings and overlay settings. Diagnostics are opt-in, content-free, in tab memory, and leave the machine only by explicit download. Benchmarks write metrics to ignored `benchmarks/results/`; `--review` adds public-fixture text only. Downloaded models and fixtures live under ignored `.local/`.
 
 In the listen profile, finalized text, up to four preceding rows and the glossary go to the selected translation provider: OpenAI with `store: false`, which is not zero retention, or Anthropic, whose retention for this account is unchecked; see [translation](translation.md). Transcribing other people requires their permission. Recording is not implemented and would need separate consent.
 

@@ -1,17 +1,18 @@
 import { Controller } from '../apps/service/controller.ts';
 import type { TranscriberFactory, TranscriptEvent, Translator } from '../packages/providers/types.ts';
-import type { AudioGate, Mode, Pair, Translation } from '../packages/protocol/index.ts';
+import type { AudioGate, Mode, Pair, Segmentation, Snapshot, Translation } from '../packages/protocol/index.ts';
 export const tick = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 export function deferred<T>() {
   let resolve!: (value: T) => void; let reject!: (reason?: unknown) => void;
   const promise = new Promise<T>((a, b) => { resolve = a; reject = b; });
   return { promise, resolve, reject };
 }
-export function harness(extra: { translationTimeoutMs?: number; queueTtlMs?: number; sessionLimitMs?: number | null; pair?: Pair } = {}) {
-  const streams: { emit(event: TranscriptEvent): void; fail(): void; closed: boolean; frames: number; modes: Mode[]; flushes: number; calibrations: number; gate(gate: AudioGate): void }[] = [];
+export function harness(extra: { translationTimeoutMs?: number; queueTtlMs?: number; sessionLimitMs?: number | null; pair?: Pair;
+  segmentation?: Segmentation; processing?: Snapshot['processing'] } = {}) {
+  const streams: { emit(event: TranscriptEvent): void; fail(): void; closed: boolean; segmentation?: Segmentation; frames: number; modes: Mode[]; flushes: number; calibrations: number; gate(gate: AudioGate): void }[] = [];
   const requests: { input: Parameters<Translator['translate']>[0]; signal: AbortSignal; result: ReturnType<typeof deferred<Translation>> }[] = [];
   const factory: TranscriberFactory = options => {
-    const stream = { emit: options.onEvent, fail: options.onFailure, closed: false, frames: 0, modes: [options.mode], flushes: 0, calibrations: 0, gate: (gate: AudioGate) => options.onGate?.(gate) };
+    const stream = { emit: options.onEvent, fail: options.onFailure, closed: false, segmentation: options.segmentation, frames: 0, modes: [options.mode], flushes: 0, calibrations: 0, gate: (gate: AudioGate) => options.onGate?.(gate) };
     streams.push(stream);
     return { async connect() {}, audio() { stream.frames++; }, async finish() {}, close() { stream.closed = true; },
       setMode(mode) { stream.modes.push(mode); }, flush() { stream.flushes++; },

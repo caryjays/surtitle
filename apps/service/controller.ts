@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
-import type { AudioGate, Failure, Glossary, Mode, Segment, Snapshot } from '../../packages/protocol/index.ts';
+import type { AudioGate, Failure, Glossary, Mode, Segment, Segmentation, Snapshot } from '../../packages/protocol/index.ts';
 import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, type Pair, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext } from '../../packages/protocol/index.ts';
 import { TranslationFailure, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
@@ -30,14 +30,21 @@ export class Controller {
   private listeners = new Set<() => void>();
   private clock: ReturnType<typeof setInterval>;
   readonly pair: Pair;
+  private segmentation: Segmentation | null;
+  // Translation can be switched off for a session; it can only be switched on when a translator was configured.
+  private translating: boolean;
   constructor(private options: {
     transcriber: TranscriberFactory; translator: Translator | null; glossary: Glossary;
     backend: string; processing?: Snapshot['processing']; translationTimeoutMs?: number; queueTtlMs?: number;
     // Local inference has no upstream session lifetime. Cloud ASR keeps its conservative cap.
     sessionLimitMs?: number | null;
     pair?: Pair;
+    // The recognizer's segmentation when it can be switched while capture is off.
+    segmentation?: Segmentation;
   }) {
     this.pair = options.pair ?? DEFAULT_PAIR;
+    this.segmentation = options.segmentation ?? null;
+    this.translating = Boolean(options.translator);
     this.clock = setInterval(() => {
       if (this.capture === 'active' && Date.now() - this.lastAudio > 5000) this.fail('capture');
       const limit = this.options.sessionLimitMs === undefined ? 25 * 60_000 : this.options.sessionLimitMs;
@@ -49,8 +56,33 @@ export class Controller {
   snapshot(): Snapshot {
     return { type: 'snapshot', sessionId: this.sessionId, generation: this.generation, revision: this.revision,
       pair: [...this.pair], mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
-      processing: this.options.processing ?? 'cloud-audio-and-text',
+      processing: this.processing(), segmentation: this.segmentation,
+      translation: { available: Boolean(this.options.translator), enabled: this.translating },
       queue: this.queue.length, running: this.running.size, gate: this.gate, rejected: this.rejected, segments: this.rows.map(r => ({ ...r })), sentAt: Date.now(), turns: structuredClone(this.traces), turnTelemetryVersion: 2 };
+  }
+  private processing(): Snapshot['processing'] {
+    const configured = this.options.processing ?? 'cloud-audio-and-text';
+    if (this.translating) return configured;
+    return configured === 'local-audio-cloud-text' ? 'local-only' : configured === 'cloud-audio-and-text' ? 'cloud-audio-only' : configured;
+  }
+  // Takes effect at the next Start, so a row never mixes two segmentations.
+  setSegmentation(value: Segmentation) {
+    if (this.segmentation === null || this.segmentation === value || ['active', 'connecting', 'stopping'].includes(this.capture)) return;
+    this.segmentation = value; this.changed();
+  }
+  // Off: queued requests are dropped and their rows keep the original; a request already sent finishes.
+  setTranslation(enabled: boolean) {
+    if (!this.options.translator || enabled === this.translating) return;
+    this.translating = enabled;
+    if (!enabled) {
+      for (const job of this.queue) {
+        job.row.state = 'original';
+        const trace = this.trace(job.row);
+        if (trace) trace.outcome = 'original';
+      }
+      this.queue = [];
+    }
+    this.changed();
   }
   private changed() { this.revision++; for (const listener of this.listeners) listener(); }
   private invalidate() {
@@ -72,7 +104,7 @@ export class Controller {
     const token = ++this.streamToken;
     this.capture = 'connecting'; this.changed();
     try {
-      const stream = this.options.transcriber({ mode: this.mode, pair: this.pair,
+      const stream = this.options.transcriber({ mode: this.mode, pair: this.pair, ...(this.segmentation ? { segmentation: this.segmentation } : {}),
         onEvent: event => { if (token === this.streamToken) this.transcript(event); },
         onFailure: () => { if (token === this.streamToken) this.fail('transcription'); },
         onTurnDiagnostic: (id, value) => {
@@ -171,7 +203,7 @@ export class Controller {
         trace.controllerRepetitionRejected = repeated;
         trace.recognitionClipped = Boolean(trace.recognitionClipped || event.text.length > 4000);
         trace.originalEndsInEllipsis = endsInEllipsis(event.text.slice(0, 4000));
-        trace.outcome = rejected ? 'rejected' : !event.text.trim() ? 'empty' : !this.options.translator ? 'original' : 'translating';
+        trace.outcome = rejected ? 'rejected' : !event.text.trim() ? 'empty' : !this.translating ? 'original' : 'translating';
       }
       row.original = rejected ? '' : event.text.slice(0, 4000);
       if (event.type === 'partial' && event.stable !== undefined && row.original) row.stable = Math.min(event.stable, row.original.length);
@@ -183,7 +215,7 @@ export class Controller {
         row.final = true; row.finalizedAt = Date.now(); row.state = 'pending';
         row.source = language;
         if (!row.original.trim()) { this.rows = this.rows.filter(r => r !== row); }
-        else if (!this.options.translator) row.state = 'original';
+        else if (!this.translating) row.state = 'original';
         else if (this.queue.length >= 8) {
           row.state = 'skipped'; this.error = 'overload';
           if (trace) { trace.outcome = 'skipped'; trace.translationFailure = 'queue-full'; }

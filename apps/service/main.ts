@@ -67,14 +67,16 @@ async function main() {
   const controller = new Controller({
     transcriber: local ? localTranscriberFactory({ model: config.LOCAL_MODEL, maxTurnMs: config.LOCAL_MAX_TURN_MS,
       segmentation: config.LOCAL_SEGMENTATION,
-      // Rolling mode replaces previews with its own locked partials.
-      previewIntervalMs: config.LOCAL_PREVIEWS === 'on' && config.LOCAL_SEGMENTATION === 'turns' ? 3000 : undefined,
+      // Previews apply to turns only; rolling replaces them with its own locked partials.
+      previewIntervalMs: config.LOCAL_PREVIEWS === 'on' ? 3000 : undefined,
       calibrationMs: listen ? 1500 : undefined })
       : openAITranscriberFactory(config.OPENAI_API_KEY, config.TRANSCRIPTION_MODEL, glossary),
     translator: !translate ? null : anthropic
       ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR })
       : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR }),
     pair: config.LANGUAGE_PAIR,
+    // The starting segmentation; the operator page can switch it while capture is off.
+    ...(local ? { segmentation: config.LOCAL_SEGMENTATION } : {}),
     sessionLimitMs: local ? null : 25 * 60_000,
     glossary, backend: `${local ? 'Local' : 'Cloud'} transcription · translation ${translate ? `cloud (${config.TRANSLATION_PROVIDER})` : 'off'}`,
     processing: local ? (translate ? 'local-audio-cloud-text' : 'local-only') : (translate ? 'cloud-audio-and-text' : 'cloud-audio-only'),

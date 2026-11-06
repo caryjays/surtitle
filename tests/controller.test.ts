@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { harness, tick, ja, en } from './helpers.ts';
+import { Controller } from '../apps/service/controller.ts';
 import { Command, MAX_SEGMENTS, Snapshot, Translation, TranslationInput } from '../packages/protocol/index.ts';
 import { TranslationFailure } from '../packages/providers/types.ts';
 
@@ -193,4 +194,51 @@ test('recalibration cancels old translations/context without restarting capture'
   assert(h.controller.snapshot().generation > before.generation); assert.equal(h.controller.snapshot().gate?.state, 'calibrating');
   h.requests[0]!.result.resolve(ja); await tick(); assert.deepEqual(h.controller.snapshot().segments, []);
   h.final('fresh'); assert.deepEqual(h.requests[1]!.input.context, []);
+});
+test('segmentation switches only while capture is off and applies from the next Start', async t => {
+  const h = harness({ segmentation: 'turns' }); t.after(() => h.controller.dispose());
+  assert.equal(h.controller.snapshot().segmentation, 'turns');
+  h.controller.setSegmentation('rolling');
+  await h.controller.start('auto');
+  assert.equal(h.streams[0]!.segmentation, 'rolling');
+  h.controller.setSegmentation('turns');
+  assert.equal(h.controller.snapshot().segmentation, 'rolling', 'refused while capturing');
+  await h.controller.pause(); h.controller.setSegmentation('turns'); await h.controller.start('auto');
+  assert.equal(h.streams[1]!.segmentation, 'turns');
+  // A recognizer without the choice reports none and ignores the command.
+  const fixed = harness(); t.after(() => fixed.controller.dispose());
+  fixed.controller.setSegmentation('rolling');
+  assert.equal(fixed.controller.snapshot().segmentation, null);
+  await fixed.controller.start('auto'); assert.equal(fixed.streams[0]!.segmentation, undefined);
+  Snapshot.parse(h.controller.snapshot());
+});
+test('translation can be switched off and on per session; off drops queued requests and keeps originals', async t => {
+  const h = harness({ processing: 'local-audio-cloud-text' }); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  assert.deepEqual(h.controller.snapshot().translation, { available: true, enabled: true });
+  h.final('a'); h.final('b'); h.final('c'); // two run, one waits in the queue
+  assert.equal(h.requests.length, 2); assert.equal(h.controller.snapshot().queue, 1);
+  h.controller.setTranslation(false);
+  const off = h.controller.snapshot();
+  assert.equal(off.processing, 'local-only'); assert.equal(off.queue, 0);
+  assert.equal(off.segments.find(r => r.id === 'c')!.state, 'original');
+  h.requests[0]!.result.resolve(ja); await tick();
+  assert.equal(h.controller.snapshot().segments.find(r => r.id === 'a')!.state, 'ready', 'a request already sent finishes');
+  h.final('d'); assert.equal(h.requests.length, 2);
+  assert.equal(h.controller.snapshot().segments.find(r => r.id === 'd')!.state, 'original');
+  h.controller.setTranslation(true); h.final('e');
+  assert.equal(h.requests.length, 3); assert.equal(h.controller.snapshot().processing, 'local-audio-cloud-text');
+});
+test('translation cannot be switched on without a configured translator', async t => {
+  const none = new Controller({
+    transcriber: () => ({ async connect() {}, audio() {}, async finish() {}, close() {} }), translator: null, glossary: [], backend: 'none', processing: 'local-only' });
+  t.after(() => none.dispose());
+  none.setTranslation(true);
+  assert.deepEqual(none.snapshot().translation, { available: false, enabled: false });
+  assert.equal(none.snapshot().processing, 'local-only');
+});
+test('the two settings commands parse and nothing else rides on them', () => {
+  assert.doesNotThrow(() => Command.parse({ type: 'set-segmentation', segmentation: 'rolling' }));
+  assert.doesNotThrow(() => Command.parse({ type: 'set-translation', enabled: false }));
+  for (const bad of [{ type: 'set-segmentation', segmentation: 'words' }, { type: 'set-translation', enabled: 'yes' },
+    { type: 'set-translation', enabled: true, provider: 'other' }]) assert.throws(() => Command.parse(bad));
 });

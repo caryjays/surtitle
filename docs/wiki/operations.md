@@ -17,7 +17,7 @@ Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Ch
 | `pnpm build` then `pnpm start:local` or `pnpm start:listen` | run the built service |
 | `LOCAL_MODEL=small-q4 pnpm dev:local` | try the smaller model |
 | `LOCAL_PREVIEWS=off pnpm dev:listen` | disable source previews |
-| `LOCAL_SEGMENTATION=rolling pnpm dev:listen` | experimental rolling recognition; not yet rehearsed |
+| `LOCAL_SEGMENTATION=rolling pnpm dev:listen` | start in experimental rolling recognition, not yet rehearsed; the console's Session panel also switches it while paused |
 
 After editing source, stop the service, run the `dev:*` command again and reload `/control`. A build alone changes nothing that is running.
 
@@ -36,7 +36,7 @@ Keep the tab open and the Mac awake and powered. Paid requests begin after Start
 ## OBS
 
 1. Start the service and capture in Chrome first.
-2. Add a Browser Source with Local file unchecked, URL `http://127.0.0.1:4317/overlay`, 1920 × 1080 to begin. `localhost` is refused. Add `?lines=3` to change the caption window's height in translation lines, 1 to 8, or `pace=off` to show locked text at once, for example `/overlay?lines=3&pace=off`.
+2. Add a Browser Source with Local file unchecked, URL `http://127.0.0.1:4317/overlay`, 1920 × 1080 to begin. `localhost` is refused. Add `?lines=3` to change the caption window's height in translation lines, 1 to 8, or `pace=off` to show locked text at once, for example `/overlay?lines=3&pace=off`. The console's Overlay for OBS panel builds and copies this URL, and its Audience view shows the result.
 3. Place it above slides, Chrome, Ghostty or camera sources. No permission prompt should appear.
 4. Test source reload and scene switching: capture must continue, and the overlay recovers from a snapshot without new inference.
 5. Disconnect the overlay to confirm captions disappear within 6 s.

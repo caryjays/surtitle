@@ -2,6 +2,7 @@ import { connect } from './client.ts';
 import { setupHistory } from './history.ts';
 import { setupDiagnostics } from './diagnostics.ts';
 import { setupReadingControls } from './reading.ts';
+import { renderHealth, setupAudience, setupSession, setupShortcuts } from './console.ts';
 import { HEARTBEAT_TIMEOUT_MS, Mode, PROFILES, direction, type Pair, type Snapshot } from '../../packages/protocol/index.ts';
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const device = element<HTMLSelectElement>('device');
@@ -102,6 +103,14 @@ function preserveReadingPosition(update: () => void) {
 setupReadingControls(preserveReadingPosition);
 const renderHistory = setupHistory(preserveReadingPosition);
 const diagnostics = setupDiagnostics(() => ({ snapshot: state, online: connected }));
+const renderAudience = setupAudience();
+const pill = element('state-pill');
+const renderSession = setupSession(command => send(command));
+function renderConsole(snapshot: Snapshot | undefined) {
+  const capture = !connected ? 'disconnected' : snapshot?.capture ?? 'connecting';
+  if (pill.dataset.capture !== capture) { pill.dataset.capture = capture; pill.textContent = capture.toUpperCase(); }
+  renderSession(snapshot, connected); renderHealth(snapshot, connected);
+}
 const connection = connect('control', snapshot => {
   state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair);
   element('active-direction').textContent = `Direction: ${describe(snapshot.mode, false)}`;
@@ -129,12 +138,13 @@ const connection = connect('control', snapshot => {
       : snapshot.running ? 'Translating · microphone still listening.' : describe(snapshot.mode, true)
     : snapshot.capture === 'connecting' ? 'Warming recognition · stay quiet through the room-noise calibration before speaking.'
       : snapshot.capture === 'stopping' ? 'Finishing the last turn…' : 'Microphone is off. Recent text remains until Clear or a new Start.';
-  renderHistory(snapshot); buttons();
+  renderHistory(snapshot); renderAudience(snapshot, lastState); renderConsole(snapshot); buttons();
 }, online => {
   connected = online; diagnostics.connection(online);
   if (!online) { stopLocal(); state = undefined; status.textContent = 'Disconnected — microphone stopped. Close any other control tab, or check the service.'; }
-  buttons();
+  renderAudience(state, lastState); renderConsole(state); buttons();
 });
+setInterval(() => renderAudience(state, lastState), 100);
 function send(command: Parameters<typeof diagnostics.command>[0]) {
   diagnostics.command(command); connection.send(command);
 }
@@ -220,3 +230,13 @@ setInterval(() => {
     stopLocal(); send({ type: 'capture-failed' }); error.textContent = 'Service heartbeat lost. Microphone stopped.';
   }
 }, 1000);
+setupShortcuts({
+  s: () => { if (!start.disabled) start.click(); else if (!pause.disabled) pause.click(); },
+  t: () => { if (!flush.disabled) flush.click(); },
+  1: () => { if (!mode.disabled) changeMode('auto'); },
+  2: () => { if (!mode.disabled) changeMode(lectureMode()); },
+  3: () => { if (!mode.disabled) changeMode(`${pair[0]}-${pair[1]}`); },
+  r: () => element('reading-focus').click(),
+  l: latest,
+  '/': () => element('history-search').focus(),
+});

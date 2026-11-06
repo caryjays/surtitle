@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-06 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-06 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one HTTPS request per finalized turn.
 
@@ -26,12 +26,13 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 
 | Path | Responsibility |
 | --- | --- |
-| `apps/web/control.ts`, `control.html` | Operator page: microphone selection and capture, commands, reading history, settings, diagnostics |
+| `apps/web/control.ts`, `control.html` | Operator console and reader: microphone selection and capture, commands, reading history, settings, diagnostics |
+| `apps/web/console.ts` | Console panels: audience view and overlay settings, session settings, health, keyboard shortcuts |
 | `apps/web/worklet.ts`, `audio.ts` | AudioWorklet downmix and area resampling to 24 kHz mono PCM16, 50 ms frames |
 | `apps/web/client.ts` | WebSocket connect with reconnect, audio send with backpressure, keyed caption rendering of released text and, for the operator, the rest |
 | `apps/web/pacer.ts` | Releases text at a reading pace in each client; see [surfaces](surfaces.md#pacing) |
 | `apps/web/history.ts`, `reading.ts`, `diagnostics.ts` | 60-row history with search and layout preview, saved display preferences, opt-in content-free log |
-| `apps/web/overlay.ts`, `visibility.ts` | OBS overlay: released text of the latest unexpired rows in a roll-up window, hidden on stale heartbeat |
+| `apps/web/overlay.ts`, `audience.ts`, `visibility.ts` | OBS overlay and its preview on the console: released text of the latest unexpired rows in a roll-up window, hidden on stale heartbeat; overlay settings in the URL |
 | `apps/service/main.ts`, `glossary.ts` | Config validation, launch flags, preflight, glossary resolution, wiring |
 | `apps/service/server.ts` | Loopback HTTP and WebSocket, origin checks, one control owner, snapshot broadcast |
 | `apps/service/controller.ts` | Session, generation and epoch, rows and traces, translation queue |
@@ -50,7 +51,7 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 
 1. The operator clicks Start. The page opens the selected input with mono, echo cancellation and noise suppression on, automatic gain off unless enabled, loads the worklet and sends `start`. The service opens a transcriber stream; local mode spawns and warms the worker before reporting ACTIVE.
 2. Each 50 ms frame travels as a binary WebSocket message to the controller, then to the detector. In listen mode the first 1.5 s calibrate the noise floor and never reach recognition.
-3. The detector opens a turn on onset, replays 300 ms of pre-roll, and commits on 700 ms of quiet, at the 12 s cap, or on flush, direction change, pause or recalibration. The commit carries its boundary reason and durations. With the experimental `LOCAL_SEGMENTATION=rolling`, there is no cap and steps 4 to 6 repeat about once a second within the turn; see [recognition](recognition.md#node-side-segmentation).
+3. The detector opens a turn on onset, replays 300 ms of pre-roll, and commits on 700 ms of quiet, at the 12 s cap, or on flush, direction change, pause or recalibration. The commit carries its boundary reason and durations. With the experimental rolling segmentation, there is no cap and steps 4 to 6 repeat about once a second within the turn; see [recognition](recognition.md#node-side-segmentation).
 4. The local adapter queues a final job and writes base64 PCM to the worker. In listen mode it also requests a preview every 3 s of turn audio; a preview shows only the prefix two consecutive hypotheses agree on.
 5. The worker resamples to 16 kHz, runs the Silero speech gate, decodes with Whisper at temperature 0, drops low-confidence, no-speech and repetitive pieces, and replies with text, language, timing and quality counters. See [recognition](recognition.md).
 6. The adapter rejects repetitive output again and emits a final event with a turn measurement. The controller finalizes the row, drops it if rejected or empty, or marks it original-only when translation is off.
@@ -67,7 +68,7 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 | `streamToken` | Any transcriber open or close | Late transcriber callbacks are ignored |
 | `sequence` | Each new turn | Monotonic row order; context uses only lower sequences |
 
-Operations: Start begins a fresh session. Pause finishes the current turn, waits up to 8 s for finals, then releases the microphone. Translate now flushes the current turn and keeps listening. Set mode commits the current turn with its old hint and applies the new one to later turns without reloading the worker. Clear invalidates everything and recreates the worker if capture was active. Recalibrate invalidates rows and pending translations and keeps the worker. New session stops capture and clears all text.
+Operations: Start begins a fresh session. Pause finishes the current turn, waits up to 8 s for finals, then releases the microphone. Translate now flushes the current turn and keeps listening. Set mode commits the current turn with its old hint and applies the new one to later turns without reloading the worker. Clear invalidates everything and recreates the worker if capture was active. Set segmentation, refused while capture is on, applies at the next Start; local recognition starts with `LOCAL_SEGMENTATION`. Set translation switches a configured translator off or on for the session: off drops queued requests and marks their rows original, and changes the reported processing. Recalibrate invalidates rows and pending translations and keeps the worker. New session stops capture and clears all text.
 
 ## Bounds
 
@@ -78,7 +79,7 @@ Operations: Start begins a fresh session. Pause finishes the current turn, waits
 | WebSocket clients | 16, one control owner, overlays read-only |
 | Pre-roll | 6 frames, 300 ms |
 | Quiet boundary | 700 ms |
-| Maximum turn | 12,000 ms; `LOCAL_MAX_TURN_MS` accepts 1,000 to 12,000; none with `LOCAL_SEGMENTATION=rolling` |
+| Maximum turn | 12,000 ms; `LOCAL_MAX_TURN_MS` accepts 1,000 to 12,000; none in rolling segmentation |
 | Minimum committed audio | 100 ms, zero padded |
 | Fixed gate, local-only and benchmarks | RMS 0.012, one onset frame |
 | Calibrated gate, listen mode | 1.5 s calibration; threshold max(0.004, p90 noise × 2.5); three onset frames; 0.65 hysteresis while open; slow drift while idle |

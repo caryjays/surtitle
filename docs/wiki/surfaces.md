@@ -1,28 +1,41 @@
 # Operator page and overlay
 
-Verified: 2026-11-06 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-06 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
-The only page that touches the microphone. One control socket may be connected; a second tab is refused. Closing or hiding the tab, a heartbeat gap of 6 s, a stalled audio send or a track ending all stop capture and send `capture-failed`.
+The operator console and the personal reader, on one page, since only one control socket may be connected; a second tab is refused. It is the only page that touches the microphone. Closing or hiding the tab, a heartbeat gap of 6 s, a stalled audio send or a track ending all stop capture and send `capture-failed`.
 
-Capture request: selected device or System default, mono, `echoCancellation: true`, `noiseSuppression: true`, `autoGainControl` from the checkbox, off by default. The actual track label is shown on the page after Start and never exported. Reload resets the device selection to System default.
+Capture request: selected device or System default, mono, `echoCancellation: true`, `noiseSuppression: true`, `autoGainControl` from the checkbox, off by default. The actual track label is shown in the status line after Start and never exported. Reload resets the device selection to System default.
 
-| Control | Effect |
-| --- | --- |
-| Conversation / Lecture | `auto` / the other language into English, `ja-en` for the Japanese pair; labels follow the snapshot's pair; sends `set-mode` while active |
-| Start microphone | opens the input, sends `start` with the selected mode |
-| Pause | stops the input, sends `pause` |
-| Translate now | `flush`: finalize the current turn, keep listening |
-| Clear screen | `clear`: drop history and in-flight work |
-| Recalibrate room noise | `calibrate`: listen mode only, clears history |
-| Direction select, New session, Automatic mic gain, Refresh inputs | under the diagnostics disclosure |
+Layout: a top bar with the capture state, the listening presets, the capture controls and the input level; a status line with what is processed where, the direction, the actual input, the service status, the current activity and errors; the transcript; and a sidebar of panels. Reading focus hides the presets, the service status, the input level and the sidebar, and gives the transcript the full width. Below 900 px wide the sidebar stacks under the transcript.
 
-Reading history shows up to 60 rows with keyed DOM updates, Follow latest, Jump to latest, search across originals and translations, and a labeled fictional layout preview that is disabled while capturing. Text & spacing saves only validated display preferences under the local storage key `captions.reading.v1`: translation size 18 to 48 px, original size 12 to 32 px and at least 4 px smaller, spacing, width, the caption diagnostics toggle, and Pace text at reading speed, on by default. Reading focus hides setup controls.
+| Control | Where | Effect |
+| --- | --- | --- |
+| Conversation / Lecture | top bar | `auto` / the other language into English, `ja-en` for the Japanese pair; labels follow the snapshot's pair; sends `set-mode` while active |
+| Start microphone | top bar | opens the input, sends `start` with the selected mode |
+| Pause | top bar | stops the input, sends `pause` |
+| Translate now | top bar | `flush`: finalize the current turn, keep listening |
+| Clear screen | top bar | `clear`: drop history and in-flight work |
+| Microphone, Refresh inputs, Recalibrate room noise, Automatic mic gain | Input panel | device choice; `calibrate`, listen mode only, clears history |
+| Direction, New session | Session panel | any of the three modes; `new-session` |
+| Segmentation | Session panel, when the recognizer offers the choice | `set-segmentation`: turns or rolling, only while capture is off, from the next Start |
+| Translate finalized text | Session panel, when a translator is configured | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
 
-The page shows every row's whole text: what the pacer has released in the normal style, and the rest in a lighter one, which includes text locked but not yet released and, in rolling mode, a partial row's unlocked tail. With pacing off, all locked text is released at once and only the tail stays lighter. Text already in the snapshot when the page connects is shown released.
+The transcript shows up to 60 rows with keyed DOM updates, Follow latest, Jump to latest, search across originals and translations, and a labeled fictional layout preview that is disabled while capturing. Text & spacing saves only validated display preferences under the local storage key `captions.reading.v1`: translation size 18 to 48 px, original size 12 to 32 px and at least 4 px smaller, spacing, width, the caption diagnostics toggle, and Pace text at reading speed, on by default.
 
-The Diagnostic log disclosure holds the opt-in content-free log; see [diagnostics](diagnostics.md).
+The transcript shows every row's whole text: what the pacer has released in the normal style, and the rest in a lighter one, which includes text locked but not yet released and, in rolling mode, a partial row's unlocked tail. With pacing off, all locked text is released at once and only the tail stays lighter. Text already in the snapshot when the page connects is shown released.
+
+Sidebar panels:
+
+- Audience view: what the overlay shows now, rendered by the overlay's own code on a 1920 × 1080 stage scaled to the panel, with the overlay settings below. It is computed in this page and opens no overlay socket.
+- Input and Session: the controls in the table above, and the noise gate's state, level and threshold.
+- Overlay for OBS: caption window lines and pacing, saved as validated settings under `captions.overlay.v1`, and the Browser Source URL that carries them, with Copy and Open.
+- Health: connection, capture, recognizer and segmentation, translation, queue, filtered rows, and medians over the last 10 rows of decode time, first text and lock lag in rolling mode or commit to final in turns mode, translation request time, and failed or skipped rows. No speech text.
+- Diagnostic log: the opt-in content-free log; see [diagnostics](diagnostics.md).
+- Help & notes.
+
+Keyboard shortcuts, ignored while typing in a field or with a modifier key: S starts the microphone or pauses, T is Translate now, 1, 2 and 3 choose automatic, Lecture and the other fixed direction, R toggles Reading focus, L jumps to the latest row, / focuses search, and ? lists them. Clear screen and New session have none, since they destroy text.
 
 ## /overlay
 
@@ -38,7 +51,9 @@ The rows sit in a roll-up window anchored at the bottom: when released text adds
 
 | Schema | Values |
 | --- | --- |
-| `Command` | `start{mode}`, `set-mode{mode}`, `flush`, `calibrate`, `pause`, `clear`, `new-session`, `capture-failed` |
+| `Command` | `start{mode}`, `set-mode{mode}`, `flush`, `calibrate`, `pause`, `clear`, `new-session`, `capture-failed`, `set-segmentation{segmentation}`, `set-translation{enabled}` |
+| `Snapshot.segmentation` | `turns`, `rolling`, or null when the recognizer has one fixed segmentation |
+| `Snapshot.translation` | `available`: a translator was configured at startup; `enabled`: it is on for this session |
 | `Snapshot.capture` | `paused`, `connecting`, `active`, `stopping`, `failed` |
 | `Segment.state` | `partial`, `pending`, `ready`, `failed`, `unresolved`, `skipped`, `original` |
 | `Segment.stable` | Optional: the number of leading characters of a partial original that are locked; absent means all of it |

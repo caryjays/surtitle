@@ -6,6 +6,9 @@ export * from './languages.ts';
 
 export const Glossary = z.array(z.object({ term: z.string().min(1).max(80), translation: z.string().min(1).max(120) }).strict()).max(32);
 export type Glossary = z.infer<typeof Glossary>;
+// How speech becomes rows: pause-bounded turns, or rolling decodes that lock agreed text; see docs/wiki/recognition.md.
+export const Segmentation = z.enum(['turns', 'rolling']);
+export type Segmentation = z.infer<typeof Segmentation>;
 export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('start'), mode: Mode }).strict(),
   z.object({ type: z.literal('set-mode'), mode: Mode }).strict(),
@@ -15,6 +18,8 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('clear') }).strict(),
   z.object({ type: z.literal('new-session') }).strict(),
   z.object({ type: z.literal('capture-failed') }).strict(),
+  z.object({ type: z.literal('set-segmentation'), segmentation: Segmentation }).strict(),
+  z.object({ type: z.literal('set-translation'), enabled: z.boolean() }).strict(),
 ]);
 export const Failure = z.enum(['credentials', 'transcription', 'translation', 'translation-auth', 'translation-rate-limit', 'translation-network', 'capture', 'overload', 'protocol', 'session-limit']);
 export type Failure = z.infer<typeof Failure>;
@@ -64,6 +69,9 @@ export const Snapshot = z.object({
   // Content-free recent turn outcomes survive rejected rows, but reset with display generation.
   turns: z.array(TurnTrace).max(MAX_SEGMENTS).default([]),
   turnTelemetryVersion: z.literal(2).optional(),
+  // null: the recognizer has one fixed segmentation. Translation is available only when the service was started with it.
+  segmentation: Segmentation.nullable().default(null),
+  translation: z.object({ available: z.boolean(), enabled: z.boolean() }).strict().default({ available: false, enabled: false }),
 });
 export type Snapshot = z.infer<typeof Snapshot>;
 export const SAMPLE_RATE = 24000;

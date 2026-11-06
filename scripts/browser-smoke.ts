@@ -7,7 +7,7 @@ import type { Mode, TranslationInput } from '../packages/protocol/index.ts';
 // Synthetic microphone + fake providers only. No .env, keys, retention, or paid calls.
 let totalFrames = 0; let opened = 0; let closed = 0; let flushes = 0; let calibrations = 0;
 const requests: TranslationInput[] = []; const modes: Mode[] = [];
-const controller = new Controller({ backend: 'Synthetic smoke test', processing: 'local-audio-cloud-text', glossary: [], sessionLimitMs: null,
+const controller = new Controller({ backend: 'Synthetic smoke test', processing: 'local-audio-cloud-text', glossary: [], sessionLimitMs: null, segmentation: 'turns',
   transcriber: options => {
     const stream = ++opened; let frames = 0; let turn = 0; let mode = options.mode; let quietFrames = 30;
     const gate = () => options.onGate?.({ state: quietFrames ? 'calibrating' : 'quiet', level: 0.01, threshold: quietFrames ? 0.025 : 0.04, remainingMs: quietFrames * 50 });
@@ -81,9 +81,12 @@ try {
   await control.locator('#reading-width').selectOption('narrow');
   assert.equal(await control.locator('.translation').first().evaluate(node => getComputedStyle(node).fontSize), '18px');
   assert.equal(await control.locator('.original').first().evaluate(node => getComputedStyle(node).fontSize), '14px');
-  assert.equal(await control.locator('main').evaluate(node => node.clientWidth), 860);
+  assert(await control.locator('main').evaluate(node => node.clientWidth) <= 860);
   await control.getByRole('button', { name: 'Reading focus', exact: true }).click();
   assert.equal(await control.locator('#reading-settings').isVisible(), true);
+  // Reading focus folds the operator sidebar away and the narrow column takes its full width.
+  assert.equal(await control.locator('.sidebar').isVisible(), false);
+  assert.equal(await control.locator('main').evaluate(node => node.clientWidth), 860);
   await control.getByRole('button', { name: 'Exit reading focus', exact: true }).click();
   await control.locator('#reading-settings > summary').click();
   await control.getByRole('button', { name: 'Reset display', exact: true }).click();
@@ -176,6 +179,48 @@ try {
   await control.getByRole('button', { name: 'Conversation · EN ↔ JA', exact: true }).click();
   await control.waitForFunction(() => document.querySelector('#conversation')?.getAttribute('aria-pressed') === 'true');
   assert.equal(controller.snapshot().mode, 'auto'); assert.equal(opened, 1);
+  // Console: the audience view mirrors the overlay, and the overlay settings build the Browser Source URL.
+  await control.waitForSelector('#audience-roll .translation');
+  assert.equal(await control.locator('#audience-roll .rest').evaluateAll(nodes => nodes.filter(n => n.textContent).length), 0);
+  await control.locator('#overlay-panel > summary').click();
+  await control.locator('#overlay-lines').selectOption('3');
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3`);
+  await control.locator('#overlay-pace').uncheck();
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3&pace=off`);
+  assert.equal(await control.locator('#audience .stage-captions').evaluate(node => getComputedStyle(node).getPropertyValue('--overlay-lines').trim()), '3');
+  await control.locator('#overlay-lines').selectOption('4'); await control.locator('#overlay-pace').check();
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay`);
+  await control.locator('#overlay-panel > summary').click();
+  // Segmentation is shown but locked while capturing; translation switches off and on without a restart.
+  assert.equal(await control.locator('#segmentation').isVisible(), true);
+  assert.equal(await control.locator('input[name="segmentation"][value="turns"]').isChecked(), true);
+  assert.equal(await control.locator('input[name="segmentation"][value="rolling"]').isDisabled(), true);
+  await control.locator('#translation-toggle').uncheck();
+  await control.waitForFunction(() => document.getElementById('processing')!.textContent!.includes('Translation is OFF'));
+  assert.equal(controller.snapshot().translation.enabled, false);
+  await control.locator('#translation-toggle').check();
+  await control.waitForFunction(() => document.getElementById('processing')!.textContent!.includes('paid cloud translation'));
+  // Shortcuts act only outside text fields; destructive commands have none.
+  await control.locator('#captions').focus();
+  const flushed = flushes;
+  await control.keyboard.press('t'); await control.waitForTimeout(100);
+  assert.equal(flushes, flushed + 1);
+  await control.locator('#history-search').focus(); await control.keyboard.press('t'); await control.waitForTimeout(100);
+  assert.equal(flushes, flushed + 1); assert.equal(await control.locator('#history-search').inputValue(), 't');
+  await control.locator('#history-search').fill(''); await control.locator('#captions').focus();
+  await control.keyboard.press('2');
+  await control.waitForFunction(() => document.querySelector('#lecture')?.getAttribute('aria-pressed') === 'true');
+  await control.keyboard.press('1');
+  await control.waitForFunction(() => document.querySelector('#conversation')?.getAttribute('aria-pressed') === 'true');
+  assert.equal(controller.snapshot().mode, 'auto'); assert.equal(opened, 1);
+  await control.keyboard.press('?');
+  assert.equal(await control.locator('#shortcuts').isVisible(), true);
+  await control.getByRole('button', { name: 'Close', exact: true }).click();
+  assert.equal(await control.locator('#shortcuts').isVisible(), false);
+  await control.locator('#health-panel > summary').click();
+  assert.match(await control.locator('#health').textContent() ?? '', /Captureactive/);
+  await control.locator('#health-panel > summary').click();
+  assert.equal(await control.locator('#state-pill').textContent(), 'ACTIVE');
   await control.locator('#diagnostics > summary').click();
   const beforeCalibration = controller.snapshot().generation;
   await control.getByRole('button', { name: 'Recalibrate room noise', exact: true }).click();
@@ -195,6 +240,12 @@ try {
   await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('PAUSED'));
   const stopped = totalFrames; await control.waitForTimeout(200); assert.equal(totalFrames, stopped);
   assert.match(await control.locator('#capture-input').textContent() ?? '', /microphone off/);
+  // Paused, segmentation can change; it applies at the next Start.
+  await control.locator('input[name="segmentation"][value="rolling"]').check();
+  for (let i = 0; i < 50 && controller.snapshot().segmentation !== 'rolling'; i++) await control.waitForTimeout(20);
+  assert.equal(controller.snapshot().segmentation, 'rolling');
+  assert.equal(await control.locator('#state-pill').textContent(), 'PAUSED');
+  await control.locator('input[name="segmentation"][value="turns"]').check();
   // Paced text finishes releasing; after that, heartbeats/health samples must not rewrite caption DOM or force reading-position layout work.
   await control.waitForFunction(() => [...document.querySelectorAll('#captions .rest')].every(node => !node.textContent));
   await control.evaluate(() => {

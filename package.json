@@ -43,6 +43,7 @@
     "test:browser": "pnpm build && tsx scripts/browser-smoke.ts",
     "test:local-browser": "pnpm build && tsx scripts/local-browser-smoke.ts",
     "test:listen-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --listen",
+    "sim:display": "tsx scripts/display-sim.ts",
     "test:rolling-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --listen --rolling",
     "docs:check": "tsx scripts/docs-check.ts",
     "check": "pnpm typecheck && pnpm test && pnpm docs:check && pnpm build"
