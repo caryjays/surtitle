@@ -1,6 +1,6 @@
 # Security and privacy
 
-Verified: 2026-11-04 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
+Verified: 2026-11-06 · Sources: apps/service/server.ts, apps/service/main.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, apps/web/diagnostics.ts, apps/web/reading.ts, .gitignore, AGENTS.md, scripts/docs-check.ts
 
 ## Boundary
 
@@ -9,6 +9,7 @@ Verified: 2026-11-04 · Sources: apps/service/server.ts, apps/service/main.ts, p
 | Bind `127.0.0.1` only; exact `Host` and `Origin`; reject cross-site fetch metadata and WebSockets without a matching `Origin` | `server.ts` |
 | Static route allowlist, `GET` only, `Cache-Control: no-store`, CSP `default-src 'none'` with self-only scripts, styles and sockets | `server.ts` |
 | `/control` may use the microphone; `/overlay` has `microphone=()` and imports no capture code | `server.ts`, `overlay.ts` |
+| HTTP paths match exactly; only `/overlay` takes a query, of at most 100 lowercase letters, digits, `=` and `&` | `server.ts` |
 | One control socket; overlay sockets are closed on any write; 16 clients; 4 KiB payloads; audio and command rate limits | `server.ts` |
 | Secrets live only in the service process; endpoints are not configurable; nothing secret enters a snapshot, URL or browser | `main.ts`, `openai.ts`, `anthropic.ts` |
 | The worker child gets an allowlisted environment with no key and offline Hugging Face flags; its stderr is dropped | `local.ts` |

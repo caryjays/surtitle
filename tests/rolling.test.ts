@@ -87,14 +87,17 @@ test('rolling locks agreed words, never retracts them, closes rows by length and
   assert.deepEqual(rows.map(r => r.text), [words(0, 8), words(160, 4)]);
   assert.deepEqual(rows.map(r => r.language), ['ja', 'ja']);
   for (const row of rows) {
-    const partials = f.events.filter(e => e.type === 'partial' && e.id === row.id).map(e => (e as { text: string }).text);
-    assert(partials.length > 1);
-    for (let i = 1; i < partials.length; i++) assert(partials[i]!.startsWith(partials[i - 1]!), 'locked text retracted');
-    assert(row.text.startsWith(partials.at(-1)!));
+    const partials = f.events.filter(e => e.type === 'partial' && e.id === row.id) as Extract<TranscriptEvent, { type: 'partial' }>[];
+    const locked = partials.map(p => p.text.slice(0, p.stable));
+    assert(partials.length > 1 && partials.every(p => p.stable !== undefined && p.stable > 0));
+    for (let i = 1; i < locked.length; i++) assert(locked[i]!.startsWith(locked[i - 1]!), 'locked text retracted');
+    assert(row.text.startsWith(locked.at(-1)!));
     // begin precedes the row's first text; nothing follows its final.
     const at = f.events.indexOf(row);
     assert(f.events.slice(at + 1).every(e => e.id !== row.id));
   }
+  // The unlocked tail travels with the locked text for the operator's view.
+  assert(f.events.some(e => e.type === 'partial' && e.stable! < e.text.length));
   const diagnostics = rows.map(r => f.measurements.find(m => m.id === r.id && m.value.boundary)!.value);
   assert.deepEqual(diagnostics.map(d => d.boundary), ['length', 'silence']);
   assert.equal(diagnostics[0]!.audioMs, 8000);

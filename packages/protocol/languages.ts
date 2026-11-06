@@ -18,6 +18,9 @@ export const LanguageProfile = z.object({
   scoring: z.enum(['word', 'character']),
   sentenceEnd: z.string().min(1).max(20),
   stockPhrases: z.array(z.string().min(1).max(80)).max(32),
+  // Display release rate in characters per second: the floor keeps a sparse speaker moving, the ceiling caps bursts.
+  reading: z.object({ floor: z.number().positive().max(100), ceiling: z.number().positive().max(100) }).strict()
+    .refine(r => r.floor <= r.ceiling),
 }).strict();
 export type LanguageProfile = z.infer<typeof LanguageProfile>;
 export const PROFILES: Record<string, LanguageProfile> = z.record(Language, LanguageProfile).parse(profiles);

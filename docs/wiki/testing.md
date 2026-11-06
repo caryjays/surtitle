@@ -6,11 +6,12 @@ Ordinary tests never read `.env`, never call a provider and never touch a physic
 
 | Command | Covers | Real model | Network |
 | --- | --- | --- | --- |
-| `pnpm check` | TypeScript; Node tests with fake providers and a fake worker covering segmentation, direction, out-of-order results, failures, clear and session invalidation, queue bounds, server origin rules, telemetry schemas and diagnostics export; docs check; build | no | no |
+| `pnpm check` | TypeScript; Node tests with fake providers and a fake worker covering segmentation, direction, out-of-order results, failures, clear and session invalidation, queue bounds, server origin rules, telemetry schemas and diagnostics export, and the display pacer under scripted timings: steady release, no rewrite of released text, catch-up, clear and new-session reset; docs check; build | no | no |
 | `pnpm test:local-unit` | Python in the project environment from `pnpm local:setup`: scoring, gate alignment and the gate targets against the wiki table, development-corpus screening rules and its fast alignment against the plain scorer, decoder filters, worker RPC with a fake engine, experiment DSP and guards | no | no |
 | `pnpm test:browser` | Headless Chrome with a synthetic microphone and fake providers: continuous EN/JA, preset switch, history, preview, diagnostics download, overlay, clear, pause, denied microphone | no | no |
 | `pnpm test:local-browser` | Public EN then JA fixtures through Chrome, the worklet and the real Turbo Q4 worker to the original-only overlay | yes | no |
 | `pnpm test:listen-browser` | Noise prelude plus fixtures through the real gate and model with previews into a fake translator | yes | no |
+| `pnpm test:rolling-browser` | The same in rolling segmentation; checks that partial rows carry an unlocked tail and that the overlay never shows unreleased text | yes | no |
 | `pnpm local:silence` | Synthetic silence, noise and hum through the real engine must yield no text | yes | no |
 | `pnpm local:bench`, `pnpm local:stream` | Full-clip and real-time replay accuracy and timing on the tuning fixtures; metrics to ignored `benchmarks/results/` | yes | no |
 | `pnpm local:noisy-fixtures`, `local:noisy-prepare`, `local:noisy-screen`, `local:noisy-replay` | Controlled noisy Japanese experiment; fixture setup downloads bounded public data once | yes | fixtures only |

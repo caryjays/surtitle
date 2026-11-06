@@ -13,6 +13,7 @@ import { loadGlossary, resolveGlossaryPath } from '../apps/service/glossary.ts';
 
 async function main() {
   const listening = process.argv.includes('--listen');
+  const rolling = process.argv.includes('--rolling');
   const manifest = z.array(z.object({ id: z.string(), sha256: z.string() })).parse(JSON.parse(await readFile('benchmarks/fleurs.json', 'utf8')));
   const parts: Buffer[] = [Buffer.alloc(48_000 * 2 * 10)]; // Initialization silence, not a live latency measurement.
   if (listening) {
@@ -37,7 +38,7 @@ async function main() {
   const replayPath = resolve('.local/fixtures/browser-replay.wav'); await writeFile(replayPath, Buffer.concat([header, pcm]));
   const glossary = listening ? await loadGlossary((await resolveGlossaryPath()).path) : [];
   const requests: TranslationInput[] = [];
-  let partialSeen = false;
+  let partialSeen = false; let tailSeen = false;
   const controller = new Controller({ backend: listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
     processing: listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null,
     translator: listening ? { async translate(input) {
@@ -46,8 +47,12 @@ async function main() {
         : { source: 'en', target: 'ja', text: '英語のテスト翻訳（フェイク）。' };
     } } : null,
     transcriber: localTranscriberFactory({ model: 'turbo-q4', previewIntervalMs: listening ? 3000 : undefined,
-      calibrationMs: listening ? 1500 : undefined }) });
-  controller.subscribe(() => { if (controller.snapshot().segments.some(row => row.state === 'partial' && row.original)) partialSeen = true; });
+      calibrationMs: listening ? 1500 : undefined, ...(rolling ? { segmentation: 'rolling' as const } : {}) }) });
+  controller.subscribe(() => {
+    const rows = controller.snapshot().segments;
+    if (rows.some(row => row.state === 'partial' && row.original)) partialSeen = true;
+    if (rows.some(row => row.stable !== undefined && row.stable < row.original.length)) tailSeen = true;
+  });
   const app = await createCaptionServer({ controller, port: 0, webDir: 'dist/web', configured: true });
   let browser;
   try {
@@ -58,6 +63,8 @@ async function main() {
     const control = await context.newPage(); const overlay = await context.newPage();
     control.on('pageerror', () => errors.push('control')); overlay.on('pageerror', () => errors.push('overlay'));
     await overlay.addInitScript("Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: () => { throw new Error('Overlay capture prohibited'); } });");
+    // The audience overlay never shows unreleased text or an unlocked tail.
+    await overlay.addInitScript("window.restShown = false; setInterval(() => { if ([...document.querySelectorAll('.rest')].some(n => n.textContent)) window.restShown = true; }, 50);");
     await control.goto(app.origin + '/control'); await overlay.goto(app.origin + '/overlay');
     await control.getByRole('button', { name: 'Start microphone' }).click();
     await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('ACTIVE'), undefined, { timeout: 60_000 });
@@ -81,7 +88,10 @@ async function main() {
     }
     await control.getByRole('button', { name: 'Pause', exact: true }).click();
     await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('PAUSED'));
+    assert.equal(await overlay.evaluate(() => (window as unknown as { restShown: boolean }).restShown), false);
+    if (rolling) assert(tailSeen, 'rolling rows carry an unlocked tail');
     assert.deepEqual(errors, []);
+    if (rolling) console.log(`Rolling segmentation: unlocked tail observed: ${tailSeen}; none shown on the overlay.`);
     console.log(listening
       ? `PASS: non-speech prelude produces no translation; public EN/JA → real speech gate + MLX with previews → FAKE bidirectional translation/context; reload/pause. Provisional source observed: ${partialSeen}. No cloud calls or real microphone.`
       : 'PASS: public EN→JA prerecorded speech → Chrome AudioWorklet → local MLX → original-only overlay; reload/pause; no cloud calls or real microphone.');

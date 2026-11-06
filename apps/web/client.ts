@@ -20,11 +20,22 @@ export function connect(role: 'control' | 'overlay', onState: (state: Snapshot) 
     },
   };
 }
-export function renderSegments(container: HTMLElement, rows: Snapshot['segments'], operator = false, turns: Snapshot['turns'] = []) {
+// Released text, then for the operator the text not released yet in a lighter style. The overlay never gets the rest.
+function fill(element: HTMLElement, shown: string, rest: string) {
+  let [released, pending] = [...element.children] as HTMLElement[];
+  if (!released || !pending) {
+    released = document.createElement('span'); pending = document.createElement('span'); pending.className = 'rest';
+    element.replaceChildren(released, pending);
+  }
+  if (released.textContent !== shown) released.textContent = shown;
+  if (pending.textContent !== rest) pending.textContent = rest;
+}
+type Row = Snapshot['segments'][number] & { originalRest?: string; translationRest?: string };
+export function renderSegments(container: HTMLElement, rows: Row[], operator = false, turns: Snapshot['turns'] = []) {
   const existing = new Map([...container.children].map(node => [(node as HTMLElement).dataset.id, node as HTMLElement]));
   const keep = new Set<string>();
   let position = 0;
-  for (const row of rows.filter(r => r.original)) {
+  for (const row of rows.filter(r => r.original || (operator && r.originalRest))) {
     keep.add(row.id);
     let article = existing.get(row.id);
     if (!article) {
@@ -38,17 +49,18 @@ export function renderSegments(container: HTMLElement, rows: Snapshot['segments'
     if (article.dataset.state !== row.state) article.dataset.state = row.state;
     if (article.dataset.sequence !== String(row.sequence)) article.dataset.sequence = String(row.sequence);
     const original = article.querySelector<HTMLElement>('.original')!;
-    if (original.textContent !== row.original) original.textContent = row.original;
+    fill(original, row.original, operator ? row.originalRest ?? '' : '');
     const sourceLanguage = row.source === 'unknown' ? '' : row.source;
     if (original.lang !== sourceLanguage) original.lang = sourceLanguage;
     const info = article.querySelector('small')!;
     let translated = article.querySelector<HTMLElement>('.translation');
-    if (row.translation) {
+    const translationRest = operator ? row.translationRest ?? '' : '';
+    if (row.translation || translationRest) {
       if (!translated) {
         translated = document.createElement('div'); translated.className = 'translation';
         article.insertBefore(translated, info);
       }
-      if (translated.textContent !== row.translation) translated.textContent = row.translation;
+      fill(translated, row.translation ?? '', translationRest);
       const targetLanguage = row.target === 'unknown' ? '' : row.target;
       if (translated.lang !== targetLanguage) translated.lang = targetLanguage;
     } else translated?.remove();

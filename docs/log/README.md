@@ -30,6 +30,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-04-settle-at-lock.md](2026-11-04-settle-at-lock.md) | Settling a rolling row's language at lock, shipped and gated: Japanese passes both public accuracy targets |
 | [2026-11-04-noise-confirm.md](2026-11-04-noise-confirm.md) | A confident first lock after a noise trim; rolling passes every measured gate target |
 | [2026-11-06-held-out-gate.md](2026-11-06-held-out-gate.md) | First held-out gate run: rolling fails, the model's one-pass decode is near the live error on public unscripted speech |
+| [2026-11-06-pacing.md](2026-11-06-pacing.md) | Rolling step 4: locked-text marker, reading-pace release, roll-up overlay with Browser Source settings |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

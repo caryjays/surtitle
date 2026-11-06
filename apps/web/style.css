@@ -61,6 +61,8 @@ small { display: block; margin-top: .5rem; color: #a9bed1; }
 .control article[data-state="ready"] { border-left-color: #93e6c6; }
 .control .original { font-size: var(--original-size); line-height: var(--reading-leading); color: #c3d0dc; }
 .control .translation { font-size: var(--translation-size); line-height: var(--reading-leading); font-weight: 550; margin-top: .25rem; }
+/* Text the pacer has not released yet, including a partial row's unlocked tail: visible to the operator, lighter. */
+.control .rest { opacity: .5; font-weight: 400; }
 .control small { font-size: .75rem; margin-top: .35rem; }
 .control:not([data-caption-details="true"]) article[data-state="ready"] small { display: none; }
 .control[data-spacing="compact"] { --reading-leading: 1.3; --turn-gap: 6px; --turn-pad: 8px 14px; }
@@ -84,7 +86,6 @@ small { display: block; margin-top: .5rem; color: #a9bed1; }
 
 /* OBS presentation styling stays deliberately independent of personal settings. */
 .overlay { background: transparent; color-scheme: normal; overflow: hidden; }
-.overlay #captions { position: fixed; bottom: 5%; left: 6%; right: 6%; }
-.overlay .original, .overlay .translation { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
-.overlay .original { -webkit-line-clamp: 2; }
-.overlay .translation { -webkit-line-clamp: 3; }
+/* Roll-up window: bottom-anchored, about --overlay-lines translation lines tall; the oldest text leaves at the top. */
+.overlay #captions { position: fixed; bottom: 5%; left: 6%; right: 6%; --overlay-lines: 4; max-height: calc(var(--overlay-lines) * 56px + 48px);
+  overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }

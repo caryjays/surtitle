@@ -174,6 +174,8 @@ export class Controller {
         trace.outcome = rejected ? 'rejected' : !event.text.trim() ? 'empty' : !this.options.translator ? 'original' : 'translating';
       }
       row.original = rejected ? '' : event.text.slice(0, 4000);
+      if (event.type === 'partial' && event.stable !== undefined && row.original) row.stable = Math.min(event.stable, row.original.length);
+      else delete row.stable;
       if (event.type === 'final' && rejected) {
         this.rejected++; this.rows = this.rows.filter(r => r !== row); this.changed(); return;
       }

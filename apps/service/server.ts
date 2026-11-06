@@ -16,7 +16,9 @@ export async function createCaptionServer(options: { controller: Controller; por
     && (websocket ? req.headers.origin === origin : (!req.headers.origin || req.headers.origin === origin))
     && req.headers['sec-fetch-site'] !== 'cross-site';
   const server = createServer((req, res) => {
-    const route = req.url ?? '/';
+    // Only the overlay takes a query: its display settings, such as ?lines=3&pace=off. Everything else matches exactly.
+    const [path = '/', query] = (req.url ?? '/').split('?', 2);
+    const route = path === '/overlay' && query !== undefined && /^[a-z0-9=&]{0,100}$/.test(query) ? path : req.url ?? '/';
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');

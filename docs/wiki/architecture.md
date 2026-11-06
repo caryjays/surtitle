@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-04 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-06 · Sources: apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one HTTPS request per finalized turn.
 
@@ -28,14 +28,15 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 | --- | --- |
 | `apps/web/control.ts`, `control.html` | Operator page: microphone selection and capture, commands, reading history, settings, diagnostics |
 | `apps/web/worklet.ts`, `audio.ts` | AudioWorklet downmix and area resampling to 24 kHz mono PCM16, 50 ms frames |
-| `apps/web/client.ts` | WebSocket connect with reconnect, audio send with backpressure, keyed caption rendering |
+| `apps/web/client.ts` | WebSocket connect with reconnect, audio send with backpressure, keyed caption rendering of released text and, for the operator, the rest |
+| `apps/web/pacer.ts` | Releases text at a reading pace in each client; see [surfaces](surfaces.md#pacing) |
 | `apps/web/history.ts`, `reading.ts`, `diagnostics.ts` | 60-row history with search and layout preview, saved display preferences, opt-in content-free log |
-| `apps/web/overlay.ts`, `visibility.ts` | OBS overlay: last two unexpired segments, hidden on stale heartbeat |
+| `apps/web/overlay.ts`, `visibility.ts` | OBS overlay: released text of the latest unexpired rows in a roll-up window, hidden on stale heartbeat |
 | `apps/service/main.ts`, `glossary.ts` | Config validation, launch flags, preflight, glossary resolution, wiring |
 | `apps/service/server.ts` | Loopback HTTP and WebSocket, origin checks, one control owner, snapshot broadcast |
 | `apps/service/controller.ts` | Session, generation and epoch, rows and traces, translation queue |
 | `packages/protocol/` | Zod schemas shared by service and browser: `Command`, `Snapshot`, `Segment`, `Translation`, `TurnTrace`; `languages.ts` holds language codes, modes, the pair and the profiles |
-| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, sentence-end characters, stock phrases |
+| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, sentence-end characters, stock phrases, display release rates |
 | `packages/providers/turns.ts` | Energy turn detector, fixed or calibrated |
 | `packages/providers/local.ts` | Local adapter: worker lifecycle, job queue, previews, repetition check |
 | `packages/providers/openai.ts` | Cloud transcriber, opt-in and never run live, plus the Responses translator |
@@ -54,7 +55,7 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 5. The worker resamples to 16 kHz, runs the Silero speech gate, decodes with Whisper at temperature 0, drops low-confidence, no-speech and repetitive pieces, and replies with text, language, timing and quality counters. See [recognition](recognition.md).
 6. The adapter rejects repetitive output again and emits a final event with a turn measurement. The controller finalizes the row, drops it if rejected or empty, or marks it original-only when translation is off.
 7. With translation on, the controller freezes up to four preceding finalized rows as context and queues the turn. The translator posts a strict JSON schema request and validates the reply. See [translation](translation.md).
-8. Every change produces a snapshot, coalesced to 50 ms and repeated with a 2 s heartbeat, to the control socket and all overlays. The overlay shows the last two unexpired finals.
+8. Every change produces a snapshot, coalesced to 50 ms and repeated with a 2 s heartbeat, to the control socket and all overlays. Each page releases new text at a reading pace; the overlay shows only released, locked text in a roll-up window. See [surfaces](surfaces.md).
 
 ## Identity and invalidation
 

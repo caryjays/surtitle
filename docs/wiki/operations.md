@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-05 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-06 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -36,7 +36,7 @@ Keep the tab open and the Mac awake and powered. Paid requests begin after Start
 ## OBS
 
 1. Start the service and capture in Chrome first.
-2. Add a Browser Source with Local file unchecked, URL `http://127.0.0.1:4317/overlay`, 1920 × 1080 to begin. `localhost` is refused.
+2. Add a Browser Source with Local file unchecked, URL `http://127.0.0.1:4317/overlay`, 1920 × 1080 to begin. `localhost` is refused. Add `?lines=3` to change the caption window's height in translation lines, 1 to 8, or `pace=off` to show locked text at once, for example `/overlay?lines=3&pace=off`.
 3. Place it above slides, Chrome, Ghostty or camera sources. No permission prompt should appear.
 4. Test source reload and scene switching: capture must continue, and the overlay recovers from a snapshot without new inference.
 5. Disconnect the overlay to confirm captions disappear within 6 s.

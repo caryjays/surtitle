@@ -195,7 +195,8 @@ try {
   await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('PAUSED'));
   const stopped = totalFrames; await control.waitForTimeout(200); assert.equal(totalFrames, stopped);
   assert.match(await control.locator('#capture-input').textContent() ?? '', /microphone off/);
-  // Heartbeats/health samples must not rewrite caption DOM or force reading-position layout work.
+  // Paced text finishes releasing; after that, heartbeats/health samples must not rewrite caption DOM or force reading-position layout work.
+  await control.waitForFunction(() => [...document.querySelectorAll('#captions .rest')].every(node => !node.textContent));
   await control.evaluate(() => {
     const state = window as unknown as { captionMutations: number; captionObserver: MutationObserver };
     state.captionMutations = 0;

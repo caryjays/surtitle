@@ -2,7 +2,8 @@ import type { AudioGate, Mode, Pair, Source, TranslationInput, Translation, Turn
 
 export type TranscriptEvent =
   | { type: 'begin'; id: string; sequence: number; mode?: Mode }
-  | { type: 'partial'; id: string; text: string }
+  // stable: how many leading characters of text are locked and never rewritten; absent means all of it is.
+  | { type: 'partial'; id: string; text: string; stable?: number }
   | { type: 'final'; id: string; text: string; language?: Source; rejected?: boolean };
 export interface Transcriber {
   connect(): Promise<void>;

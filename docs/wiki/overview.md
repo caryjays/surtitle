@@ -1,6 +1,6 @@
 # Overview
 
-Verified: 2026-11-05 · Sources: apps/service/main.ts, apps/service/glossary.ts, package.json, .env.example
+Verified: 2026-11-06 · Sources: apps/service/main.ts, apps/service/glossary.ts, package.json, .env.example
 
 Surtitle is a local live caption companion for one Mac that pairs English with one other language per session; Japanese is the only pair today. The name is the theatre term for translated text projected above a stage during a live performance. An operator browser tab captures a microphone, a loopback Node service turns speech into bilingual text, and a transparent overlay page can be composed in OBS. It was built by a presenter who gives English talks to Japanese audiences and reads Japanese lectures in English, and it has been used live at a conference.
 

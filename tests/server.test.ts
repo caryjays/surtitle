@@ -41,6 +41,10 @@ test('loopback server validates HTTP Host/Origin, paths and methods; overlay can
   assert.equal(wrongHost, 403);
   assert.equal((await fetch(f.origin + '/control', { method: 'POST' })).status, 405);
   assert.equal((await fetch(f.origin + '/.env')).status, 404);
+  // The overlay takes plain display settings in its query; nothing else takes a query.
+  const configured = await fetch(f.origin + '/overlay?lines=3&pace=off');
+  assert.equal(configured.status, 200); assert.equal(configured.headers.get('permissions-policy'), 'microphone=(), camera=(), display-capture=()');
+  for (const path of ['/overlay?x=%3Cscript%3E', '/control?lines=3', '/overlay.js?x=1']) assert.equal((await fetch(f.origin + path)).status, 404, path);
   assert.equal((await fetch(f.origin + '/control', { headers: { 'Sec-Fetch-Site': 'cross-site' } })).status, 403);
 });
 test('foreign and missing WebSocket Origins are rejected', async t => {

@@ -33,7 +33,9 @@ type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' |
   stretch?: Stretch; row?: Row; detail?: { boundary: Boundary; trailingQuietMs: number } };
 // A caption row in rolling mode: locked text only grows. Its begin event waits for its first locked text.
 type Row = { id: string; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
-  decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean };
+  decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean;
+  // The last partial sent: locked text plus the unlocked tail.
+  shown?: string };
 // One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
 type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
 type RecognitionQuality = z.infer<typeof Quality>;
@@ -241,6 +243,7 @@ export class LocalTranscriber implements Transcriber {
     } else {
       stretch!.previous = current;
     }
+    this.partial(stretch!.row, stretch!.previous);
   }
   private rowText(row: Row) {
     if (!row.begun) {
@@ -248,7 +251,15 @@ export class LocalTranscriber implements Transcriber {
       this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: this.options.mode });
     }
     row.firstTextMs ??= performance.now() - row.created;
-    if (row.text) this.options.onEvent({ type: 'partial', id: row.id, text: row.text });
+  }
+  // Locked text plus the unlocked tail, for the operator's view; displays reveal only the first `stable` characters.
+  // A row shows a tail only once it has locked text, and not while a noise trim waits for a confident decode.
+  private partial(row: Row, tail: string) {
+    if (!row.begun || !row.text) return;
+    const text = row.afterNoise ? row.text : joinText(row.text, tail);
+    if (text === row.shown) return;
+    row.shown = text;
+    this.options.onEvent({ type: 'partial', id: row.id, text, stable: row.text.length });
   }
   private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean) {
     // A whole row of stock sign-off from long audio replaced real speech.

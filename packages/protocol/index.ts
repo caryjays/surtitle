@@ -42,6 +42,8 @@ export const Segment = z.object({
   source: Source, target: Source,
   state: z.enum(['partial', 'pending', 'ready', 'failed', 'unresolved', 'skipped', 'original']),
   finalizedAt: z.number().nullable(), translationMs: z.number().nonnegative().nullable(),
+  // Leading characters of a partial original that are locked; displays reveal only these. Absent: all of it.
+  stable: z.number().int().nonnegative().max(4000).optional(),
 });
 export type Segment = z.infer<typeof Segment>;
 export const AudioGate = z.object({

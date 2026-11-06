@@ -1,4 +1,5 @@
 import { renderSegments } from './client.ts';
+import { Pacer } from './pacer.ts';
 import type { Segment, Snapshot } from '../../packages/protocol/index.ts';
 
 // Authored fictional display fixtures only: never submitted to ASR, translation or canonical state.
@@ -37,7 +38,8 @@ export function readingContentChanged(before: Pick<Snapshot, 'segments' | 'turns
   for (let i = 0; i < after.segments.length; i++) {
     const a = before.segments[i]!; const b = after.segments[i]!;
     if (a.id !== b.id || a.sequence !== b.sequence || a.original !== b.original || a.translation !== b.translation
-      || a.source !== b.source || a.target !== b.target || a.state !== b.state || a.final !== b.final || a.translationMs !== b.translationMs) return true;
+      || a.source !== b.source || a.target !== b.target || a.state !== b.state || a.final !== b.final || a.translationMs !== b.translationMs
+      || a.stable !== b.stable) return true;
   }
   for (let i = 0; i < after.turns.length; i++) {
     const a = before.turns[i]!; const b = after.turns[i]!;
@@ -56,11 +58,20 @@ export function setupHistory(preservePosition: (update: () => void) => void) {
   let turns: Snapshot['turns'] = [];
   let showingPreview = false;
   let previous: Pick<Snapshot, 'segments' | 'turns'> | undefined;
+  let latest: Snapshot | undefined;
+  const pacer = new Pacer();
   function render() {
     const source = showingPreview ? PREVIEW_SEGMENTS : rows;
     const visible = filterHistory(source, search.value);
-    preservePosition(() => renderSegments(captions, visible, true, showingPreview ? [] : turns));
-    captions.dataset.emptyMessage = search.value.trim() ? 'No matching recent text. Clear search to see all turns.' : 'Original speech and translations will appear here.';
+    let shown: Parameters<typeof renderSegments>[1] = visible;
+    if (!showingPreview) {
+      pacer.configure({ ...pacer.settings, enabled: document.body.dataset.pace !== 'false' });
+      const ids = new Set(visible.map(row => row.id));
+      shown = pacer.update(latest, Date.now()).filter(row => ids.has(row.id));
+    }
+    preservePosition(() => renderSegments(captions, shown, true, showingPreview ? [] : turns));
+    const empty = search.value.trim() ? 'No matching recent text. Clear search to see all turns.' : 'Original speech and translations will appear here.';
+    if (captions.dataset.emptyMessage !== empty) captions.dataset.emptyMessage = empty;
     document.getElementById('history-count')!.textContent = `${visible.length} / ${source.filter(row => row.original).length} turns · ${showingPreview ? 'fictional preview' : 'recent 60 · memory only'}`;
     preview.setAttribute('aria-pressed', String(showingPreview));
     preview.textContent = showingPreview ? 'Return to live text' : 'Preview long conversation';
@@ -71,9 +82,11 @@ export function setupHistory(preservePosition: (update: () => void) => void) {
   search.addEventListener('input', browse);
   document.getElementById('latest')!.addEventListener('click', () => { search.value = ''; render(); });
   document.getElementById('search-clear')!.addEventListener('click', () => { search.value = ''; browse(); search.focus(); });
+  // Keep releasing paced text between snapshots.
+  setInterval(() => { if (pacer.busy && !showingPreview) render(); }, 100);
   return (snapshot: Snapshot) => {
     const changed = readingContentChanged(previous, snapshot);
-    previous = snapshot;
+    previous = snapshot; latest = snapshot;
     rows = snapshot.segments; turns = snapshot.turns;
     const capturing = ['connecting', 'active', 'stopping'].includes(snapshot.capture);
     preview.disabled = capturing;
