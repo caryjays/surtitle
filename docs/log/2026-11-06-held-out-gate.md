@@ -6,7 +6,7 @@
 
 `pnpm gate:run --segmentation rolling --held-out .local/fixtures/held-out/held-out.json` at `325ca9c`, clean tree, on the laptop. It started once the 5-minute load average fell below 2.5: 2.0 at the start and 2.3 an hour in. Every replay finished. The run then crashed printing the held-out results path, which was relative because the manifest path was, and that lost the per-stream load samples. The silence check, the full-clip decodes and `run.json` were finished separately for the same run directory; none of them is paced in real time. The manifest folder is now resolved to an absolute path.
 
-`gate:run` now also decodes each held-out excerpt in one pass in its language, with the live model and filters and no segmentation, and `gate:score` reports that as `heldoutOfflineRate`, not gated. For this run, those decodes were made after the replays with the same function.
+`gate:run` now also decodes each held-out excerpt in one pass in its language with the live model: plain Whisper long-form decoding at temperature 0, without the speech gate, decoder filters or segmentation, and `gate:score` reports that as `heldoutOfflineRate`, not gated. For this run, those decodes were made after the replays with the same function.
 
 ## Results
 
