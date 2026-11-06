@@ -33,6 +33,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-06-pacing.md](2026-11-06-pacing.md) | Rolling step 4: locked-text marker, reading-pace release, roll-up overlay with Browser Source settings |
 | [2026-11-06-console.md](2026-11-06-console.md) | Display simulations, the operator console, runtime segmentation and translation settings |
 | [2026-11-06-rehearsal-latency.md](2026-11-06-rehearsal-latency.md) | First console rehearsal in rolling listen mode, and the stages of translation delay |
+| [2026-11-06-local-translation.md](2026-11-06-local-translation.md) | Offline profile with a local Qwen3.5-4B translator, its latency and GPU contention; automatic gain on by default |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

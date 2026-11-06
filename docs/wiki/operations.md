@@ -10,11 +10,14 @@ Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Ch
 | --- | --- |
 | `pnpm install` | Node dependencies |
 | `pnpm local:setup` | Python venv, pinned models, speech detector and public fixtures; repeatable |
+| `pnpm local:setup-translator` | the pinned local translation model, about 3 GB; resumes an interrupted download; repeatable |
 | `pnpm check` | typecheck, fake-provider tests, docs check, build |
 | `pnpm dev:local` | build and run original-only local mode without `.env` |
 | `pnpm preflight:listen` | presence checks for key, model files, detector and Python; no API call |
+| `pnpm preflight:offline` | presence checks for the recognition and translation models, detector and Python |
+| `pnpm dev:offline` | build and run local recognition with local translation, without `.env` |
 | `pnpm dev:listen` | build and run local recognition with cloud translation |
-| `pnpm build` then `pnpm start:local` or `pnpm start:listen` | run the built service |
+| `pnpm build` then `pnpm start:local`, `pnpm start:offline` or `pnpm start:listen` | run the built service |
 | `LOCAL_MODEL=small-q4 pnpm dev:local` | try the smaller model |
 | `LOCAL_PREVIEWS=off pnpm dev:listen` | disable source previews |
 | `LOCAL_SEGMENTATION=rolling pnpm dev:listen` | start in experimental rolling recognition, not yet rehearsed; the console's Session panel also switches it while paused |
@@ -47,7 +50,7 @@ For an in-person event use an extended display with the fullscreen projector and
 
 - Translation fails: originals continue; a category appears on `/control`.
 - Recognition or capture fails: captions stop visibly; click Start.
-- Venue network fails: `dev:local` keeps working; cloud translation does not.
+- Venue network fails: `dev:local` and `dev:offline` keep working; cloud translation does not.
 - Application fails: switch to a rehearsed off-the-shelf app agreed in advance.
 
 Live cloud translation sends speech-derived text off the laptop. Agree notice and consent with organizers before using it on other people.

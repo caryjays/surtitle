@@ -6,7 +6,7 @@ Verified: 2026-11-06 · Sources: apps/web/control.ts, apps/web/control.html, app
 
 The operator console and the personal reader, on one page, since only one control socket may be connected; a second tab is refused. It is the only page that touches the microphone. Closing or hiding the tab, a heartbeat gap of 6 s, a stalled audio send or a track ending all stop capture and send `capture-failed`.
 
-Capture request: selected device or System default, mono, `echoCancellation: true`, `noiseSuppression: true`, `autoGainControl` from the checkbox, off by default. The actual track label is shown in the status line after Start and never exported. Reload resets the device selection to System default.
+Capture request: selected device or System default, mono, `echoCancellation: true`, `noiseSuppression: true`, `autoGainControl` from the Automatic mic gain checkbox, on by default. The actual track label is shown in the status line after Start and never exported. Reload resets the device selection to System default.
 
 Layout: a top bar with the capture state, the listening presets, the capture controls and the input level; a status line with what is processed where, the direction, the actual input, the service status, the current activity and errors; the transcript; and a sidebar of panels. Reading focus hides the presets, the service status, the input level and the sidebar, and gives the transcript the full width. Below 900 px wide the sidebar stacks under the transcript.
 
@@ -20,7 +20,7 @@ Layout: a top bar with the capture state, the listening presets, the capture con
 | Microphone, Refresh inputs, Recalibrate room noise, Automatic mic gain | Input panel | device choice; `calibrate`, listen mode only, clears history |
 | Direction, New session | Session panel | any of the three modes; `new-session` |
 | Segmentation | Session panel, when the recognizer offers the choice | `set-segmentation`: turns or rolling, only while capture is off, from the next Start |
-| Translate finalized text | Session panel, when a translator is configured | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
+| Translate finalized text | Session panel, when a translator is configured; labeled on this Mac or paid cloud requests | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
 
 The transcript shows up to 60 rows with keyed DOM updates, Follow latest, Jump to latest, search across originals and translations, and a labeled fictional layout preview that is disabled while capturing. Text & spacing saves only validated display preferences under the local storage key `captions.reading.v1`: translation size 18 to 48 px, original size 12 to 32 px and at least 4 px smaller, spacing, width, the caption diagnostics toggle, and Pace text at reading speed, on by default.
 
@@ -57,7 +57,7 @@ The rows sit in a roll-up window anchored at the bottom: when released text adds
 | `Snapshot.capture` | `paused`, `connecting`, `active`, `stopping`, `failed` |
 | `Segment.state` | `partial`, `pending`, `ready`, `failed`, `unresolved`, `skipped`, `original` |
 | `Segment.stable` | Optional: the number of leading characters of a partial original that are locked; absent means all of it |
-| `Snapshot.processing` | `local-only`, `local-audio-cloud-text`, `cloud-audio-and-text`, `cloud-audio-only` |
+| `Snapshot.processing` | `local-only`, `local-audio-local-text`, `local-audio-cloud-text`, `cloud-audio-and-text`, `cloud-audio-only` |
 | `Failure` | `credentials`, `transcription`, `translation`, `translation-auth`, `translation-rate-limit`, `translation-network`, `capture`, `overload`, `protocol`, `session-limit` |
 | `AudioGate` | `calibrating`, `quiet` or `speech`; level; threshold; remaining ms |
 

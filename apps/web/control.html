@@ -51,7 +51,7 @@
 <div class="panel-body">
 <label>Microphone <select id="device"><option value="">System default</option></select></label>
 <div class="row"><button id="refresh" type="button">Refresh inputs</button><button id="calibrate" type="button" disabled>Recalibrate room noise</button></div>
-<label class="inline"><input id="auto-gain" type="checkbox"> Automatic mic gain (may amplify room noise)</label>
+<label class="inline"><input id="auto-gain" type="checkbox" checked> Automatic mic gain (may amplify room noise)</label>
 <p id="gate-status">Noise gate diagnostics appear while listening.</p>
 </div>
 </details>
@@ -63,8 +63,8 @@
 <label class="inline"><input type="radio" name="segmentation" value="rolling"> Rolling · lock text as it settles (experimental)</label>
 <p class="panel-note" id="segmentation-note">Applies at the next Start.</p>
 </fieldset>
-<label class="inline" id="translation-setting" hidden><input id="translation-toggle" type="checkbox"> Translate finalized text (paid cloud requests)</label>
-<p class="panel-note" id="translation-note">Translation is available when the service starts with the listen profile.</p>
+<label class="inline" id="translation-setting" hidden><input id="translation-toggle" type="checkbox"> Translate finalized text <span id="translation-where">(paid cloud requests)</span></label>
+<p class="panel-note" id="translation-note">Translation is available when the service starts with the listen or offline profile.</p>
 <button id="new" type="button" disabled>New session</button>
 </div>
 </details>
@@ -98,7 +98,7 @@
 <details id="diagnostics" class="panel"><summary>Help &amp; notes</summary>
 <div class="panel-body">
 <p>Check permission before transcribing other people. Cloud modes send text and recent context (and, only with cloud recognition, audio) to the provider; provider retention policies apply. Local recording and transcript saving are unavailable.</p>
-<p>At Start, the room (including other speakers) must be quiet during the 1.5-second room-noise calibration, then speak when Listening appears. Calibrating during someone else's speech can learn that speech as background noise. Recalibrate clears captions and context and cancels pending translations without reloading the model. Automatic gain is off by default; Pause before changing it or the microphone.</p>
+<p>At Start, the room (including other speakers) must be quiet during the 1.5-second room-noise calibration, then speak when Listening appears. Calibrating during someone else's speech can learn that speech as background noise. Recalibrate clears captions and context and cancels pending translations without reloading the model. Automatic gain is on by default; turn it off for a line feed or an already leveled input. Pause before changing it or the microphone.</p>
 <p>Direction changes finish the current turn with its previous setting; the next turn uses the new one. Automatic direction is not speaker identification: short or ambiguous speech may stay original-only. Speak in turns; simultaneous voices can mix.</p>
 <p>Turns segmentation finalizes after a pause or at 12 seconds. Rolling locks text two decodes agree on and shows it as it settles; lighter text in the transcript is not locked or not yet released. Neither is word-by-word simultaneous interpretation.</p>
 <p>Keep this tab open and the Mac awake. No synthesized speech.</p>

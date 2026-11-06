@@ -53,10 +53,11 @@ export function setupSession(send: Send) {
     element('segmentation-note').textContent = capturing ? 'Pause to change; applies at the next Start.' : 'Applies at the next Start.';
     const available = Boolean(state?.translation.available);
     element('translation-setting').hidden = !available;
+    element('translation-where').textContent = state?.processing === 'local-audio-local-text' ? '(on this Mac)' : '(paid cloud requests)';
     translation.checked = Boolean(state?.translation.enabled); translation.disabled = !connected;
     element('translation-note').textContent = available
       ? state!.translation.enabled ? 'Each finalized row is sent for translation; turning this off drops queued requests.' : 'Off: original text only, no requests.'
-      : 'Translation is available when the service starts with the listen profile.';
+      : 'Translation is available when the service starts with the listen or offline profile.';
   };
 }
 

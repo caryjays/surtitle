@@ -58,7 +58,7 @@ function describe(value: Mode, listening: boolean) {
 const errors = {
   credentials: 'Provider credential missing. Run pnpm preflight:listen; configure the key locally, then restart the service.',
   transcription: 'Local recognition unavailable. Check local setup and processing load, then Start again. Original text is retained.',
-  translation: 'Translation failed or timed out. Original text is preserved; later turns continue. Check model access and network.',
+  translation: 'Translation failed or timed out. Original text is preserved; later turns continue. Check model access and network, or the local translation model.',
   'translation-auth': 'Translation authorization failed. Check the API project/key and model access locally, then restart. Original text is preserved.',
   'translation-rate-limit': 'Translation quota or rate limit reached. Check billing/limits. No automatic retries; Pause to stop new requests.',
   'translation-network': 'Translation network unavailable. Original captions continue locally. Later turns try normally; old failures are not replayed.',
@@ -120,6 +120,7 @@ const connection = connect('control', snapshot => {
   }
   element('processing').textContent = {
     'local-only': 'Audio stays on this Mac. Translation is OFF; original-language captions only.',
+    'local-audio-local-text': 'Audio and text stay on this Mac · local translation, no network requests.',
     'local-audio-cloud-text': 'Audio stays on this Mac · text and recent context sent to paid cloud translation.',
     'cloud-audio-and-text': 'Audio and text are processed in the cloud; provider retention policies apply.',
     'cloud-audio-only': 'Audio is processed in the cloud. Translation is OFF; provider retention policies apply.',

@@ -62,7 +62,7 @@ export const Snapshot = z.object({
   revision: z.number().int().nonnegative(), pair: Pair, mode: Mode,
   capture: z.enum(['paused', 'connecting', 'active', 'stopping', 'failed']),
   error: Failure.nullable(), backend: z.string().max(160),
-  processing: z.enum(['local-only', 'local-audio-cloud-text', 'cloud-audio-and-text', 'cloud-audio-only']),
+  processing: z.enum(['local-only', 'local-audio-local-text', 'local-audio-cloud-text', 'cloud-audio-and-text', 'cloud-audio-only']),
   queue: z.number().int().nonnegative().max(8), running: z.number().int().nonnegative().max(2),
   gate: AudioGate.nullable().default(null), rejected: z.number().int().nonnegative().default(0),
   segments: z.array(Segment).max(MAX_SEGMENTS), sentAt: z.number(),

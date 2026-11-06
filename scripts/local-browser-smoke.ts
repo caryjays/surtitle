@@ -8,11 +8,14 @@ import { z } from 'zod';
 import { Controller } from '../apps/service/controller.ts';
 import { createCaptionServer } from '../apps/service/server.ts';
 import { localTranscriberFactory } from '../packages/providers/local.ts';
+import { LocalTranslator } from '../packages/providers/local-translator.ts';
 import type { TranslationInput } from '../packages/protocol/index.ts';
 import { loadGlossary, resolveGlossaryPath } from '../apps/service/glossary.ts';
 
 async function main() {
-  const listening = process.argv.includes('--listen');
+  // --offline: the listen run with the real local translation model in place of the fake translator.
+  const offline = process.argv.includes('--offline');
+  const listening = process.argv.includes('--listen') || offline;
   const rolling = process.argv.includes('--rolling');
   const manifest = z.array(z.object({ id: z.string(), sha256: z.string() })).parse(JSON.parse(await readFile('benchmarks/fleurs.json', 'utf8')));
   const parts: Buffer[] = [Buffer.alloc(48_000 * 2 * 10)]; // Initialization silence, not a live latency measurement.
@@ -39,9 +42,15 @@ async function main() {
   const glossary = listening ? await loadGlossary((await resolveGlossaryPath()).path) : [];
   const requests: TranslationInput[] = [];
   let partialSeen = false; let tailSeen = false;
-  const controller = new Controller({ backend: listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
-    processing: listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null,
-    translator: listening ? { async translate(input) {
+  const local = offline ? new LocalTranslator({ model: 'qwen3.5-4b-q4' }) : undefined;
+  if (local) await local.start();
+  const requestMs: number[] = [];
+  const controller = new Controller({ backend: offline ? 'Local transcription · translation local' : listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
+    processing: offline ? 'local-audio-local-text' : listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null,
+    translator: local ? { async translate(input, signal, diagnostic) {
+      requests.push(input); const start = performance.now();
+      try { return await local.translate(input, signal, diagnostic); } finally { requestMs.push(Math.round(performance.now() - start)); }
+    } } : listening ? { async translate(input) {
       requests.push(input);
       return input.sourceLanguage === 'ja' ? { source: 'ja', target: 'en', text: 'Japanese fixture translation (fake).' }
         : { source: 'en', target: 'ja', text: '英語のテスト翻訳（フェイク）。' };
@@ -81,7 +90,13 @@ async function main() {
       assert(requests.some(request => request.sourceLanguage === 'ja'));
       assert(requests.every(request => request.mode === 'auto'));
       assert(requests.some(request => request.context?.length));
-      assert.match(await control.locator('#processing').textContent() ?? '', /recent context/);
+      assert.match(await control.locator('#processing').textContent() ?? '', offline ? /no network requests/ : /recent context/);
+      if (offline) {
+        await overlay.waitForSelector('.translation[lang="ja"]', { timeout: 60_000 });
+        const rows = controller.snapshot().segments.filter(row => row.state === 'ready');
+        assert(rows.some(row => row.target === 'ja' && /[\u3040-\u30ff\u4e00-\u9fff]/.test(row.translation ?? '')), 'a Japanese translation');
+        assert(rows.some(row => row.target === 'en' && /[A-Za-z]{3}/.test(row.translation ?? '')), 'an English translation');
+      }
     } else {
       assert.equal(await overlay.locator('.translation').count(), 0);
       assert.equal(await control.locator('#processing').textContent(), 'Audio stays on this Mac. Translation is OFF; original-language captions only.');
@@ -92,9 +107,12 @@ async function main() {
     if (rolling) assert(tailSeen, 'rolling rows carry an unlocked tail');
     assert.deepEqual(errors, []);
     if (rolling) console.log(`Rolling segmentation: unlocked tail observed: ${tailSeen}; none shown on the overlay.`);
-    console.log(listening
+    if (offline) console.log(`Local translation requests (ms): ${requestMs.join(', ')}`);
+    console.log(offline
+      ? 'PASS: public EN/JA → real speech gate + MLX recognition → real local translation model in both directions; reload/pause. No network calls or real microphone.'
+      : listening
       ? `PASS: non-speech prelude produces no translation; public EN/JA → real speech gate + MLX with previews → FAKE bidirectional translation/context; reload/pause. Provisional source observed: ${partialSeen}. No cloud calls or real microphone.`
       : 'PASS: public EN→JA prerecorded speech → Chrome AudioWorklet → local MLX → original-only overlay; reload/pause; no cloud calls or real microphone.');
-  } finally { await browser?.close(); await app.close(); await unlink(replayPath); }
+  } finally { await browser?.close(); await app.close(); local?.close(); await unlink(replayPath); }
 }
 void main().catch(() => { console.error('Local browser smoke failed. Check local setup and Chrome availability. Details suppressed.'); process.exitCode = 1; });

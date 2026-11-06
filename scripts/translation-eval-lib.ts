@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { Glossary, TranslationContext, type Translation } from '../packages/protocol/index.ts';
 
-export type Provider = 'openai' | 'anthropic' | 'local';
+// local: an OpenAI-compatible server at a URL; mlx: a pinned model in the repo's local translation worker.
+export type Provider = 'openai' | 'anthropic' | 'local' | 'mlx';
 export type Effort = 'none' | 'minimal' | 'low' | 'medium' | 'high';
 export type Candidate = { label: string; provider: Provider; model: string; effort: Effort; baseUrl?: string; variant?: string };
 
@@ -15,8 +16,8 @@ export function parseCandidate(spec: string): Candidate {
     if (!/^[a-z0-9-]+$/.test(variant)) throw new Error(`Prompt variant "${variant}" must be lowercase letters, digits and dashes.`);
     return { ...parseCandidate(spec.trim().slice(0, tilde)), label: spec.trim(), variant };
   }
-  const match = /^(openai|anthropic|local):(.+)$/.exec(spec.trim());
-  if (!match) throw new Error(`Unknown candidate "${spec}". Use openai:<model>, anthropic:<model> or local:<model>@<url>.`);
+  const match = /^(openai|anthropic|local|mlx):(.+)$/.exec(spec.trim());
+  if (!match) throw new Error(`Unknown candidate "${spec}". Use openai:<model>, anthropic:<model>, mlx:<model> or local:<model>@<url>.`);
   const provider = match[1] as Provider;
   let rest = match[2]!;
   if (provider === 'local') {
@@ -24,6 +25,10 @@ export function parseCandidate(spec: string): Candidate {
     if (at <= 0) throw new Error(`Local candidate "${spec}" needs <model>@<base url>, for example local:qwen@http://127.0.0.1:8080/v1.`);
     const baseUrl = new URL(rest.slice(at + 1)).href;
     return { label: spec.trim(), provider, model: rest.slice(0, at), effort: 'none', baseUrl };
+  }
+  if (provider === 'mlx') {
+    if (rest !== 'qwen3.5-4b-q4') throw new Error(`Unknown local translation model "${rest}"; see scripts/local/translators.json.`);
+    return { label: spec.trim(), provider, model: rest, effort: 'none' };
   }
   let effort: Effort = 'none';
   const hash = rest.indexOf('#');
@@ -48,7 +53,7 @@ export function applyVariant(base: string, variant: Variant) {
   }
   return variant.append ? `${text} ${variant.append}` : text;
 }
-export const isPaid = (candidate: Pick<Candidate, 'provider'>) => candidate.provider !== 'local';
+export const isPaid = (candidate: Pick<Candidate, 'provider'>) => candidate.provider === 'openai' || candidate.provider === 'anthropic';
 
 export const EvalCase = z.object({
   id: z.string().min(1).max(100), referenceId: z.string().min(1).max(100), condition: z.string().max(40),

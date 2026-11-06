@@ -52,7 +52,7 @@ try {
   const overlay = await context.newPage(); overlay.on('pageerror', () => errors.push('overlay'));
   await overlay.addInitScript("Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: () => { throw new Error('Overlay attempted microphone capture'); } });");
   await control.goto(app.origin + '/control'); await overlay.goto(app.origin + '/overlay');
-  assert.equal(await control.locator('#auto-gain').isChecked(), false);
+  assert.equal(await control.locator('#auto-gain').isChecked(), true);
   await control.locator('#diagnostic-log > summary').click();
   assert.equal(await control.locator('#diagnostic-indicator').textContent(), 'OFF');
   assert.equal(await control.locator('#diagnostic-download').isDisabled(), true);

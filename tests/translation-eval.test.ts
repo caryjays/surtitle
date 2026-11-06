@@ -7,13 +7,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ChatCompletionsTranslator, chatTranslationRequest, extractObject } from '../packages/providers/chat.ts';
 import { TranslationFailure } from '../packages/providers/types.ts';
-import { applyVariant, blindJobs, degraded, direction, parseCandidate, shuffle, percentile, summarize, termScore, usageFrom, type Run } from '../scripts/translation-eval-lib.ts';
+import { applyVariant, blindJobs, degraded, direction, isPaid, parseCandidate, shuffle, percentile, summarize, termScore, usageFrom, type Run } from '../scripts/translation-eval-lib.ts';
 import { ja } from './helpers.ts';
 
 test('candidate specs parse provider, model, effort and local URL', () => {
   assert.deepEqual(parseCandidate('anthropic:claude-haiku-5-5#low'), { label: 'anthropic:claude-haiku-5-5#low', provider: 'anthropic', model: 'claude-haiku-5-5', effort: 'low' });
   assert.equal(parseCandidate('openai:gpt-5.6-terra').effort, 'none');
   assert.deepEqual(parseCandidate('local:qwen@http://127.0.0.1:8080/v1'), { label: 'local:qwen@http://127.0.0.1:8080/v1', provider: 'local', model: 'qwen', effort: 'none', baseUrl: 'http://127.0.0.1:8080/v1' });
+  assert.deepEqual(parseCandidate('mlx:qwen3.5-4b-q4'), { label: 'mlx:qwen3.5-4b-q4', provider: 'mlx', model: 'qwen3.5-4b-q4', effort: 'none' });
+  assert.throws(() => parseCandidate('mlx:some/other-model'));
+  assert.equal(isPaid(parseCandidate('mlx:qwen3.5-4b-q4')), false);
   assert.deepEqual(parseCandidate('anthropic:claude-haiku-5-5#low~repair-cut'), { label: 'anthropic:claude-haiku-5-5#low~repair-cut', provider: 'anthropic', model: 'claude-haiku-5-5', effort: 'low', variant: 'repair-cut' });
   for (const bad of ['gemini:x', 'openai:', 'local:qwen', 'anthropic:m#turbo', 'anthropic:m~Bad Name']) assert.throws(() => parseCandidate(bad));
 });

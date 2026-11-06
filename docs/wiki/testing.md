@@ -1,6 +1,6 @@
 # Testing and benchmarks
 
-Verified: 2026-11-06 · Sources: package.json, tests, scripts/display-sim.ts, scripts/diagnostics-latency.ts, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md, scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/prepare_corpus.py, scripts/local/corpus_eval.py, scripts/local/language_sim.py, scripts/local/prepare_held_out.py
+Verified: 2026-11-06 · Sources: package.json, tests, scripts/translation-eval-lib.ts, scripts/display-sim.ts, scripts/diagnostics-latency.ts, scripts/browser-smoke.ts, scripts/local-browser-smoke.ts, scripts/local/benchmark.py, scripts/local-stream-benchmark.ts, scripts/local/silence_check.py, scripts/noisy-stream-experiment.ts, scripts/local/translation_cases.py, scripts/translation-eval.ts, scripts/translation-eval-lib.ts, scripts/replay-cases.ts, scripts/local/full_clip.py, benchmarks/translation-terms.json, benchmarks/model-prices.json, benchmarks/prompt-variants.json, benchmarks/README.md, scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/prepare_corpus.py, scripts/local/corpus_eval.py, scripts/local/language_sim.py, scripts/local/prepare_held_out.py
 
 Ordinary tests never read `.env`, never call a provider and never touch a physical microphone. Real-model checks are explicit commands.
 
@@ -14,6 +14,7 @@ Ordinary tests never read `.env`, never call a provider and never touch a physic
 | `pnpm sim:display` | Authored fictional sessions through the display pacer in virtual time, with rolling locks and translation latency modeled: English and Japanese lectures, a fast speaker, alternating Q&A, slow translation, pacing off. Reports each lane's lag behind speech and the most characters released in a second. `--drain=MS` compares drain times. Development numbers: lock timing is modeled, not decoded | no | no |
 | `pnpm diag:latency <file>` | Reads a diagnostics file downloaded from the console and reports, per Start, each translated row's delay by stage: row length, first lock, lock lag, close, translation queue and request, and row start to translation. Metadata only | no | no |
 | `pnpm test:rolling-browser` | The same in rolling segmentation; checks that partial rows carry an unlocked tail and that the overlay never shows unreleased text | yes | no |
+| `pnpm test:offline-browser` | The listen smoke in rolling segmentation with the real local translation model in place of the fake: checks a Japanese and an English translation reach the overlay, and prints each request's time | yes | no |
 | `pnpm local:silence` | Synthetic silence, noise and hum through the real engine must yield no text | yes | no |
 | `pnpm local:bench`, `pnpm local:stream` | Full-clip and real-time replay accuracy and timing on the tuning fixtures; metrics to ignored `benchmarks/results/` | yes | no |
 | `pnpm local:noisy-fixtures`, `local:noisy-prepare`, `local:noisy-screen`, `local:noisy-replay` | Controlled noisy Japanese experiment; fixture setup downloads bounded public data once | yes | fixtures only |
@@ -40,7 +41,7 @@ pnpm eval:translation --paid \
 
 | Part | Behavior |
 | --- | --- |
-| Candidates | `openai:<model>` and `anthropic:<model>` use the production translators; append `#low` and so on to set effort. `local:<model>@<url>` uses the chat-completions adapter against any loopback server. Append `~<variant>` to any candidate to use a prompt variant from `benchmarks/prompt-variants.json`, written as edits to the live instructions; an edit that no longer matches fails the run |
+| Candidates | `openai:<model>` and `anthropic:<model>` use the production translators; append `#low` and so on to set effort. `local:<model>@<url>` uses the chat-completions adapter against any loopback server. `mlx:qwen3.5-4b-q4` uses the live local translator and its worker, loaded before the warm-up so model load is not timed. Append `~<variant>` to any candidate to use a prompt variant from `benchmarks/prompt-variants.json`, written as edits to the live instructions; an edit that no longer matches fails the run |
 | Cases | Each pairs recognizer output with the public reference. Add more files with repeated `--cases`; hand-written private cases belong in `private/` and may carry `terms`, `glossary` and `context` |
 | Timing | One untimed warm-up per candidate, then sequential calls with the order rotated per case; `--repeats`, default 2; `--timeout-ms`, default 12000 as live |
 | Terms | Required spellings per fixture in `benchmarks/translation-terms.json`; several test recovery from known recognition errors |

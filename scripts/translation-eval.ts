@@ -7,6 +7,7 @@ import type { TranslationDiagnostic } from '../packages/protocol/index.ts';
 import { OpenAITranslator } from '../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { ChatCompletionsTranslator } from '../packages/providers/chat.ts';
+import { LocalTranslator } from '../packages/providers/local-translator.ts';
 import { TranslationFailure, type Translator } from '../packages/providers/types.ts';
 import { translationInstructions } from '../packages/providers/translation.ts';
 import {
@@ -40,7 +41,7 @@ let candidates: Candidate[] = [];
 try { candidates = values.candidate.map(parseCandidate); } catch (error) { fail((error as Error).message); }
 if (new Set(candidates.map(c => c.label)).size !== candidates.length) fail('Candidates must be distinct.');
 const judge = values['no-judge'] ? undefined : parseCandidate(values.judge);
-if (judge?.provider === 'local') fail('The judge must be openai:<model> or anthropic:<model>.');
+if (judge && !isPaid(judge)) fail('The judge must be openai:<model> or anthropic:<model>.');
 const seed = values.seed === undefined ? Math.floor(Math.random() * 2 ** 31) : Number(values.seed);
 if (!Number.isInteger(seed) || seed < 0) fail('--seed must be a non-negative integer.');
 
@@ -87,10 +88,12 @@ function instrumented() {
   };
   return { fetch: wrapped, usage: () => pending };
 }
+const workers: LocalTranslator[] = [];
 function translatorFor(c: Candidate, f: typeof fetch): Translator {
   const instructions = instructionsFor.get(c.label);
   if (c.provider === 'openai') return new OpenAITranslator({ key: keys.openai, model: c.model, effort: c.effort, instructions, fetch: f });
   if (c.provider === 'anthropic') return new AnthropicTranslator({ key: keys.anthropic, model: c.model, effort: c.effort, instructions, fetch: f });
+  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: 'qwen3.5-4b-q4', instructions }); workers.push(t); return t; }
   return new ChatCompletionsTranslator({ baseUrl: c.baseUrl!, model: c.model, instructions, fetch: f });
 }
 const pool = candidates.map(c => { const meter = instrumented(); return { c, meter, translator: translatorFor(c, meter.fetch) }; });
@@ -118,6 +121,8 @@ async function call(entry: typeof pool[number], item: EvalCase, repeat: number):
   }
 }
 
+// Model load is not request time: local workers load before the warm-up.
+if (workers.length) { console.log('Loading local translation models.'); await Promise.all(workers.map(w => w.start())); }
 console.log(`${cases.length} cases, ${repeats} repeats, mode ${values.mode}, timeout ${timeoutMs} ms. Warming up connections.`);
 for (const entry of pool) await call(entry, cases[0]!, -1);
 const runs: Run[] = [];
@@ -187,7 +192,7 @@ if (judge) {
 }
 
 const summary = summarize(candidates.map(c => c.label), runs, judgments, cases,
-  Object.fromEntries(candidates.map(c => [c.label, c.provider === 'local' ? undefined : prices[c.model]])));
+  Object.fromEntries(candidates.map(c => [c.label, !isPaid(c) ? undefined : prices[c.model]])));
 const createdAt = new Date().toISOString();
 await mkdir(values['out-dir'], { recursive: true });
 const output = `${values['out-dir']}/translation-eval-${createdAt.replace(/[:.]/g, '-')}.json`;
@@ -196,3 +201,4 @@ await writeFile(output, `${JSON.stringify({ version: 1, createdAt, caseFiles: va
 console.log(`\n${table(summary)}\n`);
 console.log('Latency is request time from this machine, warm connections, sequential calls. Terms count first-repeat outputs. Fidelity is the judge mean (1–5); "errors" covers cases where recognition changed the words.');
 console.log(`Full results: ${output}`);
+for (const worker of workers) worker.close();

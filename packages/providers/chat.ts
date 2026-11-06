@@ -10,11 +10,17 @@ function shape(pair: Pair) {
   return `Reply with only one JSON object of the form {"source":${codes},"target":${codes},"text":string}.`;
 }
 
-export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
+// System and user messages for a chat model; the local worker uses them too.
+export function chatMessages(input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
   input = TranslationInput.parse(input);
+  return { system: `${instructions ?? translationInstructionsFor(pair)} ${shape(pair)}`, user: JSON.stringify(input) };
+}
+
+export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
+  const { system, user } = chatMessages(input, instructions, pair);
   return {
     model, max_tokens: 2048, stream: false,
-    messages: [{ role: 'system', content: `${instructions ?? translationInstructionsFor(pair)} ${shape(pair)}` }, { role: 'user', content: JSON.stringify(input) }],
+    messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     response_format: { type: 'json_schema', json_schema: { name: 'caption_translation', strict: true, schema: translationSchemaFor(pair) } },
   };
 }
