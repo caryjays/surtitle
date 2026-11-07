@@ -37,7 +37,13 @@ starts.forEach((start, i) => {
   const n = (key: string) => rows.map(t => t[key] as number | undefined);
   console.log(`Start ${i + 1}: ${end === Infinity ? 'not paused' : `${Math.round((end - start.atMs) / 1000)} s`}, ${turns.size} rows, ${rows.length} translated`);
   console.log(`  closed by: ${tally(n('boundary'))}; outcomes: ${tally([...turns.values()].map(t => t.outcome))}`);
-  console.log('  Rows (seconds unless noted)');
+  // Recognition over every kept row, translated or not, so a run without translation compares with one with it.
+  const kept = [...turns.values()].filter(t => !['rejected', 'capturing', 'empty'].includes(t.outcome as string));
+  console.log('  Recognition, all kept rows');
+  line('row start to first locked text', kept.map(t => t.firstTextMs as number | undefined));
+  line('lock lag (locked audio end to lock)', kept.map(t => t.lockLagMs as number | undefined));
+  line('closing decode inference', kept.map(t => t.recognitionInferenceMs as number | undefined));
+  console.log('  Translated rows (seconds unless noted)');
   line('row audio', n('audioMs'));
   line('original characters', rows.map(t => ready.get(t.sequence as number)!.original), 'n');
   line('translation characters', rows.map(t => ready.get(t.sequence as number)!.translation), 'n');

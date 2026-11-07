@@ -48,6 +48,7 @@
     "test:local-browser": "pnpm build && tsx scripts/local-browser-smoke.ts",
     "test:listen-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --listen",
     "diag:latency": "tsx scripts/diagnostics-latency.ts",
+    "replay:contention": "tsx scripts/contention-replay.ts",
     "sim:display": "tsx scripts/display-sim.ts",
     "test:rolling-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --listen --rolling",
     "test:offline-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --offline --rolling",
