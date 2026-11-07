@@ -1,6 +1,6 @@
 # Translation
 
-Verified: 2026-11-06 · Sources: packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/chat.ts, packages/providers/local-translator.ts, scripts/local/translate_worker.py, scripts/local/translators.json, scripts/local/download_translator.py, packages/providers/translation.ts, apps/service/main.ts, packages/protocol/index.ts, apps/service/controller.ts, apps/service/glossary.ts, profiles/glossary.example.json, profiles/README.md, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-08 · Sources: packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/chat.ts, packages/providers/local-translator.ts, scripts/local/translate_worker.py, scripts/local/translators.json, scripts/local/download_translator.py, packages/providers/translation.ts, apps/service/main.ts, packages/protocol/index.ts, apps/service/controller.ts, apps/service/glossary.ts, profiles/glossary.example.json, profiles/README.md, packages/protocol/languages.ts, profiles/languages.json
 
 Translation is one request per finalized turn, either to a cloud provider or to a model on this Mac. The listen profile, or an explicit `TRANSLATION_BACKEND=cloud`, sends it to the cloud: audio never leaves the Mac, text does. The offline profile, or `TRANSLATION_BACKEND=local`, keeps it on the Mac; see [local translation](#local-translation). `TRANSLATION_PROVIDER` selects OpenAI Responses (`openai`, the default) or Anthropic Messages (`anthropic`). Both share the instructions and output schema in `translation.ts`, generated from the session's pair; only the transport and response mapping differ. For `en-ja` the generated instructions are the same text as before the pair was configurable, so translation eval prompt variants still apply. Each translator accepts an instructions override, which only the eval uses to test prompt variants. A third adapter, `chat.ts`, speaks OpenAI-compatible chat completions to a local or private-network server. It is used only by the [translation eval](testing.md#translation-eval) and is not selectable in the live service. Because local servers do not all enforce a schema, it adds the expected JSON shape to the instructions and accepts the object even inside code fences or after a reasoning preamble. The local translator uses the same messages and the same tolerant parsing.
 
@@ -47,12 +47,12 @@ Nothing is retried. The original stays visible. A later success clears a transla
 
 ## Local translation
 
-`local-translator.ts` runs a pinned model in a Python child, `scripts/local/translate_worker.py`, over stdio JSON lines, as recognition does: no port, no network, no key. The worker gets the same allowlisted environment as the recognition worker, with Hugging Face offline flags, and its stderr is dropped. The only model is `qwen3.5-4b-q4`, Qwen3.5-4B in a 4-bit MLX build pinned by revision and hash in `scripts/local/translators.json` and fetched by `pnpm local:setup-translator` into `.local/models/`. mlx-lm loads its text weights and drops the vision ones.
+`local-translator.ts` runs a pinned model in a Python child, `scripts/local/translate_worker.py`, over stdio JSON lines, as recognition does: no port, no network, no key. The worker gets the same allowlisted environment as the recognition worker, with Hugging Face offline flags, and its stderr is dropped. The default model is `qwen3.5-4b-q4`, Qwen3.5-4B in a 4-bit MLX build pinned by revision and hash in `scripts/local/translators.json` and fetched by `pnpm local:setup-translator` into `.local/models/`. `qwen3.5-2b-q4`, the same family at 2B, is pinned for comparison and fetched only with `--model qwen3.5-2b-q4`; it is not recommended, see [GPU contention](../log/2026-11-08-gpu-contention.md). mlx-lm loads its text weights and drops the vision ones.
 
 | | Local |
 | --- | --- |
 | Selected by | `--offline` (`pnpm dev:offline`, `start:offline`), or `TRANSLATION_BACKEND=local` with local recognition |
-| Model | `LOCAL_TRANSLATION_MODEL`, only `qwen3.5-4b-q4` |
+| Model | `LOCAL_TRANSLATION_MODEL`, `qwen3.5-4b-q4` by default or `qwen3.5-2b-q4` |
 | Prompt | the shared instructions plus the JSON shape, as system message; the input object as user message; the chat template with thinking off |
 | Decoding | greedy, at most 512 new tokens |
 | Load | at service startup, before the URL is printed, with a short warm-up generation; startup fails with a setup hint if the model is missing |

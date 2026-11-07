@@ -17,6 +17,8 @@ test('candidate specs parse provider, model, effort and local URL', () => {
   assert.deepEqual(parseCandidate('mlx:qwen3.5-4b-q4'), { label: 'mlx:qwen3.5-4b-q4', provider: 'mlx', model: 'qwen3.5-4b-q4', effort: 'none' });
   assert.throws(() => parseCandidate('mlx:some/other-model'));
   assert.equal(isPaid(parseCandidate('mlx:qwen3.5-4b-q4')), false);
+  assert.equal(parseCandidate('mlx:qwen3.5-2b-q4').model, 'qwen3.5-2b-q4');
+  assert.throws(() => parseCandidate('mlx:qwen3.5-9b-q4'));
   assert.deepEqual(parseCandidate('anthropic:claude-haiku-5-5#low~repair-cut'), { label: 'anthropic:claude-haiku-5-5#low~repair-cut', provider: 'anthropic', model: 'claude-haiku-5-5', effort: 'low', variant: 'repair-cut' });
   for (const bad of ['gemini:x', 'openai:', 'local:qwen', 'anthropic:m#turbo', 'anthropic:m~Bad Name']) assert.throws(() => parseCandidate(bad));
 });

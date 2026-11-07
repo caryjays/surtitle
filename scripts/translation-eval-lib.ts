@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Glossary, TranslationContext, type Translation } from '../packages/protocol/index.ts';
+import { LOCAL_TRANSLATION_MODELS } from '../packages/providers/local-translator.ts';
 
 // local: an OpenAI-compatible server at a URL; mlx: a pinned model in the repo's local translation worker.
 export type Provider = 'openai' | 'anthropic' | 'local' | 'mlx';
@@ -27,7 +28,7 @@ export function parseCandidate(spec: string): Candidate {
     return { label: spec.trim(), provider, model: rest.slice(0, at), effort: 'none', baseUrl };
   }
   if (provider === 'mlx') {
-    if (rest !== 'qwen3.5-4b-q4') throw new Error(`Unknown local translation model "${rest}"; see scripts/local/translators.json.`);
+    if (!(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(rest)) throw new Error(`Unknown local translation model "${rest}"; see scripts/local/translators.json.`);
     return { label: spec.trim(), provider, model: rest, effort: 'none' };
   }
   let effort: Effort = 'none';

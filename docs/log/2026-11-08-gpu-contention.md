@@ -28,3 +28,20 @@ No row was forced to lock in either run. Row start to translation, p50 per talk,
 - The invalid Japanese replies: their cause, and whether a retry or a lower-temperature prompt change removes them.
 - Shorter rows, the larger lever, change the live default and need a controlled comparison first.
 - The maintainer's live rehearsal with `pnpm dev:offline` remains the check on real speech and a real microphone.
+
+## Qwen3.5-2B
+
+The smaller model of the same family, mlx-community's 4-bit MLX build, about 1.7 GB, is pinned as `qwen3.5-2b-q4` for comparison. `pnpm local:setup-translator` still fetches only the 4B; the 2B needs `--model qwen3.5-2b-q4`.
+
+Alone, on the 36 public eval cases with 2 repeats and no judge: 72 of 72 valid, no wrong direction, p50 0.62 s, p90 0.77 s, max 0.80 s, 34 of 67 glossary terms. The 4B took 1.22 s at the median and kept 38 terms.
+
+Live, the same four talks replayed with the 2B, after the two runs above:
+
+| Talk | Translated / rows | Failed: invalid, token limit, timeout | Translation request p50 / p90 (s) | Lock lag p50 (s) | Row start to translation p50 (s) |
+| --- | --- | --- | --- | --- | --- |
+| English 1 | 46 / 50 | 3, 1, 0 | 1.9 / 6.3 | 2.3 | 10.5 |
+| English 2 | 43 / 47 | 1, 2, 1 | 3.8 / 9.0 | 2.5 | 11.6 |
+| Japanese 1 | 48 / 56 | 1, 2, 5 | 5.1 / 11.4 | 2.7 | 12.6 |
+| Japanese 2 | 41 / 42 | 0, 0, 1 | 2.3 / 5.5 | 2.3 | 11.5 |
+
+17 of 195 rows failed, against 4 with the 4B. Requests that ran to the 512-token limit or the 12 s timeout kept the GPU busy and slowed every stage: the closing decode's p90 reached 1.3 to 2.5 s. On live rows with context the 2B often does not stop, which the short, clean eval cases did not show. Run order was not alternated, so some of the slowdown may be thermal; the runaway replies are not. The 4B stays the default. A token limit proportional to the input's length would end a runaway sooner but would still fail the row.

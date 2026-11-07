@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { parsePair, type Glossary } from '../../packages/protocol/index.ts';
 import { OpenAITranslator, openAITranscriberFactory } from '../../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../../packages/providers/anthropic.ts';
-import { LocalTranslator } from '../../packages/providers/local-translator.ts';
+import { LOCAL_TRANSLATION_MODELS, LocalTranslator } from '../../packages/providers/local-translator.ts';
 import { Controller } from './controller.ts';
 import { localTranscriberFactory } from '../../packages/providers/local.ts';
 import { createCaptionServer } from './server.ts';
@@ -20,7 +20,7 @@ async function main() {
     TRANSLATION_BACKEND: z.enum(['off', 'cloud', 'local']).default('off'),
     TRANSLATION_PROVIDER: z.enum(['openai', 'anthropic']).default('openai'),
     LOCAL_MODEL: z.enum(['small-q4', 'turbo-q4']).default('turbo-q4'),
-    LOCAL_TRANSLATION_MODEL: z.enum(['qwen3.5-4b-q4']).default('qwen3.5-4b-q4'),
+    LOCAL_TRANSLATION_MODEL: z.enum(LOCAL_TRANSLATION_MODELS).default('qwen3.5-4b-q4'),
     LOCAL_MAX_TURN_MS: z.coerce.number().int().min(1000).max(12_000).default(12_000),
     LOCAL_PREVIEWS: z.enum(['on', 'off']).default(listen ? 'on' : 'off'),
     // rolling is the experimental segmentation from docs/log/2026-10-26-rolling-recognition-design.md.

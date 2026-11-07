@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { Controller } from '../apps/service/controller.ts';
 import { localTranscriberFactory } from '../packages/providers/local.ts';
-import { LocalTranslator } from '../packages/providers/local-translator.ts';
+import { LOCAL_TRANSLATION_MODELS, LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
 import { FRAME_BYTES } from '../packages/protocol/index.ts';
 
@@ -11,13 +11,14 @@ import { FRAME_BYTES } from '../packages/protocol/index.ts';
 // without it, and writes a diagnostics file in the control page's format for `pnpm diag:latency`. It measures what
 // translation on the shared GPU costs recognition. Offline: no .env, no network. The file holds timings and counts only.
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
-  translate: { type: 'string', default: 'local' }, out: { type: 'string' },
+  translate: { type: 'string', default: 'local' }, model: { type: 'string', default: 'qwen3.5-4b-q4' }, out: { type: 'string' },
 } });
-if (!values.out || !positionals.length || !['local', 'off'].includes(values.translate!)) {
-  console.error('Usage: --translate local|off --out <diagnostics.json> <audio>...'); process.exit(2);
+if (!values.out || !positionals.length || !['local', 'off'].includes(values.translate!)
+  || !(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(values.model!)) {
+  console.error('Usage: --translate local|off [--model <local translation model>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
-const translator = values.translate === 'local' ? new LocalTranslator({ model: 'qwen3.5-4b-q4' }) : null;
+const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel }) : null;
 await translator?.start();
 const controller = new Controller({ backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling',

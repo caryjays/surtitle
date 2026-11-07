@@ -24,7 +24,8 @@ def verified(path, spec):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', choices=[*MODELS, 'all'], default='all')
+    # The live default only; the others are for comparison and fetched by name.
+    parser.add_argument('--model', choices=[*MODELS, 'all'], default='qwen3.5-4b-q4')
     args = parser.parse_args()
     for name, model in MODELS.items():
         if args.model not in ('all', name):

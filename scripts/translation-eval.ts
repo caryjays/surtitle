@@ -7,7 +7,7 @@ import type { TranslationDiagnostic } from '../packages/protocol/index.ts';
 import { OpenAITranslator } from '../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { ChatCompletionsTranslator } from '../packages/providers/chat.ts';
-import { LocalTranslator } from '../packages/providers/local-translator.ts';
+import { LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { TranslationFailure, type Translator } from '../packages/providers/types.ts';
 import { translationInstructions } from '../packages/providers/translation.ts';
 import {
@@ -93,7 +93,7 @@ function translatorFor(c: Candidate, f: typeof fetch): Translator {
   const instructions = instructionsFor.get(c.label);
   if (c.provider === 'openai') return new OpenAITranslator({ key: keys.openai, model: c.model, effort: c.effort, instructions, fetch: f });
   if (c.provider === 'anthropic') return new AnthropicTranslator({ key: keys.anthropic, model: c.model, effort: c.effort, instructions, fetch: f });
-  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: 'qwen3.5-4b-q4', instructions }); workers.push(t); return t; }
+  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: c.model as LocalTranslationModel, instructions }); workers.push(t); return t; }
   return new ChatCompletionsTranslator({ baseUrl: c.baseUrl!, model: c.model, instructions, fetch: f });
 }
 const pool = candidates.map(c => { const meter = instrumented(); return { c, meter, translator: translatorFor(c, meter.fetch) }; });

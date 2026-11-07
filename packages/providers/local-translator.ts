@@ -13,8 +13,11 @@ const Reply = z.discriminatedUnion('type', [
     promptTokens: z.number().int().nonnegative(), generationTokens: z.number().int().nonnegative(), finish: z.string().max(20) }).strict(),
 ]);
 type Result = Extract<z.infer<typeof Reply>, { type: 'result' }>;
+// Pinned in scripts/local/translators.json.
+export const LOCAL_TRANSLATION_MODELS = ['qwen3.5-4b-q4', 'qwen3.5-2b-q4'] as const;
+export type LocalTranslationModel = typeof LOCAL_TRANSLATION_MODELS[number];
 export type LocalTranslatorOptions = {
-  model: 'qwen3.5-4b-q4'; python?: string; pair?: Pair; instructions?: string; maxTokens?: number;
+  model: LocalTranslationModel; python?: string; pair?: Pair; instructions?: string; maxTokens?: number;
   startupTimeoutMs?: number; workerFactory?: () => ChildProcessWithoutNullStreams;
   // Per-request generation timing, for the eval and the service's diagnostics. Never text.
   onTiming?: (timing: { inferenceMs: number; promptTokens: number; generationTokens: number }) => void;

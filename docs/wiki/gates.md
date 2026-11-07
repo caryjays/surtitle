@@ -1,6 +1,6 @@
 # Language gates
 
-Verified: 2026-11-06 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
+Verified: 2026-11-08 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
 
 A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the five parts; this page sets the numbers. Japanese is the only gate so far. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
