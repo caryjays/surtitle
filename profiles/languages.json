@@ -3,6 +3,7 @@
     "name": "English",
     "scoring": "word",
     "sentenceEnd": ".!?",
+    "clauseEnd": ",;:",
     "stockPhrases": ["thank you for watching", "thanks for watching", "thank you"],
     "reading": { "floor": 8, "ceiling": 25 }
   },
@@ -10,6 +11,7 @@
     "name": "Japanese",
     "scoring": "character",
     "sentenceEnd": "。！？",
+    "clauseEnd": "、，",
     "stockPhrases": ["ご視聴ありがとうございました", "ご清聴ありがとうございました", "お疲れ様でした", "チャンネル登録よろしくお願いします"],
     "reading": { "floor": 3, "ceiling": 10 }
   }

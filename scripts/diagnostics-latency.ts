@@ -43,6 +43,7 @@ starts.forEach((start, i) => {
   line('row start to first locked text', kept.map(t => t.firstTextMs as number | undefined));
   line('lock lag (locked audio end to lock)', kept.map(t => t.lockLagMs as number | undefined));
   line('closing decode inference', kept.map(t => t.recognitionInferenceMs as number | undefined));
+  line('speech end to final text', kept.map(t => t.speechEndToFinalMs as number | undefined));
   console.log('  Translated rows (seconds unless noted)');
   line('row audio', n('audioMs'));
   line('original characters', rows.map(t => ready.get(t.sequence as number)!.original), 'n');
@@ -62,4 +63,12 @@ starts.forEach((start, i) => {
   line('first shown text to translation', rows.map(t => ready.get(t.sequence as number)!.at - firstText.get(t.sequence as number)!));
   line('row start to translation', rows.map(t => t.firstTextMs === undefined ? undefined
     : (t.firstTextMs as number) + ready.get(t.sequence as number)!.at - firstText.get(t.sequence as number)!));
+  // What a listener waits: from when a word was said to its translation. Speech end is measured; earlier words in the
+  // row wait longer by their distance from the end, taken here from the row's audio length.
+  const heard = (t: Record<string, unknown>, share: number) => t.speechEndToFinalMs === undefined || t['at:translating'] === undefined ? undefined
+    : (t.speechEndToFinalMs as number) + ready.get(t.sequence as number)!.at - (t['at:translating'] as number) + share * (t.audioMs as number);
+  console.log('  Speech to translation (rolling)');
+  line('last word of the row', rows.map(t => heard(t, 0)));
+  line('middle of the row', rows.map(t => heard(t, 0.5)));
+  line('first word of the row', rows.map(t => heard(t, 1)));
 });

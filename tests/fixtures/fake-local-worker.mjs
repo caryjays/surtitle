@@ -39,7 +39,7 @@ function rolling(request) {
   }
   if (behavior !== 'rolling-noise' && !misheard) {
     for (let k = 0; (k + 1) * 1000 <= ms; k++) {
-      segments.push({ endMs: (k + 1) * 1000, text: ` w${start + 20 * k}${behavior === 'rolling-unstable' ? `x${decodes}` : ''}` });
+      segments.push({ endMs: (k + 1) * 1000, text: ` w${start + 20 * k}${behavior === 'rolling-unstable' ? `x${decodes}` : ''}${behavior === 'rolling-clauses' && (start / 20 + k) % 2 ? '、' : ''}` });
     }
     if (ms % 1000) segments.push({ endMs: Math.floor(ms), text: ` t${decodes}` });
   }

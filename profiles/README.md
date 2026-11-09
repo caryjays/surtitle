@@ -19,6 +19,7 @@ Mappings are hints. A glossary cannot repair recognition errors, and glossary te
 | `name` | English name in translation instructions, cloud recognition hints and control labels |
 | `scoring` | `word` or `character`: the error-rate unit in benchmark scoring |
 | `sentenceEnd` | characters that end a sentence; rolling segmentation closes a row at one after 3 s of locked audio |
+| `clauseEnd` | characters that end a clause; rolling segmentation closes a row at one only when given a clause length, which the live service does not set |
 | `stockPhrases` | sign-offs Whisper hallucinates; a long turn or row that is only these is dropped. Every profile's phrases apply in every session |
 
 A script variant, such as Simplified or Traditional Chinese, is meant to be a profile setting, not a separate code. No such setting exists yet.

@@ -35,6 +35,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-06-rehearsal-latency.md](2026-11-06-rehearsal-latency.md) | First console rehearsal in rolling listen mode, and the stages of translation delay |
 | [2026-11-06-local-translation.md](2026-11-06-local-translation.md) | Offline profile with a local Qwen3.5-4B translator, its latency and GPU contention; automatic gain on by default |
 | [2026-11-08-gpu-contention.md](2026-11-08-gpu-contention.md) | Real-time held-out replay with and without the local translator: what each costs the other on one GPU |
+| [2026-11-08-row-length.md](2026-11-08-row-length.md) | Speech to translation measured per row, and two shorter row rules against the live one |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

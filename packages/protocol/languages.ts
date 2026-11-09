@@ -17,6 +17,8 @@ export const LanguageProfile = z.object({
   name: z.string().min(1).max(40),
   scoring: z.enum(['word', 'character']),
   sentenceEnd: z.string().min(1).max(20),
+  // Clause punctuation; rolling segmentation can close a shorter row at one when given a clause length.
+  clauseEnd: z.string().min(1).max(20),
   stockPhrases: z.array(z.string().min(1).max(80)).max(32),
   // Display release rate in characters per second: the floor keeps a sparse speaker moving, the ceiling caps bursts.
   reading: z.object({ floor: z.number().positive().max(100), ceiling: z.number().positive().max(100) }).strict()

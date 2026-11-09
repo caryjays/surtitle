@@ -9,20 +9,29 @@ import { FRAME_BYTES } from '../packages/protocol/index.ts';
 
 // Replays recordings in real time through the live controller with rolling recognition, with the local translator or
 // without it, and writes a diagnostics file in the control page's format for `pnpm diag:latency`. It measures what
-// translation on the shared GPU costs recognition. Offline: no .env, no network. The file holds timings and counts only.
+// translation on the shared GPU costs recognition, and what row rules cost or save. Offline: no .env, no network. The
+// diagnostics file holds timings and counts only; --review writes each row's text, for a person to read, so keep it ignored.
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   translate: { type: 'string', default: 'local' }, model: { type: 'string', default: 'qwen3.5-4b-q4' }, out: { type: 'string' },
+  // sentence,max,clause in ms, clause 'off' for none; the live rules are 3000,8000,off.
+  rows: { type: 'string', default: '3000,8000,off' }, review: { type: 'string' },
 } });
+const [sentenceMs, maxMs, clause] = values.rows!.split(',');
+const rows = { sentenceMs: Number(sentenceMs), maxMs: Number(maxMs), clauseMs: clause === 'off' ? null : Number(clause) };
 if (!values.out || !positionals.length || !['local', 'off'].includes(values.translate!)
-  || !(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(values.model!)) {
-  console.error('Usage: --translate local|off [--model <local translation model>] --out <diagnostics.json> <audio>...'); process.exit(2);
+  || !(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(values.model!)
+  || ![rows.sentenceMs, rows.maxMs, rows.clauseMs ?? 1000].every(ms => Number.isInteger(ms) && ms >= 1000 && ms <= 20_000)) {
+  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
 const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel }) : null;
 await translator?.start();
 const controller = new Controller({ backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling',
-  transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS }) });
+  transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows }) });
+// Collected as rows change: a snapshot holds only the latest rows. Keyed by recording and sequence.
+const review = new Map<string, { recording: number; sequence: number; original: string; translation: string | null; state: string }>();
+let recording = 0;
 
 type Event = Record<string, unknown> & { type: string; atMs: number };
 const events: Event[] = []; const origin = Date.now();
@@ -37,6 +46,7 @@ controller.subscribe(() => {
     const meta = { sequence: row.sequence, final: row.final, state: row.state, originalChars: row.original.length, translationChars: row.translation?.length ?? 0 };
     const key = `r${row.sequence}`; const value = JSON.stringify(meta);
     if (seen.get(key) !== value) { seen.set(key, value); events.push({ type: 'segment', atMs, row: meta }); }
+    if (values.review) review.set(`${recording}:${row.sequence}`, { recording, sequence: row.sequence, original: row.original, translation: row.translation ?? null, state: row.state });
   }
 });
 
@@ -45,7 +55,7 @@ for (const audio of positionals) {
   if (converted.status !== 0) { console.error(`Audio conversion failed: ${audio}`); process.exit(1); }
   // Calibration in a quiet room, then the recording, then trailing quiet so the last row closes.
   const pcm = Buffer.concat([Buffer.alloc((CALIBRATION_MS / 50) * FRAME_BYTES), converted.stdout, Buffer.alloc(40 * FRAME_BYTES)]);
-  seen.clear();
+  seen.clear(); recording++;
   events.push({ type: 'command', atMs: Date.now() - origin, command: { type: 'start' } });
   await controller.start('auto');
   const frames = Math.ceil(pcm.length / FRAME_BYTES); const started = performance.now();
@@ -63,4 +73,5 @@ for (const audio of positionals) {
 }
 controller.dispose(); translator?.close();
 await writeFile(values.out, `${JSON.stringify({ version: 2, events })}\n`);
+if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, model: translator ? values.model : null, review: [...review.values()] }, null, 2)}\n`);
 console.log(`Wrote ${events.length} events: ${values.out}`);

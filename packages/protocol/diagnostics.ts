@@ -22,6 +22,8 @@ export const TurnMeasurement = z.object({
   // Rolling segmentation only: decodes that fed the row, locks forced without agreement, row start to its
   // first locked text, and the median time from a locked segment's end to its lock.
   decodes: count.optional(), forcedLocks: count.optional(), firstTextMs: ms.optional(), lockLagMs: ms.optional(),
+  // Rolling only: from the end of the row's last speech to its final, the recognition part of speech-to-translation delay.
+  speechEndToFinalMs: ms.optional(),
 }).strict();
 export type TurnMeasurement = z.infer<typeof TurnMeasurement>;
 export const TranslationDiagnostic = z.object({

@@ -106,6 +106,24 @@ test('rolling locks agreed words, never retracts them, closes rows by length and
   assert(Math.max(...f.requests) <= 3000);
   assert.equal(f.failures(), 0);
 });
+test('rolling rows can close at a clause or a shorter length, and report speech end to final', async t => {
+  const clauses = fixture('rolling-clauses', { rows: { sentenceMs: 3000, maxMs: 8000, clauseMs: 1500 } });
+  t.after(() => clauses.stream.close()); await clauses.stream.connect();
+  await clauses.speak(8); clauses.quiet(); await clauses.stream.finish();
+  const rows = finals(clauses.events);
+  assert.deepEqual(rows.slice(0, 3).map(r => r.text), ['w0 w20、', 'w40 w60、', 'w80 w100、']);
+  const closing = (f: typeof clauses) => finals(f.events).map(r => f.measurements.find(m => m.id === r.id && m.value.boundary)!.value);
+  assert.deepEqual(closing(clauses).slice(0, 3).map(d => [d.boundary, d.audioMs]), [['length', 2000], ['length', 2000], ['length', 2000]]);
+  assert(closing(clauses).every(d => d.speechEndToFinalMs !== undefined));
+  const short = fixture('rolling', { rows: { sentenceMs: 3000, maxMs: 4000, clauseMs: null } });
+  t.after(() => short.stream.close()); await short.stream.connect();
+  await short.speak(9); short.quiet(); await short.stream.finish();
+  assert.deepEqual(closing(short).map(d => [d.boundary, d.audioMs]).slice(0, 2), [['length', 4000], ['length', 4000]]);
+  // Without a clause length, clause punctuation does not close a row.
+  const live = fixture('rolling-clauses'); t.after(() => live.stream.close()); await live.stream.connect();
+  await live.speak(6); live.quiet(); await live.stream.finish();
+  assert.equal(finals(live.events).length, 1);
+});
 test('rolling forces a lock rather than let an unagreeing window approach Whisper input', async t => {
   const f = fixture('rolling-unstable'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(27); f.quiet(); await f.stream.finish();

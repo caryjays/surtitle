@@ -21,6 +21,8 @@ export type LocalOptions = {
   model: 'small-q4' | 'turbo-q4'; python?: string; maxTurnMs?: number;
   // rolling: re-decode the open stretch about every second and lock text two decodes agree on. See rolling.ts.
   segmentation?: 'turns' | 'rolling';
+  // Rolling row closing, for experiments; the live service keeps the defaults in ROLLING. clauseMs null: never at a clause.
+  rows?: { sentenceMs: number; maxMs: number; clauseMs: number | null };
   previewIntervalMs?: number; glossary?: Glossary; calibrationMs?: number;
   startupTimeoutMs?: number; inferenceTimeoutMs?: number;
   workerFactory?: () => ChildProcessWithoutNullStreams;
@@ -59,9 +61,13 @@ export class LocalTranscriber implements Transcriber {
   private detector: TurnDetector;
   private pair: readonly [Language, Language];
   private sentenceEnds: string;
+  private clauseEnds: string;
+  private rows: { sentenceMs: number; maxMs: number; clauseMs: number | null };
   constructor(private options: LocalOptions & Parameters<TranscriberFactory>[0]) {
     this.pair = options.pair ?? DEFAULT_PAIR;
     this.sentenceEnds = this.pair.map(language => profile(language).sentenceEnd).join('');
+    this.clauseEnds = this.pair.map(language => profile(language).clauseEnd).join('');
+    this.rows = options.rows ?? { sentenceMs: ROLLING.sentenceRowMs, maxMs: ROLLING.maxRowMs, clauseMs: null };
     const rolling = options.segmentation === 'rolling';
     this.detector = new TurnDetector(rolling ? {
       begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', row: this.row() }; },
@@ -227,7 +233,9 @@ export class LocalTranscriber implements Transcriber {
       row.audioMs += endMs; row.forced += Number(forced);
       row.lags.push(windowMs - endMs + performance.now() - job.queued);
       this.rowText(row);
-      if (row.audioMs >= ROLLING.maxRowMs || (row.audioMs >= ROLLING.sentenceRowMs && endsSentence(row.text, this.sentenceEnds))) {
+      const rules = this.rows;
+      if (row.audioMs >= rules.maxMs || (row.audioMs >= rules.sentenceMs && endsSentence(row.text, this.sentenceEnds))
+        || (rules.clauseMs !== null && row.audioMs >= rules.clauseMs && endsSentence(row.text, this.clauseEnds))) {
         this.closeRow(row, 'length', {}, false);
         stretch!.row = this.row();
       }
@@ -266,12 +274,15 @@ export class LocalTranscriber implements Transcriber {
     const stock = row.audioMs >= ROLLING.stockMs && isStockPhrase(row.text);
     if (!row.begun) { row.begun = true; this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: this.options.mode }); }
     if (row.text.trim()) row.firstTextMs ??= performance.now() - row.created;
+    // A closing decode: the trailing quiet plus the decode. A length close: the lock that closed it.
+    const speechEnd = extra.commitToFinalMs !== undefined ? (extra.trailingQuietMs ?? 0) + extra.commitToFinalMs : row.lags.at(-1);
     const lags = [...row.lags].sort((a, b) => a - b);
     const quality = row.quality && stock ? { ...row.quality, stockPhraseDrops: Math.min(10_000, row.quality.stockPhraseDrops + 1) } : row.quality;
     this.options.onTurnDiagnostic?.(row.id, { boundary, audioMs: Math.min(120_000, Math.round(row.audioMs)), ...extra,
       decodes: row.decodes, forcedLocks: row.forced,
       ...(row.firstTextMs !== undefined ? { firstTextMs: Math.min(120_000, Math.round(row.firstTextMs)) } : {}),
       ...(lags.length ? { lockLagMs: Math.min(120_000, Math.round(lags[Math.floor((lags.length - 1) / 2)]!)) } : {}),
+      ...(speechEnd !== undefined ? { speechEndToFinalMs: Math.min(120_000, Math.round(speechEnd)) } : {}),
       ...(quality ? { quality } : {}) });
     const empty = stock || !row.text.trim();
     this.options.onEvent({ type: 'final', id: row.id, text: stock ? '' : row.text, language: row.language ?? 'unknown',
