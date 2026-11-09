@@ -272,7 +272,8 @@ export class LocalTranscriber implements Transcriber {
     const text = row.afterNoise ? row.text : joinText(row.text, tail);
     if (text === row.shown) return;
     row.shown = text;
-    this.options.onEvent({ type: 'partial', id: row.id, text, stable: row.text.length });
+    this.options.onEvent({ type: 'partial', id: row.id, text, stable: row.text.length,
+      locked: { audioMs: Math.round(row.audioMs), lagMs: Math.round(row.lags.at(-1) ?? 0), language: row.language ?? 'unknown' } });
   }
   private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean) {
     // A whole row of stock sign-off from long audio replaced real speech.

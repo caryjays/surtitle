@@ -27,7 +27,11 @@ starts.forEach((start, i) => {
   // Translations of the last rows can land shortly after Pause.
   const within = events.filter(e => e.atMs >= start.atMs && e.atMs <= end + 20_000);
   const turns = new Map<number, Record<string, unknown>>();
-  for (const e of within) if (e.turn) turns.set(e.turn.sequence, { ...turns.get(e.turn.sequence), ...e.turn, [`at:${e.turn.outcome}`]: e.atMs });
+  // at:<outcome> is when the turn first reached it; a trace can change again while translating.
+  for (const e of within) if (e.turn) {
+    const previous = turns.get(e.turn.sequence), at = `at:${e.turn.outcome}`;
+    turns.set(e.turn.sequence, { ...previous, ...e.turn, [at]: previous?.[at] ?? e.atMs });
+  }
   const firstText = new Map<number, number>(); const firstTranslation = new Map<number, number>(); const ready = new Map<number, { at: number; original: number; translation: number }>();
   for (const e of within) if (e.row) {
     if (e.row.originalChars > 0 && !firstText.has(e.row.sequence)) firstText.set(e.row.sequence, e.atMs);
@@ -78,7 +82,33 @@ starts.forEach((start, i) => {
   line('last word of the row', rows.map(t => heard(t, 0)));
   line('middle of the row', rows.map(t => heard(t, 0.5)));
   line('first word of the row', rows.map(t => heard(t, 1)));
-  console.log('  Speech to first translated text (rolling; the same as above unless the translator streams)');
-  line('last word of the row', rows.map(t => heard(t, 0, true)));
-  line('middle of the row', rows.map(t => heard(t, 0.5, true)));
+  const pieced = rows.filter(t => Array.isArray(t.pieces) && (t.pieces as unknown[]).length);
+  if (!pieced.length) {
+    console.log('  Speech to first translated text (rolling; the same as above unless the translator streams)');
+    line('last word of the row', rows.map(t => heard(t, 0, true)));
+    line('middle of the row', rows.map(t => heard(t, 0.5, true)));
+    line('first word of the row', rows.map(t => heard(t, 1, true)));
+    return;
+  }
+  // Piece translation: a word waits for the first translated text of the piece that translated it, the first translated
+  // piece ending at or after it. From that piece's speech end: the lag to its request, the queue and the first text.
+  type Piece = { endMs: number; lagMs: number; queueMs: number; firstTranslationMs?: number; translationMs?: number; outcome?: string };
+  const byPiece = (t: Record<string, unknown>, share: number) => {
+    const done = (t.pieces as Piece[]).filter(p => p.outcome === 'ready');
+    const at = (1 - share) * (t.audioMs as number);
+    const piece = done.find(p => p.endMs >= at) ?? done.at(-1);
+    const first = piece?.firstTranslationMs ?? piece?.translationMs;
+    return piece && first !== undefined ? piece.lagMs + piece.queueMs + first + Math.max(0, piece.endMs - at) : undefined;
+  };
+  const all = pieced.flatMap(t => t.pieces as Piece[]);
+  console.log('  Pieces');
+  line('pieces per row', pieced.map(t => (t.pieces as Piece[]).length), 'n');
+  line('failed or unresolved pieces per row', pieced.map(t => (t.pieces as Piece[]).filter(p => p.outcome && p.outcome !== 'ready').length), 'n');
+  line('piece speech end to request', all.map(p => p.lagMs + p.queueMs));
+  line('piece request', all.map(p => p.translationMs));
+  line('piece request to first translated text', all.map(p => p.firstTranslationMs));
+  console.log('  Speech to first translated text, by piece');
+  line('last word of the row', pieced.map(t => byPiece(t, 0)));
+  line('middle of the row', pieced.map(t => byPiece(t, 0.5)));
+  line('first word of the row', pieced.map(t => byPiece(t, 1)));
 });

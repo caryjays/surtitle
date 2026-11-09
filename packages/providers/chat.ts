@@ -10,10 +10,14 @@ function shape(pair: Pair) {
   return `Reply with only one JSON object of the form {"source":${codes},"target":${codes},"text":string}.`;
 }
 
+// Added only for a piece of an open row, so a whole row's prompt is unchanged.
+export const CONTINUES_INSTRUCTION = 'continues true: the sentence goes on after text, and the next text will be appended to your translation. Translate text so it can be continued: never complete, close or summarise it.';
+
 // System and user messages for a chat model; the local worker uses them too.
 export function chatMessages(input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
   input = TranslationInput.parse(input);
-  return { system: `${instructions ?? translationInstructionsFor(pair)} ${shape(pair)}`, user: JSON.stringify(input) };
+  const continues = input.continues ? ` ${CONTINUES_INSTRUCTION}` : '';
+  return { system: `${instructions ?? translationInstructionsFor(pair)}${continues} ${shape(pair)}`, user: JSON.stringify(input) };
 }
 
 export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {

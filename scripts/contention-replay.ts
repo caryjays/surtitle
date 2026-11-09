@@ -17,6 +17,8 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   rows: { type: 'string', default: '3000,8000,off' }, review: { type: 'string' },
   // interval,settle in ms; the live cadence is 1000,1000.
   cadence: { type: 'string', default: '1000,1000' },
+  // row: translate each closed row, as live; piece: translate locked pieces before the row closes.
+  units: { type: 'string', default: 'row' },
 } });
 const [sentenceMs, maxMs, clause] = values.rows!.split(',');
 const rows = { sentenceMs: Number(sentenceMs), maxMs: Number(maxMs), clauseMs: clause === 'off' ? null : Number(clause) };
@@ -25,14 +27,15 @@ const cadence = { intervalMs: intervalMs!, settleMs: settleMs! };
 if (!values.out || !positionals.length || !['local', 'off'].includes(values.translate!)
   || !(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(values.model!)
   || ![rows.sentenceMs, rows.maxMs, rows.clauseMs ?? 1000].every(ms => Number.isInteger(ms) && ms >= 1000 && ms <= 20_000)
-  || ![cadence.intervalMs, cadence.settleMs].every(ms => Number.isInteger(ms) && ms >= 300 && ms <= 3000)) {
-  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
+  || ![cadence.intervalMs, cadence.settleMs].every(ms => Number.isInteger(ms) && ms >= 300 && ms <= 3000)
+  || !['row', 'piece'].includes(values.units!)) {
+  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--units row|piece] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
 const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel }) : null;
 await translator?.start();
 const controller = new Controller({ backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
-  glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling',
+  glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
   transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence }) });
 // Collected as rows change: a snapshot holds only the latest rows. Keyed by recording and sequence.
 const review = new Map<string, { recording: number; sequence: number; original: string; translation: string | null; state: string }>();
@@ -78,5 +81,5 @@ for (const audio of positionals) {
 }
 controller.dispose(); translator?.close();
 await writeFile(values.out, `${JSON.stringify({ version: 2, events })}\n`);
-if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, cadence: values.cadence, model: translator ? values.model : null, review: [...review.values()] }, null, 2)}\n`);
+if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, cadence: values.cadence, units: values.units, model: translator ? values.model : null, review: [...review.values()] }, null, 2)}\n`);
 console.log(`Wrote ${events.length} events: ${values.out}`);

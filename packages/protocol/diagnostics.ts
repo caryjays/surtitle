@@ -42,6 +42,11 @@ export const TurnTrace = TurnMeasurement.extend({
   contextSequences: z.array(z.number().int().nonnegative()).max(4).optional(),
   contextMissingTranslations: z.number().int().min(0).max(4).optional(),
   contextClippedRows: z.number().int().min(0).max(4).optional(),
+  // Piece translation: each request for a locked piece of the row, in order. endMs: the row's locked audio at the cut;
+  // lagMs: from that audio's end to the request being ready; queueMs: ready to sent; firstTranslationMs: sent to the
+  // first translated text shown. The last piece's end is the row's audioMs.
+  pieces: z.array(z.object({ endMs: ms, lagMs: ms, queueMs: ms, firstTranslationMs: ms.optional(), translationMs: ms.optional(),
+    outcome: z.enum(['ready', 'unresolved', 'failed']).optional() }).strict()).max(32).optional(),
 }).strict();
 export type TurnTrace = z.infer<typeof TurnTrace>;
 

@@ -93,6 +93,9 @@ test('rolling locks agreed words, never retracts them, closes rows by length and
     assert(partials.length > 1 && partials.every(p => p.stable !== undefined && p.stable > 0));
     for (let i = 1; i < locked.length; i++) assert(locked[i]!.startsWith(locked[i - 1]!), 'locked text retracted');
     assert(row.text.startsWith(locked.at(-1)!));
+    // Each partial reports the row's locked audio, which only grows, and its language, for piece translation.
+    const audio = partials.map(p => p.locked!.audioMs);
+    assert(audio[0]! > 0 && audio.every((ms, i) => i === 0 || ms >= audio[i - 1]!) && partials.every(p => p.locked!.language === 'ja'));
     // begin precedes the row's first text; nothing follows its final.
     const at = f.events.indexOf(row);
     assert(f.events.slice(at + 1).every(e => e.id !== row.id));

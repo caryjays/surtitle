@@ -37,6 +37,8 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-08-gpu-contention.md](2026-11-08-gpu-contention.md) | Real-time held-out replay with and without the local translator: what each costs the other on one GPU |
 | [2026-11-08-row-length.md](2026-11-08-row-length.md) | Speech to translation measured per row, and two shorter row rules against the live one |
 | [2026-11-09-cadence-streaming.md](2026-11-09-cadence-streaming.md) | Faster decode cadences against the live one, and streamed local translation |
+| [2026-11-09-piece-translation-design.md](2026-11-09-piece-translation-design.md) | Design proposal: translating locked pieces before a row closes |
+| [2026-11-09-piece-translation.md](2026-11-09-piece-translation.md) | Piece translation built behind a replay flag and compared with row translation |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

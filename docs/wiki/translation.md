@@ -65,6 +65,19 @@ The controller shows streamed text as the row's translation while the row is `pe
 
 A reply cut at the token limit is `incomplete` with `outputTokenLimitReached`; text with no valid object is `invalid`. Both fail the row; the original stays.
 
+## Piece translation, replay only
+
+The controller's `translationUnit` option is `row` by default and in every live profile; only `pnpm replay:contention --units piece` sets `piece`. With rolling segmentation, each partial event also reports the row's locked audio, the lag of its latest lock and the row's language. In piece mode the controller translates an open row's locked text in pieces, each appended to the row's translation and never rewritten:
+
+- A piece is cut only while no request runs, so one request is in flight at a time and pieces grow when translation is slower than speech. It needs at least 1.5 s of locked audio, and must end at a clause or sentence mark from the profiles or hold 4 s (`PIECE` in `controller.ts`).
+- When the row closes, the rest of its text is the last piece, queued like a row. A row whose pieces already covered all of it becomes `ready` without another request.
+- Each piece's text and context are taken when it is sent: earlier finalized rows with `ready` translations, then this row's translated pieces, at most four entries. Every piece but the last carries `continues: true`, and only then does the system message gain one line telling the model the sentence goes on and must not be completed. A whole row's prompt is unchanged.
+- The first translated piece fixes the row's direction; later pieces are sent in that direction, so a reply the other way, or unresolved, fails the direction check.
+- Translations join with a space, or with nothing for a character-scored target language. A piece streams like a row, appended after the finished pieces.
+- A piece before the last that fails, or comes back unresolved, is withdrawn; its text goes to the front of the next piece, which is cut once more text has locked. It sets no error category. A failed last piece fails the row, which keeps the pieces already translated.
+
+Design and evidence: [piece translation design](../log/2026-11-09-piece-translation-design.md).
+
 ## Direction policy
 
 The Conversation preset is `auto`: the model picks the dominant language, using `sourceLanguage` and context for short utterances. The Lecture preset is the other language into English, `ja-en` for the Japanese pair: Japanese is supplied as the recognition hint and English output is enforced. Changing preset while active commits the current turn with its old mode; the new mode applies from the next turn. Language describes the turn and says nothing about who spoke.

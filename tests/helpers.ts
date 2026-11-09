@@ -8,7 +8,7 @@ export function deferred<T>() {
   return { promise, resolve, reject };
 }
 export function harness(extra: { translationTimeoutMs?: number; queueTtlMs?: number; sessionLimitMs?: number | null; pair?: Pair;
-  segmentation?: Segmentation; processing?: Snapshot['processing'] } = {}) {
+  segmentation?: Segmentation; processing?: Snapshot['processing']; translationUnit?: 'row' | 'piece' } = {}) {
   const streams: { emit(event: TranscriptEvent): void; fail(): void; closed: boolean; segmentation?: Segmentation; frames: number; modes: Mode[]; flushes: number; calibrations: number; gate(gate: AudioGate): void }[] = [];
   const requests: { input: Parameters<Translator['translate']>[0]; signal: AbortSignal; result: ReturnType<typeof deferred<Translation>>;
     partial: NonNullable<Parameters<Translator['translate']>[3]> }[] = [];

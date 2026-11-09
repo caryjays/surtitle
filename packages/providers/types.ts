@@ -3,7 +3,9 @@ import type { AudioGate, Mode, Pair, Segmentation, Source, TranslationInput, Tra
 export type TranscriptEvent =
   | { type: 'begin'; id: string; sequence: number; mode?: Mode }
   // stable: how many leading characters of text are locked and never rewritten; absent means all of it is.
-  | { type: 'partial'; id: string; text: string; stable?: number }
+  // locked, rolling only: the row's locked audio, the lag of its latest lock (that audio's end to the lock), and the row's
+  // language once settled, so the controller can translate locked pieces before the row closes.
+  | { type: 'partial'; id: string; text: string; stable?: number; locked?: { audioMs: number; lagMs: number; language: Source } }
   | { type: 'final'; id: string; text: string; language?: Source; rejected?: boolean };
 export interface Transcriber {
   connect(): Promise<void>;

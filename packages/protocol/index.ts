@@ -38,6 +38,8 @@ export const TranslationInput = z.object({
   sourceLanguage: Source.optional(), context: TranslationContext.optional(),
   // Whether the turn was cut at the maximum duration: its first or last word may be partial.
   truncated: z.object({ start: z.boolean(), end: z.boolean() }).strict().optional(),
+  // A locked piece of a row that is still open: the sentence may go on after text.
+  continues: z.boolean().optional(),
 }).strict();
 export type TranslationInput = z.infer<typeof TranslationInput>;
 export const MAX_SEGMENTS = 60;
