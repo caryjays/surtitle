@@ -1,6 +1,6 @@
 # Translation
 
-Verified: 2026-11-08 · Sources: packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/chat.ts, packages/providers/local-translator.ts, scripts/local/translate_worker.py, scripts/local/translators.json, scripts/local/download_translator.py, packages/providers/translation.ts, apps/service/main.ts, packages/protocol/index.ts, apps/service/controller.ts, apps/service/glossary.ts, profiles/glossary.example.json, profiles/README.md, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-09 · Sources: packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/chat.ts, packages/providers/local-translator.ts, scripts/local/translate_worker.py, scripts/local/translators.json, scripts/local/download_translator.py, packages/providers/translation.ts, apps/service/main.ts, packages/protocol/index.ts, apps/service/controller.ts, apps/service/glossary.ts, profiles/glossary.example.json, profiles/README.md, packages/protocol/languages.ts, profiles/languages.json
 
 Translation is one request per finalized turn, either to a cloud provider or to a model on this Mac. The listen profile, or an explicit `TRANSLATION_BACKEND=cloud`, sends it to the cloud: audio never leaves the Mac, text does. The offline profile, or `TRANSLATION_BACKEND=local`, keeps it on the Mac; see [local translation](#local-translation). `TRANSLATION_PROVIDER` selects OpenAI Responses (`openai`, the default) or Anthropic Messages (`anthropic`). Both share the instructions and output schema in `translation.ts`, generated from the session's pair; only the transport and response mapping differ. For `en-ja` the generated instructions are the same text as before the pair was configurable, so translation eval prompt variants still apply. Each translator accepts an instructions override, which only the eval uses to test prompt variants. A third adapter, `chat.ts`, speaks OpenAI-compatible chat completions to a local or private-network server. It is used only by the [translation eval](testing.md#translation-eval) and is not selectable in the live service. Because local servers do not all enforce a schema, it adds the expected JSON shape to the instructions and accepts the object even inside code fences or after a reasoning preamble. The local translator uses the same messages and the same tolerant parsing.
 
@@ -55,10 +55,13 @@ Nothing is retried. The original stays visible. A later success clears a transla
 | Model | `LOCAL_TRANSLATION_MODEL`, `qwen3.5-4b-q4` by default or `qwen3.5-2b-q4` |
 | Prompt | the shared instructions plus the JSON shape, as system message; the input object as user message; the chat template with thinking off |
 | Decoding | greedy, at most 512 new tokens |
+| Streaming | while it generates, the worker sends the reply so far at most every 100 ms; the adapter reads `source`, `target` and the text decoded so far from the unfinished object and passes them on once both codes are known |
 | Load | at service startup, before the URL is printed, with a short warm-up generation; startup fails with a setup hint if the model is missing |
 | Concurrency | the controller's two concurrent requests queue in the worker, which generates one at a time |
 | Cancel | a timeout, clear or new session sends a cancel; the worker stops generating at the next token or drops the request from its queue |
 | Failure | a worker that exits or breaks the protocol fails its pending requests with category `translation`; the next request starts a new worker |
+
+The controller shows streamed text as the row's translation while the row is `pending`, only in a direction the finished reply could have, and stops updating it past four times the original's length plus 40 characters, since a runaway reply is not a translation. The finished reply is validated as before and replaces it; a failure, or a reply in the wrong direction, clears it and leaves the original. A row still streaming is never context for a later request: context carries a translation only from a `ready` row. The cloud translators do not stream.
 
 A reply cut at the token limit is `incomplete` with `outputTokenLimitReached`; text with no valid object is `invalid`. Both fail the row; the original stays.
 

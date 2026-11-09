@@ -32,6 +32,29 @@ export function extractObject(text: string) {
   return JSON.parse(text.slice(start, end + 1)) as unknown;
 }
 
+// A streamed reply so far: its source and target once both are complete, and its text up to the last whole character.
+// null until then, or for a reply that is not such an object. The finished reply is still parsed and validated whole.
+export function partialObject(reply: string): { source: string; target: string; text: string } | null {
+  const body = reply.slice(Math.max(0, reply.indexOf('{')));
+  const field = (name: string) => new RegExp(`"${name}"\\s*:\\s*"([a-z]{2,3}|unknown)"`).exec(body)?.[1];
+  const source = field('source'), target = field('target'), open = /"text"\s*:\s*"/.exec(body);
+  if (!source || !target || !open) return null;
+  const escapes: Record<string, string> = { '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
+  let text = '';
+  for (let i = open.index + open[0].length; i < body.length && body[i] !== '"';) {
+    if (body[i] !== '\\') { text += body[i++]; continue; }
+    const escape = body[i + 1];
+    if (escape === undefined) break;
+    if (escape === 'u') {
+      const hex = body.slice(i + 2, i + 6);
+      if (hex.length < 4) break;
+      if (!/^[0-9a-fA-F]{4}$/.test(hex)) return null;
+      text += String.fromCharCode(parseInt(hex, 16)); i += 6;
+    } else if (escape in escapes) { text += escapes[escape]; i += 2; } else return null;
+  }
+  return { source, target, text };
+}
+
 const Completion = z.object({
   choices: z.array(z.object({
     finish_reason: z.string().nullish(),

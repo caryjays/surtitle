@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import type { AudioGate, Failure, Glossary, Mode, Segment, Segmentation, Snapshot } from '../../packages/protocol/index.ts';
 import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, type Pair, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext } from '../../packages/protocol/index.ts';
-import { TranslationFailure, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
+import { TranslationFailure, type PartialTranslation, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
 
 type Job = { row: Segment; mode: Mode; context: TranslationContext; epoch: number; queued: number };
@@ -226,11 +226,12 @@ export class Controller {
           const preceding = this.rows.filter(r => r.final && r.sequence < row!.sequence).slice(-4);
           if (trace) {
             trace.contextSequences = preceding.map(r => r.sequence);
-            trace.contextMissingTranslations = preceding.filter(r => !r.translation).length;
+            trace.contextMissingTranslations = preceding.filter(r => r.state !== 'ready' || !r.translation).length;
             trace.contextClippedRows = preceding.filter(r => r.original.length > 800 || (r.translation?.length ?? 0) > 800).length;
           }
           const context = preceding.map(r => ({
-            original: r.original.slice(0, 800), translation: r.translation?.slice(0, 800) ?? null, source: r.source,
+            // A translation still streaming is not context.
+            original: r.original.slice(0, 800), translation: r.state === 'ready' ? r.translation?.slice(0, 800) ?? null : null, source: r.source,
           }));
           this.queue.push({ row, mode: this.rowModes.get(row) ?? this.mode, context, epoch: this.epoch, queued: performance.now() });
         }
@@ -268,11 +269,17 @@ export class Controller {
             if (!trace || abort.signal.aborted || job.epoch !== this.epoch || !this.traces.includes(trace) || !diagnostic.success) return;
             trace.translationResponse = diagnostic.data.response;
             if (diagnostic.data.outputTokenLimitReached !== undefined) trace.outputTokenLimitReached = diagnostic.data.outputTokenLimitReached;
+          }, partial => {
+            // Streamed text shows while the request runs, once its direction is valid; the result replaces it and a failure clears it.
+            if (abort.signal.aborted || job.epoch !== this.epoch || !this.rows.includes(job.row) || job.row.state !== 'pending'
+              || partial.source === 'unknown' || !this.directed(job.mode, partial)) return;
+            // A runaway reply stops showing well past any translation of the row; its result, if valid, still shows in full.
+            const text = partial.text.slice(0, 4000);
+            if (!text.trim() || text === job.row.translation || text.length > 4 * job.row.original.length + 40) return;
+            job.row.translation = text; this.changed();
           }), cancelled,
       ]));
-      const forced = direction(job.mode);
-      if (forced ? result.source !== forced.source || result.target !== forced.target
-        : result.source !== 'unknown' && !(inPair(this.pair, result.source) && inPair(this.pair, result.target))) throw new Error('direction');
+      if (!this.directed(job.mode, result)) throw new Error('direction');
       if (job.epoch !== this.epoch || !this.rows.includes(job.row)) return;
       Object.assign(job.row, { translation: result.text || null, source: result.source, target: result.target,
         state: result.source === 'unknown' ? 'unresolved' : 'ready', translationMs: Math.round(performance.now() - start) });
@@ -284,7 +291,7 @@ export class Controller {
       if (this.error?.startsWith('translation')) this.error = null;
     } catch (error) {
       if (job.epoch === this.epoch && this.rows.includes(job.row)) {
-        job.row.state = 'failed'; this.error = error instanceof TranslationFailure ? error.category : 'translation';
+        job.row.state = 'failed'; job.row.translation = null; this.error = error instanceof TranslationFailure ? error.category : 'translation';
         if (trace && this.traces.includes(trace)) {
           trace.outcome = 'failed'; trace.translationMs = Math.round(performance.now() - start);
           trace.translationFailure = abort.signal.aborted ? 'timeout' : 'request-error';
@@ -294,6 +301,11 @@ export class Controller {
       clearTimeout(timer); this.running.delete(abort);
       if (job.epoch === this.epoch) { this.changed(); this.pump(); }
     }
+  }
+  private directed(mode: Mode, result: PartialTranslation) {
+    const forced = direction(mode);
+    return forced ? result.source === forced.source && result.target === forced.target
+      : result.source === 'unknown' || (inPair(this.pair, result.source) && inPair(this.pair, result.target));
   }
   dispose() { clearInterval(this.clock); this.closeStream(); this.invalidate(); this.listeners.clear(); }
 }

@@ -34,11 +34,11 @@ export function hypothesis(segments: WorkerSegment[]) {
 
 // How many leading segments to lock: whole segments inside the stable text that ended at least settleMs
 // before the newest audio. At the end of a stretch everything locks; past forceMs all but the last does.
-export function lockCount(segments: WorkerSegment[], stable: string, windowMs: number, final: boolean) {
+export function lockCount(segments: WorkerSegment[], stable: string, windowMs: number, final: boolean, settleMs = ROLLING.settleMs) {
   if (final) return { count: segments.length, forced: false };
   let count = 0;
   for (let i = 0; i < segments.length; i++) {
-    if (hypothesis(segments.slice(0, i + 1)).length > stable.length || segments[i]!.endMs > windowMs - ROLLING.settleMs) break;
+    if (hypothesis(segments.slice(0, i + 1)).length > stable.length || segments[i]!.endMs > windowMs - settleMs) break;
     count = i + 1;
   }
   if (!count && windowMs >= ROLLING.forceMs && segments.length) return { count: Math.max(1, segments.length - 1), forced: true };

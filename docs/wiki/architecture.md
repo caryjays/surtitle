@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-08 · Sources: packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-09 · Sources: packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one request per finalized turn: HTTPS to a cloud provider, or stdio to a second Python child running a local model.
 
@@ -57,7 +57,7 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 4. The local adapter queues a final job and writes base64 PCM to the worker. In listen mode it also requests a preview every 3 s of turn audio; a preview shows only the prefix two consecutive hypotheses agree on.
 5. The worker resamples to 16 kHz, runs the Silero speech gate, decodes with Whisper at temperature 0, drops low-confidence, no-speech and repetitive pieces, and replies with text, language, timing and quality counters. See [recognition](recognition.md).
 6. The adapter rejects repetitive output again and emits a final event with a turn measurement. The controller finalizes the row, drops it if rejected or empty, or marks it original-only when translation is off.
-7. With translation on, the controller freezes up to four preceding finalized rows as context and queues the turn. The translator posts a strict JSON schema request and validates the reply. See [translation](translation.md).
+7. With translation on, the controller freezes up to four preceding finalized rows as context and queues the turn. The translator posts a strict JSON schema request and validates the reply. The local translator also streams the reply so far, which the row shows while pending. See [translation](translation.md).
 8. Every change produces a snapshot, coalesced to 50 ms and repeated with a 2 s heartbeat, to the control socket and all overlays. Each page releases new text at a reading pace; the overlay shows only released, locked text in a roll-up window. See [surfaces](surfaces.md).
 
 ## Identity and invalidation

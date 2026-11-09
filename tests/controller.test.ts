@@ -135,6 +135,38 @@ test('translation context is bounded, immutable, preceding-only and reset by cle
   assert.equal(h.requests.at(-1)!.input.context!.length, 4);
   await h.controller.clear(); h.final('fresh'); assert.deepEqual(h.requests.at(-1)!.input.context, []);
 });
+test('streamed translation text shows while pending, never as context, and a failure or wrong direction clears it', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('a');
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こん' });
+  assert.deepEqual([h.controller.snapshot().segments[0]!.state, h.controller.snapshot().segments[0]!.translation], ['pending', 'こん']);
+  h.final('b');
+  // The next request's context does not carry the unfinished translation.
+  assert.equal(h.requests[1]!.input.context![0]!.translation, null);
+  assert.equal(h.controller.snapshot().turns[1]!.contextMissingTranslations, 1);
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こん'.repeat(40) });
+  assert.equal(h.controller.snapshot().segments[0]!.translation, 'こん');
+  h.requests[0]!.result.resolve(ja); await tick();
+  assert.equal(h.controller.snapshot().segments[0]!.translation, ja.text);
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'late' });
+  assert.equal(h.controller.snapshot().segments[0]!.translation, ja.text);
+  // A failure after streamed text keeps only the original.
+  h.requests[1]!.partial({ source: 'en', target: 'ja', text: 'こん' });
+  h.requests[1]!.result.reject(new Error('cut off')); await tick();
+  assert.deepEqual([h.controller.snapshot().segments[1]!.state, h.controller.snapshot().segments[1]!.translation], ['failed', null]);
+  Snapshot.parse(h.controller.snapshot());
+  // A forced direction shows nothing streamed the wrong way, nor an unresolved reply.
+  const forced = harness(); t.after(() => forced.controller.dispose()); await forced.controller.start('en-ja'); forced.final('c');
+  forced.requests[0]!.partial({ source: 'ja', target: 'en', text: 'Hel' });
+  forced.requests[0]!.partial({ source: 'unknown', target: 'unknown', text: 'x' });
+  assert.equal(forced.controller.snapshot().segments[0]!.translation, null);
+  // Clear invalidates a request that keeps streaming.
+  forced.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こ' });
+  assert.equal(forced.controller.snapshot().segments[0]!.translation, 'こ');
+  await forced.controller.clear();
+  forced.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こん' });
+  assert.equal(forced.controller.snapshot().segments.length, 0);
+});
 test('out-of-order finals never use later speech as translation context', async t => {
   const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
   h.begin('first'); h.begin('second');

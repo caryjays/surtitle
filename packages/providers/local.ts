@@ -23,6 +23,9 @@ export type LocalOptions = {
   segmentation?: 'turns' | 'rolling';
   // Rolling row closing, for experiments; the live service keeps the defaults in ROLLING. clauseMs null: never at a clause.
   rows?: { sentenceMs: number; maxMs: number; clauseMs: number | null };
+  // Rolling decode cadence, for experiments, defaults in ROLLING: new audio between decodes, and how long a segment must end
+  // before the newest audio to lock.
+  cadence?: { intervalMs: number; settleMs: number };
   previewIntervalMs?: number; glossary?: Glossary; calibrationMs?: number;
   startupTimeoutMs?: number; inferenceTimeoutMs?: number;
   workerFactory?: () => ChildProcessWithoutNullStreams;
@@ -63,11 +66,13 @@ export class LocalTranscriber implements Transcriber {
   private sentenceEnds: string;
   private clauseEnds: string;
   private rows: { sentenceMs: number; maxMs: number; clauseMs: number | null };
+  private cadence: { intervalMs: number; settleMs: number };
   constructor(private options: LocalOptions & Parameters<TranscriberFactory>[0]) {
     this.pair = options.pair ?? DEFAULT_PAIR;
     this.sentenceEnds = this.pair.map(language => profile(language).sentenceEnd).join('');
     this.clauseEnds = this.pair.map(language => profile(language).clauseEnd).join('');
     this.rows = options.rows ?? { sentenceMs: ROLLING.sentenceRowMs, maxMs: ROLLING.maxRowMs, clauseMs: null };
+    this.cadence = options.cadence ?? { intervalMs: ROLLING.intervalMs, settleMs: ROLLING.settleMs };
     const rolling = options.segmentation === 'rolling';
     this.detector = new TurnDetector(rolling ? {
       begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', row: this.row() }; },
@@ -218,7 +223,7 @@ export class LocalTranscriber implements Transcriber {
       return;
     }
     const current = hypothesis(segments);
-    const locks = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false);
+    const locks = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false, this.cadence.settleMs);
     const { count, forced } = unconfirmed ? { count: 0, forced: false } : locks;
     if (count) {
       settle();
@@ -309,7 +314,7 @@ export class LocalTranscriber implements Transcriber {
       this.options.onGate?.(this.detector.status());
     }
     const stretch = this.stretch;
-    if (stretch && stretch.sinceRequestMs >= ROLLING.intervalMs && stretch.windowMs >= ROLLING.minWindowMs
+    if (stretch && stretch.sinceRequestMs >= this.cadence.intervalMs && stretch.windowMs >= ROLLING.minWindowMs
       && !this.active && !this.queue.length && !this.preview) {
       // Backpressure: a slow decode delays the next request rather than queueing more.
       stretch.sinceRequestMs = 0;

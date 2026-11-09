@@ -17,6 +17,7 @@ test('only whole segments inside the stable text that have settled lock, unless 
   const segments = [{ endMs: 2000, text: ' One.' }, { endMs: 4000, text: ' Two.' }, { endMs: 5500, text: ' Thr' }];
   assert.deepEqual(lockCount(segments, 'One. Two.', 4800, false), { count: 1, forced: false }); // Two ends only 0.8 s before the newest audio
   assert.deepEqual(lockCount(segments, 'One. Two.', 6000, false), { count: 2, forced: false });
+  assert.deepEqual(lockCount(segments, 'One. Two.', 4800, false, 500), { count: 2, forced: false }); // a shorter settle
   assert.deepEqual(lockCount(segments, 'One. Tw', 6000, false), { count: 1, forced: false });
   assert.deepEqual(lockCount(segments, '', 24_000, false), { count: 0, forced: false });
   assert.deepEqual(lockCount(segments, '', 25_000, false), { count: 2, forced: true });

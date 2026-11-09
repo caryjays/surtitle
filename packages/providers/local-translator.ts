@@ -1,14 +1,15 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { DEFAULT_PAIR, Translation, inPair, type Pair, type TranslationDiagnostic, type TranslationInput } from '../protocol/index.ts';
-import type { Translator } from './types.ts';
-import { chatMessages, extractObject } from './chat.ts';
+import { DEFAULT_PAIR, Source, Translation, inPair, type Pair, type TranslationDiagnostic, type TranslationInput } from '../protocol/index.ts';
+import type { PartialTranslation, Translator } from './types.ts';
+import { chatMessages, extractObject, partialObject } from './chat.ts';
 
 const Reply = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ready') }).strict(),
   z.object({ type: z.literal('error') }).strict(),
   z.object({ type: z.literal('cancelled'), id: z.string().uuid() }).strict(),
+  z.object({ type: z.literal('partial'), id: z.string().uuid(), text: z.string().max(16_000) }).strict(),
   z.object({ type: z.literal('result'), id: z.string().uuid(), text: z.string().max(16_000), inferenceMs: z.number().nonnegative().max(600_000),
     promptTokens: z.number().int().nonnegative(), generationTokens: z.number().int().nonnegative(), finish: z.string().max(20) }).strict(),
 ]);
@@ -29,7 +30,7 @@ export class LocalTranslator implements Translator {
   private worker?: ChildProcessWithoutNullStreams;
   private starting?: Promise<void>;
   private output = '';
-  private pending = new Map<string, { resolve: (r: Result) => void; reject: (e: Error) => void }>();
+  private pending = new Map<string, { resolve: (r: Result) => void; reject: (e: Error) => void; partial: (text: string) => void }>();
   constructor(private options: LocalTranslatorOptions) {}
   // Loads and warms the model; the service calls it at startup so the first caption does not pay for the load.
   start() {
@@ -66,6 +67,7 @@ export class LocalTranslator implements Translator {
           try { reply = Reply.parse(JSON.parse(line)); } catch { fail(); return; }
           if (reply.type === 'ready') { if (ready) { fail(); return; } ready = true; clearTimeout(deadline); resolve(); }
           else if (reply.type === 'error') { fail(); return; }
+          else if (reply.type === 'partial') this.pending.get(reply.id)?.partial(reply.text);
           else {
             const job = this.pending.get(reply.id); this.pending.delete(reply.id);
             if (reply.type === 'result') job?.resolve(reply); else job?.reject(new Error('cancelled'));
@@ -75,7 +77,8 @@ export class LocalTranslator implements Translator {
     });
     return this.starting;
   }
-  async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
+  async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void,
+    partial?: (value: PartialTranslation) => void) {
     // A 4B model given Auto often rewrites the source in its own language instead of translating it. In Auto, the
     // recognizer's language of the pair sets the direction; with no such language the model still decides.
     const pair = this.options.pair ?? DEFAULT_PAIR;
@@ -85,8 +88,16 @@ export class LocalTranslator implements Translator {
     try { await this.start(); } catch { diagnostic?.({ response: 'network-error' }); throw new Error('local translation unavailable'); }
     if (signal.aborted) throw new Error('cancelled');
     const id = randomUUID(); const worker = this.worker!;
+    let shown = '';
+    const progress = (reply: string) => {
+      const value = partialObject(reply);
+      if (!partial || !value || value.text === shown) return;
+      const source = Source.safeParse(value.source), target = Source.safeParse(value.target);
+      if (!source.success || !target.success) return;
+      shown = value.text; partial({ source: source.data, target: target.data, text: value.text });
+    };
     const result = await new Promise<Result>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      this.pending.set(id, { resolve, reject, partial: progress });
       // A timeout, clear or new session stops the generation instead of letting it hold the model.
       signal.addEventListener('abort', () => {
         if (!this.pending.delete(id)) return;

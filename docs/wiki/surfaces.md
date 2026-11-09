@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-11-08 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-09 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
@@ -39,7 +39,7 @@ Keyboard shortcuts, ignored while typing in a field or with a modifier key: S st
 
 ## /overlay
 
-Read-only, no controls, `Permissions-Policy: microphone=()`, and its script imports no capture code. It shows only released text: never a partial row's unlocked tail, and never text the pacer holds back. It renders up to the last six eligible rows with released text, rows that have not expired 20 s after finalization, while the snapshot is fresh within the 6 s heartbeat and capture is neither `connecting` nor `failed`.
+Read-only, no controls, `Permissions-Policy: microphone=()`, and its script imports no capture code. It shows only released text: never a partial row's unlocked tail, and never text the pacer holds back. A translation streamed by the local translator is released as it grows, and is withdrawn if the request then fails. It renders up to the last six eligible rows with released text, rows that have not expired 20 s after finalization, while the snapshot is fresh within the 6 s heartbeat and capture is neither `connecting` nor `failed`.
 
 The rows sit in a roll-up window anchored at the bottom: when released text adds a line, earlier lines slide up over 250 ms, or move at once with reduced motion, and the window clips the oldest text at its top. Defaults: original 24 px, translation 40 px, a window of about four translation lines, 6% side and 5% bottom margins, translucent dark panels. Settings go in the Browser Source URL, the only query the service accepts: `lines=1` to `8` sizes the window, and `pace=off` releases locked text at once. The operator page keeps full text.
 

@@ -28,9 +28,11 @@ starts.forEach((start, i) => {
   const within = events.filter(e => e.atMs >= start.atMs && e.atMs <= end + 20_000);
   const turns = new Map<number, Record<string, unknown>>();
   for (const e of within) if (e.turn) turns.set(e.turn.sequence, { ...turns.get(e.turn.sequence), ...e.turn, [`at:${e.turn.outcome}`]: e.atMs });
-  const firstText = new Map<number, number>(); const ready = new Map<number, { at: number; original: number; translation: number }>();
+  const firstText = new Map<number, number>(); const firstTranslation = new Map<number, number>(); const ready = new Map<number, { at: number; original: number; translation: number }>();
   for (const e of within) if (e.row) {
     if (e.row.originalChars > 0 && !firstText.has(e.row.sequence)) firstText.set(e.row.sequence, e.atMs);
+    // A streaming translator shows text before the row is ready; otherwise this is the ready event.
+    if (e.row.translationChars > 0 && !firstTranslation.has(e.row.sequence)) firstTranslation.set(e.row.sequence, e.atMs);
     if (e.row.state === 'ready' && !ready.has(e.row.sequence)) ready.set(e.row.sequence, { at: e.atMs, original: e.row.originalChars, translation: e.row.translationChars });
   }
   const rows = [...turns.values()].filter(t => ready.has(t.sequence as number) && firstText.has(t.sequence as number));
@@ -59,16 +61,24 @@ starts.forEach((start, i) => {
   line('closing decode inference', n('recognitionInferenceMs'));
   line('translation queue', n('translationQueueMs'));
   line('translation request', n('translationMs'));
+  line('translation request to first translated text', rows.map(t => (t['at:translating'] as number | undefined) === undefined ? undefined
+    : firstTranslation.get(t.sequence as number)! - (t['at:translating'] as number)));
   console.log('  End to end, before display pacing');
   line('first shown text to translation', rows.map(t => ready.get(t.sequence as number)!.at - firstText.get(t.sequence as number)!));
   line('row start to translation', rows.map(t => t.firstTextMs === undefined ? undefined
     : (t.firstTextMs as number) + ready.get(t.sequence as number)!.at - firstText.get(t.sequence as number)!));
   // What a listener waits: from when a word was said to its translation. Speech end is measured; earlier words in the
   // row wait longer by their distance from the end, taken here from the row's audio length.
-  const heard = (t: Record<string, unknown>, share: number) => t.speechEndToFinalMs === undefined || t['at:translating'] === undefined ? undefined
-    : (t.speechEndToFinalMs as number) + ready.get(t.sequence as number)!.at - (t['at:translating'] as number) + share * (t.audioMs as number);
+  const heard = (t: Record<string, unknown>, share: number, first = false) => {
+    const sequence = t.sequence as number; const shown = first ? firstTranslation.get(sequence)! : ready.get(sequence)!.at;
+    return t.speechEndToFinalMs === undefined || t['at:translating'] === undefined ? undefined
+      : (t.speechEndToFinalMs as number) + shown - (t['at:translating'] as number) + share * (t.audioMs as number);
+  };
   console.log('  Speech to translation (rolling)');
   line('last word of the row', rows.map(t => heard(t, 0)));
   line('middle of the row', rows.map(t => heard(t, 0.5)));
   line('first word of the row', rows.map(t => heard(t, 1)));
+  console.log('  Speech to first translated text (rolling; the same as above unless the translator streams)');
+  line('last word of the row', rows.map(t => heard(t, 0, true)));
+  line('middle of the row', rows.map(t => heard(t, 0.5, true)));
 });

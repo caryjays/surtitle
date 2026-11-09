@@ -1,6 +1,6 @@
 import readline from 'node:readline';
 // Stands in for scripts/local/translate_worker.py: one generation at a time, cancel by id. Behaviors: normal, slow,
-// crash-once (exits on its first request), length, garbage.
+// crash-once (exits on its first request), length, garbage, stream (sends prefixes of its reply first).
 const behavior = process.argv[2];
 console.log(JSON.stringify({ type: 'ready' }));
 const queue = []; const cancelled = new Set(); let busy = false; let requests = 0;
@@ -17,6 +17,8 @@ function next() {
       const input = JSON.parse(request.user);
       const text = behavior === 'garbage' ? 'Sure! Here is the translation.'
         : `<think>\n\n</think>\n\n${JSON.stringify({ source: 'en', target: 'ja', text: `[ja] ${input.text}` })}`;
+      // Every prefix, as the real worker's throttled partials are; the adapter must tolerate any cut.
+      if (behavior === 'stream') for (let k = 1; k < text.length; k++) send({ type: 'partial', id: request.id, text: text.slice(0, k) });
       send({ type: 'result', id: request.id, text, inferenceMs: 5, promptTokens: 300, generationTokens: 20, finish: behavior === 'length' ? 'length' : 'stop' });
     }
     next();

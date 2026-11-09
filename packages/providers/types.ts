@@ -25,6 +25,10 @@ export class TranslationFailure extends Error {
     super(category);
   }
 }
+// A translation still generating: its text so far, which later partials and the result only extend or replace.
+export type PartialTranslation = { source: Source; target: Source; text: string };
 export interface Translator {
-  translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void): Promise<Translation>;
+  // partial: translators that stream report the text so far; the returned translation is still the only validated one.
+  translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void,
+    partial?: (value: PartialTranslation) => void): Promise<Translation>;
 }
