@@ -166,6 +166,9 @@ test('in Auto, decodes detected outside the pair lock nothing, and a row of them
   await f.speak(6); f.quiet(); await f.stream.finish();
   assert(!f.events.some(e => e.type === 'partial' && e.text), 'no text displayed');
   assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected]), [['', true]]);
+  const quality = f.measurements.find(m => m.value.quality)!.value.quality!;
+  // Every decode of this row came back outside the pair with text, and none of it locked.
+  assert.equal(quality.otherLanguageDrops, f.requests.length);
 });
 test('in Auto, an opening detected outside the pair is decoded again, not lost, once detection finds the pair', async t => {
   const f = fixture('rolling-third-opening', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
@@ -173,6 +176,8 @@ test('in Auto, an opening detected outside the pair is decoded again, not lost, 
   const rows = finals(f.events);
   assert.equal(rows[0]!.language, 'ja');
   assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
+  const dropped = f.measurements.find(m => m.value.quality)!.value.quality!.otherLanguageDrops!;
+  assert(dropped >= 1 && dropped < f.requests.length, String(dropped));
 });
 test('one wholly filtered decode inside unlocked speech is skipped, not trimmed', async t => {
   const f = fixture('rolling-loop'); t.after(() => f.stream.close()); await f.stream.connect();

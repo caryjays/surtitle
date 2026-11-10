@@ -64,6 +64,14 @@ starts.forEach((start, i) => {
     return values.length ? `p10 ${values[Math.floor(0.1 * (values.length - 1))]!.toFixed(4)}, p50 ${values[Math.floor(0.5 * (values.length - 1))]!.toFixed(4)}, max ${values.at(-1)!.toFixed(4)}` : 'not recorded';
   };
   console.log(`  Input level per row, share of full scale: RMS ${level('inputRms')}; peak ${level('inputPeak')}`);
+  // Rolling Auto: windows detected outside the pair, placed in the pair by the worker's retry or dropped. Over every row.
+  const quality = [...turns.values()].map(t => t.quality as { pairRetries?: number; otherLanguageDrops?: number } | undefined);
+  if (quality.some(q => q?.pairRetries !== undefined || q?.otherLanguageDrops !== undefined)) {
+    const sum = (key: 'pairRetries' | 'otherLanguageDrops') => quality.reduce((total, q) => total + (q?.[key] ?? 0), 0);
+    const rowsWith = (key: 'pairRetries' | 'otherLanguageDrops') => quality.filter(q => (q?.[key] ?? 0) > 0).length;
+    console.log(`  Outside the pair: ${sum('pairRetries')} decodes placed in the pair by retry, in ${rowsWith('pairRetries')} rows; `
+      + `${sum('otherLanguageDrops')} decodes dropped, in ${rowsWith('otherLanguageDrops')} rows`);
+  }
   console.log('  Translated rows (seconds unless noted)');
   line('row audio', n('audioMs'));
   line('original characters', rows.map(t => ready.get(t.sequence as number)!.original), 'n');

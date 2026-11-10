@@ -227,6 +227,9 @@ export class LocalTranscriber implements Transcriber {
     // Auto, before the row has a language: a decode detected outside the pair locks nothing and is handled as wholly
     // filtered, so third-language speech never displays and a misdetected pair-language window is decoded again.
     const otherLanguage = !row.language && !inPair(this.pair, message.language);
+    if (otherLanguage && !rejected && message.segments?.length && row.quality) {
+      row.quality = { ...row.quality, otherLanguageDrops: Math.min(10_000, (row.quality.otherLanguageDrops ?? 0) + 1) };
+    }
     const segments: WorkerSegment[] = rejected || otherLanguage || (unconfirmed && job.kind === 'close') ? [] : message.segments ?? [];
     // Auto: once per row, from the decode whose text locks first; the closing decode locks all it returns. A short opening
     // misheard as the other language can pass the filters once, and keeping that language would force it on every later decode.
@@ -397,7 +400,10 @@ function mergeQuality(a: RecognitionQuality | undefined, b: RecognitionQuality |
     noSpeechDrops: add(a.noSpeechDrops, b.noSpeechDrops), lowConfidenceDrops: add(a.lowConfidenceDrops, b.lowConfidenceDrops),
     repetitionDrops: add(a.repetitionDrops, b.repetitionDrops), stockPhraseDrops: add(a.stockPhraseDrops, b.stockPhraseDrops),
     invalidScoreDrops: add(a.invalidScoreDrops, b.invalidScoreDrops),
-    noSpeechMax: extreme(a.noSpeechMax, b.noSpeechMax, Math.max), logprobMin: extreme(a.logprobMin, b.logprobMin, Math.min) };
+    noSpeechMax: extreme(a.noSpeechMax, b.noSpeechMax, Math.max), logprobMin: extreme(a.logprobMin, b.logprobMin, Math.min),
+    ...(a.pairRetries !== undefined || b.pairRetries !== undefined ? { pairRetries: add(a.pairRetries ?? 0, b.pairRetries ?? 0) } : {}),
+    ...(a.otherLanguageDrops !== undefined || b.otherLanguageDrops !== undefined
+      ? { otherLanguageDrops: add(a.otherLanguageDrops ?? 0, b.otherLanguageDrops ?? 0) } : {}) };
 }
 export function localTranscriberFactory(options: LocalOptions): TranscriberFactory {
   return callbacks => new LocalTranscriber({ ...options, ...callbacks });

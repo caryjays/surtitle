@@ -79,7 +79,7 @@ class Engine:
                 mx.synchronize()
                 kept2, rejected2, quality2 = accepted_segments(again, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
                 if kept2 and script_matches(''.join(s['text'] for s in kept2), retry):
-                    result, kept, rejected, quality = {**again, 'language': retry}, kept2, rejected2, quality2
+                    result, kept, rejected, quality = {**again, 'language': retry}, kept2, rejected2, {**quality2, 'pairRetries': 1}
         text = ''.join(s['text'] for s in kept).strip()
         return {'text': text[:4000], 'rejected': rejected, 'segments': segment_ends(kept, len(audio) / 16),
                 'language': result.get('language', 'unknown'),

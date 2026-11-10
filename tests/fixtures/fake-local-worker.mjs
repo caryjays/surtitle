@@ -47,7 +47,10 @@ function rolling(request) {
     if (ms % 1000) segments.push({ endMs: Math.floor(ms), text: ` t${decodes}` });
   }
   return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: misheard ? 'en' : other ? 'ko' : request.language ?? 'ja',
-    inferenceMs: 1, rejected: !segments.length, segments };
+    inferenceMs: 1, rejected: !segments.length, segments,
+    ...(behavior.startsWith('rolling-third') ? { measurement: { quality: { speechGateRejected: false, decodedSegments: segments.length,
+      droppedSegments: 0, noSpeechDrops: 0, lowConfidenceDrops: 0, repetitionDrops: 0, stockPhraseDrops: 0, invalidScoreDrops: 0,
+      noSpeechMax: 0, logprobMin: -0.2, pairRetries: 0, otherLanguageDrops: 0 } } } : {}) };
 }
 lines.on('line', line => {
   const request = JSON.parse(line);

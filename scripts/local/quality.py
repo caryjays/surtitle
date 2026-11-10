@@ -41,7 +41,7 @@ def stock_phrase(text, audio_seconds):
 def quality_metadata(speech_gate_rejected=False):
     return {'speechGateRejected': speech_gate_rejected, 'decodedSegments': 0, 'droppedSegments': 0,
             'noSpeechDrops': 0, 'lowConfidenceDrops': 0, 'repetitionDrops': 0, 'stockPhraseDrops': 0, 'invalidScoreDrops': 0,
-            'noSpeechMax': None, 'logprobMin': None}
+            'noSpeechMax': None, 'logprobMin': None, 'pairRetries': 0, 'otherLanguageDrops': 0}
 
 
 def accepted_result(result, min_logprob=-1.0, audio_seconds=None):

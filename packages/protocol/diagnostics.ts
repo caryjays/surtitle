@@ -11,6 +11,9 @@ export const RecognitionQuality = z.object({
   noSpeechDrops: count, lowConfidenceDrops: count, repetitionDrops: count, stockPhraseDrops: count, invalidScoreDrops: count,
   noSpeechMax: z.number().finite().min(0).max(1).nullable(),
   logprobMin: z.number().finite().min(-100).max(10).nullable(),
+  // Rolling Auto, before a row has a language: decodes outside the pair that the worker's retry placed in the pair, and
+  // decodes outside the pair that locked nothing.
+  pairRetries: count.optional(), otherLanguageDrops: count.optional(),
 }).strict();
 export const TurnMeasurement = z.object({
   boundary: Boundary.optional(), audioMs: ms.optional(), trailingQuietMs: ms.optional(),

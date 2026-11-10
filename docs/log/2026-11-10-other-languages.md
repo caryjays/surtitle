@@ -45,9 +45,24 @@ The held-out talks, simulated over the energy detector's stretches and scored wi
 
 On the real engine, of 28 windows of 0KTVqevvEjo whose detection fell outside the pair with accepted text, 10 were decoded again into the pair, 9 Japanese and 1 English; none of the first 3 s of the 40 third-language clips was.
 
+## First rehearsal with the change
+
+The maintainer ran `pnpm dev:offline` with rolling and Auto for 440 s on two videos, one in fast technical Japanese, one in English, while another project's test suites loaded the Mac: load average 9 to 12. Content-free diagnostics:
+
+- 45 rows: 34 translated, 1 left untranslated by an invalid local translator reply after 1.9 s, and 10 rejected. Nine rejections were the speech gate on non-speech, at the start and between the videos; one closing decode, 3.5 s at the end, was detected as Russian and rejected under the new rule.
+- No shown row outside the pair: every kept row was recognized as English or Japanese, each video in its own language.
+- Latency is not comparable with earlier rehearsals. Translation request to first translated text was 2.3 s at the median against 1.0 s in the previous session, a stage the retry does not touch, and 32 of 34 rows closed by length on continuous speech, 9.0 s of audio at the median against 4.6 s.
+
+The session predates the counters below, so it cannot show retries or drops.
+
+## Counters
+
+Row quality gains two optional counts, `pairRetries` from the worker and `otherLanguageDrops` from the adapter, and `pnpm diag:latency` prints their totals per Start when a file carries them. On the real engine, 3 of 12 windows of 0KTVqevvEjo detected outside the pair came back with `pairRetries: 1`.
+
 ## Open
 
-- Real-time gate run with the held-out set, rolling and turns, on the Air: the change has only been simulated.
+- A rehearsal with the counters, on an otherwise idle Mac, with speech that has been mislabeled before.
+- Real-time gate run with the held-out set, rolling and turns, on the Air.
 - Looping on short stretches remains this talk's main loss.
 - Turns mode still shows a third-language final as `unknown`.
 - One window of the talk went into English on retry; whether it was an English loanword phrase or a translation was not checked.
