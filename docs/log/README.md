@@ -41,6 +41,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-09-piece-translation.md](2026-11-09-piece-translation.md) | Piece translation built behind a replay flag and compared with row translation |
 | [2026-11-10-piece-quality.md](2026-11-10-piece-quality.md) | Piece translation quality read against rows: worse on every talk, live stays row |
 | [2026-11-10-prompt-order.md](2026-11-10-prompt-order.md) | Padded replies traced to the local prompt's order; text now last; glossary filter tried and reverted |
+| [2026-11-10-offline-rehearsal.md](2026-11-10-offline-rehearsal.md) | Maintainer's two offline rehearsal sessions on fast technical Japanese, matching replay timings, names misrecognized; `diag:latency` reads files without a Start |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

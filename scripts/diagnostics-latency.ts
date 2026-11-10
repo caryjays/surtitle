@@ -21,7 +21,10 @@ function line(name: string, values: (number | undefined)[], unit: 'ms' | 'n' = '
 const tally = (values: unknown[]) => Object.entries(values.reduce<Record<string, number>>((m, v) => (m[String(v)] = (m[String(v)] ?? 0) + 1, m), {}))
   .map(([k, v]) => `${k} ${v}`).join(', ');
 
-const starts = events.filter(e => e.command?.type === 'start');
+// Collection switched on after Start records no start command; the whole file is then one session from its first event.
+const commands = events.filter(e => e.command?.type === 'start');
+const starts = commands.length ? commands : events.slice(0, 1);
+if (!commands.length) console.log('No Start recorded: diagnostics began mid-session, so rows already open then are partly measured.');
 starts.forEach((start, i) => {
   const end = events.find(e => e.command?.type === 'pause' && e.atMs > start.atMs)?.atMs ?? Infinity;
   // Translations of the last rows can land shortly after Pause.
