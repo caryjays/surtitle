@@ -26,6 +26,9 @@ outside the pair locks nothing: it is handled as a wholly filtered decode, so th
 With --pair-retry T as well, such a window is decoded again in the pair language detection prefers when the pair holds
 at least T of detection's probability, and kept if written in that language's script.
 
+With --settle S, a segment locks once it ends S seconds before the newest audio, against the live 1.0. Every run reports
+lock lag, from a locked segment's end to the reply that locked it, in virtual time.
+
 With --noise-confirm T, after a noise trim the next lock in the stretch needs a decode whose lowest segment log
 probability is at least T, so a stretch held open by music or noise cannot lock a chance agreement of two hallucinations.
 
@@ -38,7 +41,7 @@ share windows decode them once and reruns are cheap. Decode times come from the 
 realistic. Public licensed fixtures only; no API or .env use.
 
   run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row] [--pair-only [--pair-retry 0.5]]
-      [--noise-confirm -0.5]
+      [--noise-confirm -0.5] [--settle 1.0]
 """
 import argparse
 import json
@@ -205,7 +208,8 @@ def third_language(decoder, pcm, a, b):
     return sum(probs[k] for k in PAIR) < 1 - THIRD
 
 
-def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False, noise_confirm=None, pair_only=False, pair_retry=None):
+def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False, noise_confirm=None, pair_only=False, pair_retry=None,
+            lags=None):
     """One stretch of speech, samples a to b. Returns rows [(language, text)], the clock, and decode count."""
     rows, row = [], {'language': None, 'text': '', 'audio': 0.0, 'start': a}
 
@@ -243,6 +247,8 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False,
                     row['language'] = language
                 locked = segments[:count]
                 end = int(locked[-1]['endMs'] * RATE / 1000)
+                if lags is not None and not final:
+                    lags.append(clock - (win + end) / RATE)
                 previous = hypothesis(segments)[len(hypothesis(locked)):].lstrip()
                 row['text'] = join(row['text'], ''.join(s['text'] for s in locked))
                 row['audio'] += end / RATE
@@ -321,6 +327,8 @@ def layout(stream):
 
 def run(args):
     import subprocess
+    global SETTLE
+    SETTLE = args.settle
     report = {}
     for stream in args.streams.split(','):
         if stream.startswith('stress-'):
@@ -329,18 +337,21 @@ def run(args):
                               'pipe:1'], check=True, capture_output=True).stdout
         decoder = Decoder(stream)
         for rule in args.rules.split(','):
-            rows, decodes, busy, clock = [], 0, 0.0, 0.0
+            rows, decodes, busy, clock, lags = [], 0, 0.0, 0.0, []
             started = time.perf_counter()
             for clip, a, b in layout(stream):
                 clock = max(clock, a / RATE)
                 before = clock
                 found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row,
-                                          args.noise_confirm, args.pair_only, args.pair_retry)
+                                          args.noise_confirm, args.pair_only, args.pair_retry, lags)
                 rows += [(clip.get('id'), language, text) for language, text in found]
                 decodes += n
                 busy += clock - before
             decoder.save(force=True)
             result = {'rows': len(rows), 'decodes': decodes, 'wallSeconds': round(time.perf_counter() - started, 1)}
+            if lags:
+                lags.sort()
+                result['lockLag'] = {'n': len(lags), 'p50': round(lags[len(lags) // 2], 2), 'p90': round(lags[int(len(lags) * 0.9)], 2)}
             if stream.startswith(('public-', 'stress-')):
                 language = stream.split('-')[1]
                 clips = layout(stream)
@@ -352,6 +363,7 @@ def run(args):
                 result['texts'] = [text for _, _, text in rows]
             name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '') + ('+pair' if args.pair_only else '') + (
                 f'+retry{args.pair_retry}' if args.pair_retry is not None else '') + (
+                f'+settle{args.settle}' if args.settle != 1.0 else '') + (
                 f'+confirm{args.noise_confirm}' if args.noise_confirm is not None else '')
             report.setdefault(stream, {})[name] = result
             print(stream, name, json.dumps({k: v for k, v in result.items() if k != 'score'} | (
@@ -372,6 +384,7 @@ def main():
     run_parser.add_argument('--third-row', action='store_true')
     run_parser.add_argument('--pair-only', action='store_true')
     run_parser.add_argument('--pair-retry', type=float)
+    run_parser.add_argument('--settle', type=float, default=1.0)
     run_parser.add_argument('--noise-confirm', type=float)
     run(parser.parse_args())
 
