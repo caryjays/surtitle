@@ -247,7 +247,12 @@ export class Controller {
         if (event.locked.language !== 'unknown') pieces.language = event.locked.language;
       }
       if (event.type === 'final' && rejected) {
-        this.rejected++; this.rows = this.rows.filter(r => r !== row); this.changed(); return;
+        this.rejected++;
+        if (event.uncaptioned && !repeated) {
+          // Kept as a marker so the display shows that speech went uncaptioned; nothing to translate.
+          Object.assign(row, { final: true, finalizedAt: Date.now(), state: 'original', uncaptioned: event.uncaptioned });
+        } else this.rows = this.rows.filter(r => r !== row);
+        this.changed(); return;
       }
       if (event.type === 'final') {
         row.final = true; row.finalizedAt = Date.now(); row.state = 'pending';
@@ -264,7 +269,7 @@ export class Controller {
         else {
           // Snapshot ONLY earlier finalized rows at commit time. Never include future
           // turns or let later translations mutate an already queued request's context.
-          const preceding = this.rows.filter(r => r.final && r.sequence >= this.contextFloor && r.sequence < row!.sequence).slice(-4);
+          const preceding = this.rows.filter(r => r.final && !r.uncaptioned && r.sequence >= this.contextFloor && r.sequence < row!.sequence).slice(-4);
           if (trace) {
             trace.contextSequences = preceding.map(r => r.sequence);
             trace.contextMissingTranslations = preceding.filter(r => r.state !== 'ready' || !r.translation).length;
@@ -406,7 +411,7 @@ export class Controller {
       const source = pieces.direction ? direction(pieces.direction)!.source : pieces.language;
       // Earlier rows' finished translations, then this row's translated pieces, at most four.
       const context = [
-        ...this.rows.filter(r => r.final && r.sequence >= this.contextFloor && r.sequence < row.sequence).slice(-4).map(r => ({ original: r.original.slice(0, 800),
+        ...this.rows.filter(r => r.final && !r.uncaptioned && r.sequence >= this.contextFloor && r.sequence < row.sequence).slice(-4).map(r => ({ original: r.original.slice(0, 800),
           translation: r.state === 'ready' ? r.translation?.slice(0, 800) ?? null : null, source: r.source })),
         ...pieces.parts.map(part => ({ original: part.original.slice(0, 800), translation: part.translation.slice(0, 800) || null, source })),
       ].slice(-4);

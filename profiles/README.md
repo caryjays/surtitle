@@ -22,5 +22,6 @@ Mappings are hints. A glossary cannot repair recognition errors, and glossary te
 | `sentenceEnd` | characters that end a sentence; rolling segmentation closes a row at one after 3 s of locked audio |
 | `clauseEnd` | characters that end a clause; rolling segmentation closes a row at one only when given a clause length, which the live service does not set |
 | `stockPhrases` | sign-offs Whisper hallucinates; a long turn or row that is only these is dropped. Every profile's phrases apply in every session |
+| `uncaptioned` | short label for a marker row, speech heard but not captioned; the displays show both pair languages' labels and never name the speech's language |
 
 A script variant, such as Simplified or Traditional Chinese, is meant to be a profile setting, not a separate code. No such setting exists yet.

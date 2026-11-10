@@ -1,4 +1,4 @@
-import { Snapshot } from '../../packages/protocol/index.ts';
+import { DEFAULT_PAIR, PROFILES, Snapshot, type Pair } from '../../packages/protocol/index.ts';
 export function connect(role: 'control' | 'overlay', onState: (state: Snapshot) => void, onConnection: (connected: boolean) => void) {
   let socket: WebSocket;
   function open() {
@@ -31,11 +31,19 @@ function fill(element: HTMLElement, shown: string, rest: string) {
   if (pending.textContent !== rest) pending.textContent = rest;
 }
 type Row = Snapshot['segments'][number] & { originalRest?: string; translationRest?: string };
-export function renderSegments(container: HTMLElement, rows: Row[], operator = false, turns: Snapshot['turns'] = []) {
+// A marker row, speech heard but not captioned, reads the same in both languages whatever the reason or the speech's language.
+export function uncaptionedLabel(pair: Pair) {
+  return `[ ${pair.map(language => PROFILES[language]?.uncaptioned ?? language).join(' · ')} ]`;
+}
+// The audience sees markers for speech outside the pair; the operator also sees speech the recognition filters rejected.
+export function shownRow(row: Row, operator: boolean) {
+  return Boolean(row.original || (operator && row.originalRest) || (row.uncaptioned && (operator || row.uncaptioned === 'language')));
+}
+export function renderSegments(container: HTMLElement, rows: Row[], operator = false, turns: Snapshot['turns'] = [], pair: Pair = DEFAULT_PAIR) {
   const existing = new Map([...container.children].map(node => [(node as HTMLElement).dataset.id, node as HTMLElement]));
   const keep = new Set<string>();
   let position = 0;
-  for (const row of rows.filter(r => r.original || (operator && r.originalRest))) {
+  for (const row of rows.filter(r => shownRow(r, operator))) {
     keep.add(row.id);
     let article = existing.get(row.id);
     if (!article) {
@@ -48,8 +56,10 @@ export function renderSegments(container: HTMLElement, rows: Row[], operator = f
     position++;
     if (article.dataset.state !== row.state) article.dataset.state = row.state;
     if (article.dataset.sequence !== String(row.sequence)) article.dataset.sequence = String(row.sequence);
+    const marker = row.uncaptioned && !row.original ? row.uncaptioned : undefined;
+    if (article.dataset.uncaptioned !== marker) { if (marker) article.dataset.uncaptioned = marker; else delete article.dataset.uncaptioned; }
     const original = article.querySelector<HTMLElement>('.original')!;
-    fill(original, row.original, operator ? row.originalRest ?? '' : '');
+    fill(original, marker ? uncaptionedLabel(pair) : row.original, marker || !operator ? '' : row.originalRest ?? '');
     const sourceLanguage = row.source === 'unknown' ? '' : row.source;
     if (original.lang !== sourceLanguage) original.lang = sourceLanguage;
     const info = article.querySelector('small')!;
@@ -70,7 +80,8 @@ export function renderSegments(container: HTMLElement, rows: Row[], operator = f
       skipped: 'Translation skipped · backlog or recalibration', original: 'Original only · translation off' };
     const turn = operator ? turns.find(turn => turn.sequence === row.sequence) : undefined;
     const boundaries = { silence: 'quiet boundary', 'max-duration': 'time-limit split · may continue', length: 'row length · speech continues', flush: 'manual flush', 'mode-change': 'direction change', pause: 'capture pause', recalibration: 'recalibration' };
-    const infoText = `#${row.sequence} · ${row.source === 'unknown' ? 'Auto' : row.source.toUpperCase()} · ${labels[row.state]}${row.translationMs === null ? '' : ` · request ${row.translationMs} ms`}`
+    const uncaptioned = { language: 'Not captioned · speech outside the pair', filtered: 'Not captioned · rejected by recognition filters · operator only' };
+    const infoText = `#${row.sequence} · ${row.source === 'unknown' ? 'Auto' : row.source.toUpperCase()} · ${marker ? uncaptioned[marker] : labels[row.state]}${row.translationMs === null ? '' : ` · request ${row.translationMs} ms`}`
       + (turn?.boundary ? ` · ${boundaries[turn.boundary]}${turn.audioMs === undefined ? '' : ` (${(turn.audioMs / 1000).toFixed(1)} s)`}` : '')
       + (turn?.quality?.droppedSegments ? ` · filtered ${turn.quality.droppedSegments} decoder pieces` : '')
       + (turn?.recognitionClipped ? ' · original character limit reached' : '');

@@ -44,7 +44,10 @@ type Row = { id: string; mode: Mode; begun: boolean; text: string; audioMs: numb
   level: Level;
   decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean;
   // The last partial sent: locked text plus the unlocked tail.
-  shown?: string };
+  shown?: string;
+  // Decodes outside the pair that locked nothing: in a row, and since the last decode in the pair. marked: this stretch
+  // already showed a marker for speech outside the pair, so the row shows no other.
+  otherRun: number; otherDrops: number; marked?: boolean };
 // One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
 type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
 type RecognitionQuality = z.infer<typeof Quality>;
@@ -130,6 +133,7 @@ export class LocalTranscriber implements Transcriber {
   private row(): Row {
     const mode = this.options.mode;
     return { id: randomUUID(), mode, level: { squares: 0, samples: 0, peak: 0 }, begun: false, text: '', audioMs: 0, created: performance.now(), decodes: 0, forced: 0, lags: [],
+      otherRun: 0, otherDrops: 0,
       language: direction(mode)?.source ?? null };
   }
   // The unlocked audio as one buffer, capped below Whisper's 30 s input.
@@ -227,9 +231,10 @@ export class LocalTranscriber implements Transcriber {
     // Auto, before the row has a language: a decode detected outside the pair locks nothing and is handled as wholly
     // filtered, so third-language speech never displays and a misdetected pair-language window is decoded again.
     const otherLanguage = !row.language && !inPair(this.pair, message.language);
-    if (otherLanguage && !rejected && message.segments?.length && row.quality) {
-      row.quality = { ...row.quality, otherLanguageDrops: Math.min(10_000, (row.quality.otherLanguageDrops ?? 0) + 1) };
-    }
+    if (otherLanguage && !rejected && message.segments?.length) {
+      row.otherRun++; row.otherDrops++;
+      if (row.quality) row.quality = { ...row.quality, otherLanguageDrops: Math.min(10_000, (row.quality.otherLanguageDrops ?? 0) + 1) };
+    } else if (!rejected && message.segments?.length) row.otherRun = 0;
     const segments: WorkerSegment[] = rejected || otherLanguage || (unconfirmed && job.kind === 'close') ? [] : message.segments ?? [];
     // Auto: once per row, from the decode whose text locks first; the closing decode locks all it returns. A short opening
     // misheard as the other language can pass the filters once, and keeping that language would force it on every later decode.
@@ -239,11 +244,17 @@ export class LocalTranscriber implements Transcriber {
       // Everything left locks. An older worker without segments still returns its text.
       row.text = joinText(row.text, rejected || unconfirmed || otherLanguage ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
       row.audioMs += windowMs;
+      // Speech that shows nothing leaves a marker instead: speech outside the pair, or speech the filters rejected. Not
+      // for non-speech, nor after a noise trim without a confident decode.
+      const quality = message.measurement?.quality;
+      const filtered = rejected && quality && !quality.speechGateRejected && !unconfirmed
+        && (repeated || quality.repetitionDrops + quality.lowConfidenceDrops + quality.stockPhraseDrops > 0);
+      const uncaptioned = row.marked ? undefined : row.otherDrops ? 'language' as const : filtered ? 'filtered' as const : undefined;
       this.closeRow(row, job.detail!.boundary, { trailingQuietMs: job.detail!.trailingQuietMs,
         recognitionQueueMs: Math.round(job.sent! - job.queued), recognitionInferenceMs: message.inferenceMs,
         commitToFinalMs: Math.round(performance.now() - job.queued), adapterRepetitionRejected: repeated,
         ...(message.measurement?.recognitionLanguage ? { recognitionLanguage: message.measurement.recognitionLanguage } : {}),
-      }, rejected || unconfirmed || otherLanguage);
+      }, rejected || unconfirmed || otherLanguage, uncaptioned);
       this.options.onTiming?.({ id: row.id, audioMs: row.audioMs, queueMs: job.sent! - job.queued,
         inferenceMs: message.inferenceMs, commitToFinalMs: performance.now() - job.queued });
       return;
@@ -282,6 +293,12 @@ export class LocalTranscriber implements Transcriber {
     } else {
       stretch!.previous = current;
     }
+    if (row === stretch!.row && !row.text && !row.marked && row.otherRun >= ROLLING.otherMarkDecodes) {
+      // Sustained speech outside the pair: close the row now as a marker rather than leave the display empty until the
+      // stretch ends. The stretch continues in a row that shows no second marker.
+      this.closeRow(row, 'length', {}, true, 'language');
+      stretch!.row = { ...this.row(), marked: true, ...(row.afterNoise ? { afterNoise: true } : {}) };
+    }
     this.partial(stretch!.row, stretch!.previous);
   }
   private rowText(row: Row) {
@@ -301,7 +318,7 @@ export class LocalTranscriber implements Transcriber {
     this.options.onEvent({ type: 'partial', id: row.id, text, stable: row.text.length,
       locked: { audioMs: Math.round(row.audioMs), lagMs: Math.round(row.lags.at(-1) ?? 0), language: row.language ?? 'unknown' } });
   }
-  private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean) {
+  private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean, uncaptioned?: 'language' | 'filtered') {
     // A whole row of stock sign-off from long audio replaced real speech.
     const stock = row.audioMs >= ROLLING.stockMs && isStockPhrase(row.text);
     if (!row.begun) { row.begun = true; this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: row.mode }); }
@@ -317,8 +334,9 @@ export class LocalTranscriber implements Transcriber {
       ...(speechEnd !== undefined ? { speechEndToFinalMs: Math.min(120_000, Math.round(speechEnd)) } : {}),
       ...(quality ? { quality } : {}) });
     const empty = stock || !row.text.trim();
+    const reason = stock && !row.marked ? 'filtered' : uncaptioned;
     this.options.onEvent({ type: 'final', id: row.id, text: stock ? '' : row.text, language: row.language ?? 'unknown',
-      ...((empty && rejected) || stock ? { rejected: true } : {}) });
+      ...((empty && rejected) || stock ? { rejected: true, ...(reason ? { uncaptioned: reason } : {}) } : {}) });
   }
   private pump() {
     if (this.closed || !this.ready || this.active) return;

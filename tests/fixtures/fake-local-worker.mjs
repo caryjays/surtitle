@@ -30,6 +30,12 @@ function rolling(request) {
         droppedSegments: 0, noSpeechDrops: 0, lowConfidenceDrops: 0, repetitionDrops: 0, stockPhraseDrops: 0, invalidScoreDrops: 0,
         noSpeechMax: 0, logprobMin: noise ? null : logprobMin } } };
   }
+  // filtered: speech the filters reject on every decode, a loop over audible speech.
+  if (behavior === 'rolling-filtered') {
+    return { type: 'final', id: request.id, text: '', language: request.language ?? 'ja', inferenceMs: 1, rejected: true, segments: [],
+      measurement: { quality: { speechGateRejected: false, decodedSegments: 1, droppedSegments: 1, noSpeechDrops: 0, lowConfidenceDrops: 0,
+        repetitionDrops: 1, stockPhraseDrops: 0, invalidScoreDrops: 0, noSpeechMax: 0, logprobMin: -0.2 } } };
+  }
   // loop: the whole speech is one segment that never settles, and the decode of a 4 to 5 s window loops and is filtered.
   if (behavior === 'rolling-loop') {
     const words = Array.from({ length: Math.ceil(ms / 1000) }, (_, k) => ` w${start + 20 * k}`).join('');

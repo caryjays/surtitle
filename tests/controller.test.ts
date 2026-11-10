@@ -218,6 +218,14 @@ test('model-rejected non-speech does not translate even when text is not repetit
   assert.equal(h.requests.length, 0); assert.equal(h.controller.snapshot().segments.length, 0);
   assert.equal(h.controller.snapshot().rejected, 1);
 });
+test('a rejected row of uncaptioned speech stays as a marker, never translated or context', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.begin('spanish'); h.streams[0]!.emit({ type: 'final', id: 'spanish', text: '', rejected: true, uncaptioned: 'language' });
+  const [marker] = h.controller.snapshot().segments;
+  assert.deepEqual([marker!.original, marker!.final, marker!.state, marker!.uncaptioned, marker!.translation], ['', true, 'original', 'language', null]);
+  assert.equal(h.requests.length, 0); assert.equal(h.controller.snapshot().rejected, 1);
+  h.final('real'); assert.deepEqual(h.requests[0]!.input.context, []);
+});
 test('recalibration keeps finalized rows, cancels pending translations and context, and drops open rows without restarting capture', async t => {
   const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
   h.final('done'); h.requests[0]!.result.resolve(ja); await tick();

@@ -161,14 +161,31 @@ test('in Auto a short opening misheard as accepted text does not settle the row;
   assert.equal(rows[0]!.language, 'ja');
   assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
 });
-test('in Auto, decodes detected outside the pair lock nothing, and a row of them closes rejected', async t => {
+test('in Auto, decodes outside the pair lock nothing; three in a row leave one marker while the speech goes on', async t => {
   const f = fixture('rolling-third', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
-  await f.speak(6); f.quiet(); await f.stream.finish();
+  await f.speak(3);
+  // The marker closes during the speech, not at its end.
+  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected, r.uncaptioned]), [['', true, 'language']]);
+  await f.speak(5); f.quiet(); await f.stream.finish();
   assert(!f.events.some(e => e.type === 'partial' && e.text), 'no text displayed');
-  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected]), [['', true]]);
-  const quality = f.measurements.find(m => m.value.quality)!.value.quality!;
-  // Every decode of this row came back outside the pair with text, and none of it locked.
-  assert.equal(quality.otherLanguageDrops, f.requests.length);
+  // The rest of the stretch closes rejected without a second marker.
+  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected, r.uncaptioned]), [['', true, 'language'], ['', true, undefined]]);
+  const drops = f.measurements.flatMap(m => m.value.quality ? [m.value.quality.otherLanguageDrops ?? 0] : []);
+  // Every decode came back outside the pair with text, and none of it locked.
+  assert.equal(drops.reduce((a, b) => a + b, 0), f.requests.length);
+});
+test('a short stretch outside the pair leaves its marker when it closes', async t => {
+  const f = fixture('rolling-third', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(2); f.quiet(); await f.stream.finish();
+  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected, r.uncaptioned]), [['', true, 'language']]);
+});
+test('speech the filters reject leaves a filtered marker; non-speech leaves none', async t => {
+  const f = fixture('rolling-filtered'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(2); f.quiet(); await f.stream.finish();
+  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected, r.uncaptioned]), [['', true, 'filtered']]);
+  const g = fixture('rolling-noise'); t.after(() => g.stream.close()); await g.stream.connect();
+  await g.speak(2); g.quiet(); await g.stream.finish();
+  assert.deepEqual(finals(g.events).map(r => [r.text, r.rejected, r.uncaptioned]), [['', true, undefined]]);
 });
 test('in Auto, an opening detected outside the pair is decoded again, not lost, once detection finds the pair', async t => {
   const f = fixture('rolling-third-opening', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();

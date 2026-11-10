@@ -18,6 +18,8 @@ export const ROLLING = {
   sentenceRowMs: 3000, // a row closes at sentence punctuation once it holds this much locked audio
   maxRowMs: 8000, // or at this much, which is what closes Japanese rows in continuous speech
   stockMs: 6000,
+  // Consecutive decodes outside the pair, about a second each, before an empty row shows a marker for them.
+  otherMarkDecodes: 3,
 };
 
 // Text two consecutive hypotheses agree on, never ending inside a Latin word or number.

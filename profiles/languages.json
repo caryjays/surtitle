@@ -6,7 +6,8 @@
     "sentenceEnd": ".!?",
     "clauseEnd": ",;:",
     "stockPhrases": ["thank you for watching", "thanks for watching", "thank you"],
-    "reading": { "floor": 8, "ceiling": 25 }
+    "reading": { "floor": 8, "ceiling": 25 },
+    "uncaptioned": "not captioned"
   },
   "ja": {
     "name": "Japanese",
@@ -15,6 +16,7 @@
     "sentenceEnd": "。！？",
     "clauseEnd": "、，",
     "stockPhrases": ["ご視聴ありがとうございました", "ご清聴ありがとうございました", "お疲れ様でした", "チャンネル登録よろしくお願いします"],
-    "reading": { "floor": 3, "ceiling": 10 }
+    "reading": { "floor": 3, "ceiling": 10 },
+    "uncaptioned": "字幕なし"
   }
 }

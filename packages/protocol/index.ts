@@ -43,6 +43,9 @@ export const TranslationInput = z.object({
 }).strict();
 export type TranslationInput = z.infer<typeof TranslationInput>;
 export const MAX_SEGMENTS = 60;
+// Why a row holds speech but no text: outside the session pair, or rejected by the recognition filters. Content-free.
+export const Uncaptioned = z.enum(['language', 'filtered']);
+export type Uncaptioned = z.infer<typeof Uncaptioned>;
 export const Segment = z.object({
   id: z.string().max(100), sequence: z.number().int().nonnegative(), original: z.string().max(4000),
   final: z.boolean(), translation: z.string().max(4000).nullable(),
@@ -51,6 +54,8 @@ export const Segment = z.object({
   finalizedAt: z.number().nullable(), translationMs: z.number().nonnegative().nullable(),
   // Leading characters of a partial original that are locked; displays reveal only these. Absent: all of it.
   stable: z.number().int().nonnegative().max(4000).optional(),
+  // A marker row: speech was heard and is not captioned. Its original stays empty and it is never translated or context.
+  uncaptioned: Uncaptioned.optional(),
 });
 export type Segment = z.infer<typeof Segment>;
 export const AudioGate = z.object({

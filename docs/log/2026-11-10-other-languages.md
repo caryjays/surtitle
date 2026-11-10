@@ -66,3 +66,32 @@ Row quality gains two optional counts, `pairRetries` from the worker and `otherL
 - Looping on short stretches remains this talk's main loss.
 - Turns mode still shows a third-language final as `unknown`.
 - One window of the talk went into English on retry; whether it was an English loanword phrase or a translation was not checked.
+
+## Second rehearsal: OBS, recording, and Spanish
+
+The maintainer ran `pnpm dev:offline` with rolling and Auto for 459 s with OBS composing the overlay, screen and browser sharing, audio into OBS, video recording for part of the session, and another agent session running development tasks. Japanese and English video, and a stretch of Spanish speech. Content-free diagnostics, with the counters:
+
+- 52 rows: 49 translated, 3 rejected. No shown row outside the pair, and the retry never fired: `pairRetries` 0.
+- The Spanish stretch was one row of 20 decodes, all detected as Spanish, all dropped, none placed in the pair by the retry. English resumed in the right language on the next row.
+- The other two rejections: 8.3 s of near-silent audio, RMS 0.0018, that Whisper looped on and the repetition filter rejected; and 2.7 s of English dropped for low confidence, log probability −1.14, possibly a real short phrase.
+- From about 1:55 to 4:00 into the session, lock lag rose from about 2 s to 4 to 8 s, translation requests from 2 to 3 s to 4 to 6.6 s, and one closing decode waited 4.4 s in the queue. Both recovered after about 4:00. The maintainer observed lag with recording on and smooth captions, slower than on an idle Mac, with recording off. Which stretch the recording covered is the maintainer's recollection, not in the file.
+
+## Marker rows
+
+The Spanish stretch left the overlay empty for about 30 s. The maintainer asked for a display in that time, worded so it serves other drop reasons and languages detection cannot name reliably.
+
+- `TranscriptEvent` finals and `Segment` gain `uncaptioned`: `language` or `filtered`. The controller keeps such a rejected row as a final marker with an empty original, never translated and never context, and still counts it as rejected.
+- The rolling adapter closes an empty row as a `language` marker after three consecutive decodes outside the pair, so the marker shows about 3 s into the speech; the stretch continues in a row that shows no second marker. A shorter stretch leaves the marker when it closes. A closing decode rejected by the repetition, low-confidence or stock-phrase filters, with the speech gate passed and no noise trim waiting, closes its empty row as a `filtered` marker. Speech-gate rejections and unconfirmed rows after a noise trim leave nothing.
+- Profiles gain `uncaptioned`, `not captioned` and `字幕なし`. Displays render `[ not captioned · 字幕なし ]` in muted italics: the overlay and audience view for `language`, the operator page for both, with the reason in its row details.
+- Tests: three adapter tests over the fake worker, a controller test, and the display rules. `pnpm check`, the Python tests and `pnpm test:browser` pass. Not yet seen on a real display.
+
+Applied to the second rehearsal, the rule would have shown one overlay marker about 3 s into the Spanish and two operator-only markers, for the near-silent loop and the dropped English.
+
+## Third rehearsal: markers in OBS
+
+The maintainer's report, no diagnostics file: the markers worked as intended in OBS. An English speaker explaining several Latin phrases was transcribed and translated throughout, since a row's settled language keeps later decodes in English; a long stretch of Spanish that followed showed the marker and then resumed correctly.
+
+## Open, after the rehearsals
+
+- The near-silent loop would show an operator marker; whether filtered markers should require a minimum input level is open.
+- Recording's GPU cost under OBS: a run with recording toggled at noted times would separate it from the other load.

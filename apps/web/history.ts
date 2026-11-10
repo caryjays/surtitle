@@ -39,7 +39,7 @@ export function readingContentChanged(before: Pick<Snapshot, 'segments' | 'turns
     const a = before.segments[i]!; const b = after.segments[i]!;
     if (a.id !== b.id || a.sequence !== b.sequence || a.original !== b.original || a.translation !== b.translation
       || a.source !== b.source || a.target !== b.target || a.state !== b.state || a.final !== b.final || a.translationMs !== b.translationMs
-      || a.stable !== b.stable) return true;
+      || a.stable !== b.stable || a.uncaptioned !== b.uncaptioned) return true;
   }
   for (let i = 0; i < after.turns.length; i++) {
     const a = before.turns[i]!; const b = after.turns[i]!;
@@ -69,7 +69,7 @@ export function setupHistory(preservePosition: (update: () => void) => void) {
       const ids = new Set(visible.map(row => row.id));
       shown = pacer.update(latest, Date.now()).filter(row => ids.has(row.id));
     }
-    preservePosition(() => renderSegments(captions, shown, true, showingPreview ? [] : turns));
+    preservePosition(() => renderSegments(captions, shown, true, showingPreview ? [] : turns, latest?.pair));
     const empty = search.value.trim() ? 'No matching recent text. Clear search to see all turns.' : 'Original speech and translations will appear here.';
     if (captions.dataset.emptyMessage !== empty) captions.dataset.emptyMessage = empty;
     document.getElementById('history-count')!.textContent = `${visible.length} / ${source.filter(row => row.original).length} turns · ${showingPreview ? 'fictional preview' : 'recent 60 · memory only'}`;

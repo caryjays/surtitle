@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { renderSegments } from './client.ts';
+import { renderSegments, shownRow } from './client.ts';
 import { DEFAULT_PACE, Pacer } from './pacer.ts';
 import { visibleSegments } from './visibility.ts';
 import type { Snapshot } from '../../packages/protocol/index.ts';
@@ -36,8 +36,8 @@ export function audienceView(window: HTMLElement, roll: HTMLElement) {
     },
     render(state: Snapshot | undefined, receivedAt: number, now: number) {
       const paced = pacer.update(state, now);
-      const rows = paced.filter(row => row.original);
-      renderSegments(roll, visibleSegments(state, receivedAt, now, rows, 6));
+      const rows = paced.filter(row => shownRow(row, false));
+      renderSegments(roll, visibleSegments(state, receivedAt, now, rows, 6), false, [], state?.pair);
       const grown = roll.offsetHeight - height;
       height = roll.offsetHeight;
       if (grown > 0 && !still.matches) {

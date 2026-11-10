@@ -16,6 +16,8 @@ a { color: #9cdbff; }
 meter { width: 140px; height: 1.4rem; }
 article { background: rgba(8, 12, 19, .86); border-radius: 12px; padding: 16px 24px; margin-top: 12px; overflow-wrap: anywhere; }
 .original { font-size: 24px; line-height: 1.4; color: #e0e6ed; white-space: pre-wrap; }
+/* Speech heard but not captioned: a quiet placeholder, never mistaken for speech text. */
+article[data-uncaptioned] .original { font-style: italic; opacity: .55; }
 .translation { font-size: 40px; line-height: 1.4; font-weight: 650; color: white; white-space: pre-wrap; margin-top: 6px; }
 small { display: block; margin-top: .5rem; color: #a9bed1; }
 #error { color: #ffb3a7; min-height: 1.6rem; }
