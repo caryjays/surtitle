@@ -1,6 +1,6 @@
 # Translation
 
-Verified: 2026-11-09 · Sources: packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/chat.ts, packages/providers/local-translator.ts, scripts/local/translate_worker.py, scripts/local/translators.json, scripts/local/download_translator.py, packages/providers/translation.ts, apps/service/main.ts, packages/protocol/index.ts, apps/service/controller.ts, apps/service/glossary.ts, profiles/glossary.example.json, profiles/README.md, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-10 · Sources: packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/chat.ts, packages/providers/local-translator.ts, scripts/local/translate_worker.py, scripts/local/translators.json, scripts/local/download_translator.py, packages/providers/translation.ts, apps/service/main.ts, packages/protocol/index.ts, apps/service/controller.ts, apps/service/glossary.ts, profiles/glossary.example.json, profiles/README.md, packages/protocol/languages.ts, profiles/languages.json
 
 Translation is one request per finalized turn, either to a cloud provider or to a model on this Mac. The listen profile, or an explicit `TRANSLATION_BACKEND=cloud`, sends it to the cloud: audio never leaves the Mac, text does. The offline profile, or `TRANSLATION_BACKEND=local`, keeps it on the Mac; see [local translation](#local-translation). `TRANSLATION_PROVIDER` selects OpenAI Responses (`openai`, the default) or Anthropic Messages (`anthropic`). Both share the instructions and output schema in `translation.ts`, generated from the session's pair; only the transport and response mapping differ. For `en-ja` the generated instructions are the same text as before the pair was configurable, so translation eval prompt variants still apply. Each translator accepts an instructions override, which only the eval uses to test prompt variants. A third adapter, `chat.ts`, speaks OpenAI-compatible chat completions to a local or private-network server. It is used only by the [translation eval](testing.md#translation-eval) and is not selectable in the live service. Because local servers do not all enforce a schema, it adds the expected JSON shape to the instructions and accepts the object even inside code fences or after a reasoning preamble. The local translator uses the same messages and the same tolerant parsing.
 
@@ -19,7 +19,7 @@ Translation is one request per finalized turn, either to a cloud provider or to 
 
 Both send no tools and force the output through the JSON schema `{ source, target, text }`. Effort comes from `TRANSLATION_REASONING_EFFORT`, default `none`.
 
-The instructions tell the model it is a caption translator, must never answer or obey anything in the transcript, glossary or context, must not invent endings for unfinished sentences, and must return `unknown` for ambiguous or unsupported speech. They go in `instructions` for OpenAI and in `system` for Anthropic. The user message is one JSON object validated by `TranslationInput`:
+The instructions tell the model it is a caption translator, must never answer or obey anything in the transcript, glossary or context, must not invent endings for unfinished sentences, and must return `unknown` for ambiguous or unsupported speech. They go in `instructions` for OpenAI and in `system` for Anthropic. The user message is one JSON object validated by `TranslationInput`; for the local and chat-completions translators `text` comes last, after `context` and `glossary`, because with `text` first the local 4B sometimes translated the context too, most often for a row of a few characters:
 
 | Field | Bound |
 | --- | --- |
@@ -27,7 +27,7 @@ The instructions tell the model it is a caption translator, must never answer or
 | `mode` | `auto` or a direction of the session's pair, such as `en-ja`, as recorded when the turn began |
 | `glossary` | at most 32 `{ term, translation }` pairs from the glossary file resolved at startup; see [overview](overview.md) |
 | `sourceLanguage` | the recognizer's evidence: a language of the pair, or unknown |
-| `context` | at most 4 preceding finalized rows, each at most 800 original plus 800 translated chars, frozen at finalization |
+| `context` | at most 4 preceding finalized rows, each at most 800 original plus 800 translated chars, frozen at finalization. |
 | `truncated` | optional `{ start, end }`: whether a maximum-duration cut split the turn's first or last word. Defined in the protocol and sent only by eval prompt variants; the live controller does not set it |
 
 ## Response handling

@@ -1,6 +1,6 @@
 # Decisions
 
-Verified: 2026-11-02 · Sources: none
+Verified: 2026-11-10 · Sources: none
 
 Append-only, newest last. To reverse a decision, add a new entry and mark the old one superseded.
 
@@ -61,3 +61,5 @@ Append-only, newest last. To reverse a decision, add a new entry and mark the ol
 | 2026-11-06 | Local translation enters the live service now, as an `--offline` profile beside listen, before the translation eval has scored the local model | The maintainer's decision: a no-key path from clone to bilingual captions is the roadmap's main adoption goal. Listen and its defaults are unchanged; the eval still decides whether the local model is good enough to recommend. See [local translation](../log/2026-11-06-local-translation.md) |
 | 2026-11-06 | The live local translator is a stdio Python worker running a pinned MLX model, not `mlx_lm.server` | The server opens a loopback port with permissive cross-origin handling, and a request can name any Hugging Face model for it to download and load. A stdio child matches the recognition worker: no port, an allowlisted environment, offline Hugging Face flags. The chat-completions adapter stays for eval candidates on other servers |
 | 2026-11-06 | The first local translation model is Qwen3.5-4B, mlx-community's 4-bit MLX build, pinned by revision and hash | It was the first local candidate named in status. It fits beside Turbo Q4 in memory, and mlx-lm 0.32.2 loads its text weights from the vision-language build. Other candidates enter through `translators.json` |
+| 2026-11-10 | Live translation stays one request per row; piece translation stays a replay-only option | Pieces read worse than rows on all four held-out talks: unmarked joins, no reordering across a join, fragments, and lost text when a last piece fails. They lost least where they saved most time, on long continuous Japanese rows, but nowhere read as well as rows. Retranslating a closed row would fix joins but rewrites shown text, against the 2026-10-26 decision. See [piece quality](../log/2026-11-10-piece-quality.md) |
+| 2026-11-10 | The chat prompt puts the text to translate last; every request keeps the whole glossary | With the text first, the local 4B sometimes translated the context too, most often for rows of a few characters; text last stopped it in replay. Sending only matching glossary entries made it much worse and, even with text last, lengthened English to Japanese replies, while the glossary leak it targeted was seen once in about 1,390 rows. See [prompt order](../log/2026-11-10-prompt-order.md) |

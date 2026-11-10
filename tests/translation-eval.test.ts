@@ -5,7 +5,7 @@ import { spawnSync, spawn } from 'node:child_process';
 import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ChatCompletionsTranslator, chatTranslationRequest, extractObject } from '../packages/providers/chat.ts';
+import { ChatCompletionsTranslator, chatMessages, chatTranslationRequest, extractObject } from '../packages/providers/chat.ts';
 import { TranslationFailure } from '../packages/providers/types.ts';
 import { applyVariant, blindJobs, degraded, direction, isPaid, parseCandidate, shuffle, percentile, summarize, termScore, usageFrom, type Run } from '../scripts/translation-eval-lib.ts';
 import { ja } from './helpers.ts';
@@ -126,4 +126,10 @@ test('eval runs end to end against a local chat-completions server and writes a 
   const report = JSON.parse(await readFile(join(out, file!), 'utf8'));
   assert.equal(report.summary[0].completed, 4); assert.equal(report.summary[0].termHits, 2); assert.equal(report.summary[0].termTotal, 2);
   assert.equal(report.summary[0].wrongDirection, 0); assert.deepEqual(report.summary[0].tokensPerCall, { input: 5, output: 2 });
+});
+
+test('a chat prompt puts the text to translate last, after context and glossary', () => {
+  const user = JSON.parse(chatMessages({ text: 'Then we tried RAG.', mode: 'auto', glossary: [{ term: 'RAG', translation: 'RAG' }],
+    sourceLanguage: 'en', context: [{ original: 'Earlier.', translation: '前に。', source: 'en' }] }).user);
+  assert.deepEqual(Object.keys(user), ['mode', 'glossary', 'sourceLanguage', 'context', 'text']);
 });

@@ -39,6 +39,8 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-09-cadence-streaming.md](2026-11-09-cadence-streaming.md) | Faster decode cadences against the live one, and streamed local translation |
 | [2026-11-09-piece-translation-design.md](2026-11-09-piece-translation-design.md) | Design proposal: translating locked pieces before a row closes |
 | [2026-11-09-piece-translation.md](2026-11-09-piece-translation.md) | Piece translation built behind a replay flag and compared with row translation |
+| [2026-11-10-piece-quality.md](2026-11-10-piece-quality.md) | Piece translation quality read against rows: worse on every talk, live stays row |
+| [2026-11-10-prompt-order.md](2026-11-10-prompt-order.md) | Padded replies traced to the local prompt's order; text now last; glossary filter tried and reverted |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

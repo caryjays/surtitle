@@ -17,7 +17,10 @@ export const CONTINUES_INSTRUCTION = 'continues true: the sentence goes on after
 export function chatMessages(input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
   input = TranslationInput.parse(input);
   const continues = input.continues ? ` ${CONTINUES_INSTRUCTION}` : '';
-  return { system: `${instructions ?? translationInstructionsFor(pair)}${continues} ${shape(pair)}`, user: JSON.stringify(input) };
+  // The text to translate goes last, after the context and glossary: with it first, the 4B model sometimes
+  // translated the context too, most often for a row of a few characters.
+  const { text, ...rest } = input;
+  return { system: `${instructions ?? translationInstructionsFor(pair)}${continues} ${shape(pair)}`, user: JSON.stringify({ ...rest, text }) };
 }
 
 export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
