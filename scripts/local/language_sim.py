@@ -21,6 +21,11 @@ returned text; it is skipped, so the accepted decodes on either side of it can s
 With --third-row, a closing row is dropped when detection over its whole audio puts more than THIRD of its
 probability outside the pair: third-language rejection over a row rather than a short window.
 
+With --pair-only, under auto and auto-lock a decode for a row with no language yet whose detected language is
+outside the pair locks nothing: it is handled as a wholly filtered decode, so third-language text never displays.
+With --pair-retry T as well, such a window is decoded again in the pair language detection prefers when the pair holds
+at least T of detection's probability, and kept if written in that language's script.
+
 With --noise-confirm T, after a noise trim the next lock in the stretch needs a decode whose lowest segment log
 probability is at least T, so a stretch held open by music or noise cannot lock a chance agreement of two hallucinations.
 
@@ -32,7 +37,8 @@ Every decode is cached by stream, window and language under benchmarks/results/l
 share windows decode them once and reruns are cheap. Decode times come from the cache, so virtual timing stays
 realistic. Public licensed fixtures only; no API or .env use.
 
-  run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row] [--noise-confirm -0.5]
+  run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row] [--pair-only [--pair-retry 0.5]]
+      [--noise-confirm -0.5]
 """
 import argparse
 import json
@@ -113,10 +119,23 @@ class Decoder:
             self.dirty = 0
 
 
-def choose(rule, decoder, pcm, a, b):
+def choose(rule, decoder, pcm, a, b, pair_only=False, pair_retry=None):
     """Decode a window of a row with no language yet: (segments, language or None, seconds)."""
     if rule in ('auto', 'auto-lock'):
         d = decoder.decode(pcm, a, b, None)
+        if pair_only and d['language'] not in PAIR:
+            if pair_retry is None or not d['segments']:
+                return [], None, d['seconds']
+            detection = decoder.detect(pcm, a, b)
+            seconds = d['seconds'] + detection['seconds']
+            if sum(detection['probs'][k] for k in PAIR) < pair_retry:
+                return [], None, seconds
+            language = max(PAIR, key=lambda k: detection['probs'][k])
+            retry = decoder.decode(pcm, a, b, language)
+            seconds += retry['seconds']
+            if retry['segments'] and script_ok(''.join(s['text'] for s in retry['segments']), language):
+                return retry['segments'], language, seconds
+            return [], None, seconds
         return d['segments'], d['language'] if d['segments'] and d['language'] in PAIR else None, d['seconds']
     detection = decoder.detect(pcm, a, b)
     seconds, probs = detection['seconds'], detection['probs']
@@ -186,7 +205,7 @@ def third_language(decoder, pcm, a, b):
     return sum(probs[k] for k in PAIR) < 1 - THIRD
 
 
-def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False, noise_confirm=None):
+def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False, noise_confirm=None, pair_only=False, pair_retry=None):
     """One stretch of speech, samples a to b. Returns rows [(language, text)], the clock, and decode count."""
     rows, row = [], {'language': None, 'text': '', 'audio': 0.0, 'start': a}
 
@@ -207,7 +226,7 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False,
                 d = decoder.decode(pcm, win, until, row['language'])
                 segments, seconds, logprob = d['segments'], d['seconds'], d['logprob']
             else:
-                segments, language, seconds = choose(rule, decoder, pcm, win, until)
+                segments, language, seconds = choose(rule, decoder, pcm, win, until, pair_only, pair_retry)
                 if rule in ('auto', 'auto-lock'):
                     logprob = decoder.decode(pcm, win, until, None)['logprob']
                 # auto keeps the live rule; the others settle the row's language only when its text locks.
@@ -315,7 +334,8 @@ def run(args):
             for clip, a, b in layout(stream):
                 clock = max(clock, a / RATE)
                 before = clock
-                found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row, args.noise_confirm)
+                found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row,
+                                          args.noise_confirm, args.pair_only, args.pair_retry)
                 rows += [(clip.get('id'), language, text) for language, text in found]
                 decodes += n
                 busy += clock - before
@@ -330,7 +350,8 @@ def run(args):
                 result['wrongLanguageRows'] = sum(lang != language for _, lang, _ in rows)
             else:
                 result['texts'] = [text for _, _, text in rows]
-            name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '') + (
+            name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '') + ('+pair' if args.pair_only else '') + (
+                f'+retry{args.pair_retry}' if args.pair_retry is not None else '') + (
                 f'+confirm{args.noise_confirm}' if args.noise_confirm is not None else '')
             report.setdefault(stream, {})[name] = result
             print(stream, name, json.dumps({k: v for k, v in result.items() if k != 'score'} | (
@@ -349,6 +370,8 @@ def main():
                                                 'third-language')
     run_parser.add_argument('--keep-agreed', action='store_true')
     run_parser.add_argument('--third-row', action='store_true')
+    run_parser.add_argument('--pair-only', action='store_true')
+    run_parser.add_argument('--pair-retry', type=float)
     run_parser.add_argument('--noise-confirm', type=float)
     run(parser.parse_args())
 

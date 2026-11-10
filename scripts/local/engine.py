@@ -13,7 +13,7 @@ from mlx_whisper.transcribe import ModelHolder
 import numpy as np
 from scipy.signal import resample_poly
 from languages import PROFILES
-from quality import accepted_segments, quality_metadata, segment_ends
+from quality import accepted_segments, pair_retry_language, quality_metadata, script_matches, segment_ends
 from speech_gate import SpeechGate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,9 +45,20 @@ class Engine:
             word_timestamps=False, fp16=True, initial_prompt=prompt,
         )
 
-    def transcribe(self, pcm24, language=None, prompt=None, *, speech_threshold=0.5, min_logprob=-1.0):
+    def detect(self, audio):
+        """Whisper's language probabilities for 16 kHz audio."""
+        from mlx_whisper.audio import N_FRAMES, N_SAMPLES, log_mel_spectrogram, pad_or_trim
+        from mlx_whisper.decoding import detect_language
+        model = ModelHolder.get_model(str(self.path), mx.float16)
+        mel = pad_or_trim(log_mel_spectrogram(audio, n_mels=model.dims.n_mels, padding=N_SAMPLES), N_FRAMES, axis=-2)
+        _, probs = detect_language(model, mel.astype(mx.float16))
+        return probs[0] if isinstance(probs, list) else probs
+
+    def transcribe(self, pcm24, language=None, prompt=None, *, pair=None, speech_threshold=0.5, min_logprob=-1.0):
         if (language is not None and language not in PROFILES) or not 4800 <= len(pcm24) <= 24_000 * 2 * 30 or len(pcm24) % 2:
             raise ValueError('Invalid local audio')
+        if pair is not None and (not isinstance(pair, (list, tuple)) or len(pair) != 2 or any(p not in PROFILES for p in pair)):
+            raise ValueError('Invalid language pair')
         if prompt is not None and (not isinstance(prompt, str) or len(prompt) > 1000):
             raise ValueError('Invalid vocabulary prompt')
         start = time.perf_counter()
@@ -59,6 +70,16 @@ class Engine:
         result = self._decode(audio, language, prompt)
         mx.synchronize()
         kept, rejected, quality = accepted_segments(result, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
+        if language is None and pair and kept and result.get('language') not in pair:
+            # Detected outside the session pair: misheard pair speech decodes again in the pair, third-language speech
+            # does not, and the adapter locks nothing from a decode outside the pair.
+            retry = pair_retry_language(self.detect(audio), pair)
+            if retry:
+                again = self._decode(audio, retry, prompt)
+                mx.synchronize()
+                kept2, rejected2, quality2 = accepted_segments(again, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
+                if kept2 and script_matches(''.join(s['text'] for s in kept2), retry):
+                    result, kept, rejected, quality = {**again, 'language': retry}, kept2, rejected2, quality2
         text = ''.join(s['text'] for s in kept).strip()
         return {'text': text[:4000], 'rejected': rejected, 'segments': segment_ends(kept, len(audio) / 16),
                 'language': result.get('language', 'unknown'),

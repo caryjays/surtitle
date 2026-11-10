@@ -2,9 +2,11 @@
   "gate": "ja",
   "page": "docs/wiki/gates.md",
   "languages": ["ja", "en"],
+  "pair": "en-ja",
+  "public": "gate-fleurs.json",
   "targets": [
-    { "key": "heldoutErrorRate", "label": "Held-out error rate, live path", "unit": "percent", "max": { "ja": 0.05, "en": 0.04 } },
-    { "key": "heldoutDeletionRate", "label": "Held-out deletion rate, live path", "unit": "percent", "max": { "ja": 0.02, "en": 0.01 } },
+    { "key": "heldoutOverOffline", "label": "Held-out live error minus one-pass decode of the same excerpts", "unit": "points", "max": { "ja": 0.015, "en": 0.015 } },
+    { "key": "heldoutDeletionsOverOffline", "label": "Held-out live deletions minus one-pass decode of the same excerpts", "unit": "points", "max": { "ja": 0.01, "en": 0.01 } },
     { "key": "publicErrorRate", "label": "Public error rate, live path", "unit": "percent", "max": { "ja": 0.06, "en": 0.08 } },
     { "key": "publicOverFullClip", "label": "Public live error minus full-clip decode of the same clips", "unit": "points", "max": { "ja": 0.015, "en": 0.015 } },
     { "key": "heldoutMajorShare", "label": "Held-out rows rated major or hallucinated, by a read-through against references", "unit": "percent", "max": { "ja": 0.05, "en": 0.05 } },

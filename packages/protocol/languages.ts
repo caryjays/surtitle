@@ -16,6 +16,8 @@ export type Pair = z.infer<typeof Pair>;
 export const LanguageProfile = z.object({
   name: z.string().min(1).max(40),
   scoring: z.enum(['word', 'character']),
+  // Whether the language writes spaces between words. Not the same as scoring: Korean is spaced and scored by character.
+  spaced: z.boolean(),
   sentenceEnd: z.string().min(1).max(20),
   // Clause punctuation; rolling segmentation can close a shorter row at one when given a clause length.
   clauseEnd: z.string().min(1).max(20),

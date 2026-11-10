@@ -2,6 +2,7 @@
   "en": {
     "name": "English",
     "scoring": "word",
+    "spaced": true,
     "sentenceEnd": ".!?",
     "clauseEnd": ",;:",
     "stockPhrases": ["thank you for watching", "thanks for watching", "thank you"],
@@ -10,6 +11,7 @@
   "ja": {
     "name": "Japanese",
     "scoring": "character",
+    "spaced": false,
     "sentenceEnd": "。！？",
     "clauseEnd": "、，",
     "stockPhrases": ["ご視聴ありがとうございました", "ご清聴ありがとうございました", "お疲れ様でした", "チャンネル登録よろしくお願いします"],

@@ -26,10 +26,14 @@ def main(engine_factory=Engine):
         if len(line) > 2_000_000 or not line.endswith(b'\n'):
             raise ValueError('Invalid RPC frame')
         request = json.loads(line)
-        if set(request) not in ({'id', 'audio', 'language'}, {'id', 'audio', 'language', 'prompt'}) or not isinstance(request['id'], str) or len(request['id']) > 100:
+        if not {'id', 'audio', 'language'} <= set(request) <= {'id', 'audio', 'language', 'prompt', 'pair'} \
+                or not isinstance(request['id'], str) or len(request['id']) > 100:
+            raise ValueError('Invalid RPC request')
+        pair = request.get('pair')
+        if pair is not None and (not isinstance(pair, list) or len(pair) != 2 or any(p not in PROFILES for p in pair)):
             raise ValueError('Invalid RPC request')
         pcm = base64.b64decode(request['audio'], validate=True)
-        result = engine.transcribe(pcm, request['language'], request.get('prompt'))
+        result = engine.transcribe(pcm, request['language'], request.get('prompt'), **({'pair': pair} if pair else {}))
         send({'type': 'final', 'id': request['id'], 'text': result['text'],
               'language': result['language'] if result['language'] in PROFILES else 'unknown',
               'inferenceMs': round(result['seconds'] * 1000), 'rejected': result['rejected'],

@@ -18,10 +18,10 @@ export function rateLanguage(text: string, known: string, pair: Pair) {
   const character = pair.find(language => PROFILES[language]?.scoring === 'character');
   return character && NON_LATIN.test(text) ? character : pair.find(language => PROFILES[language]?.scoring === 'word') ?? pair[0];
 }
-// How much of text a reader sees once count characters are released: whole words in word-scored languages.
+// How much of text a reader sees once count characters are released: whole words in languages written with spaces.
 export function shownLength(text: string, count: number, language: string) {
   if (count >= text.length) return text.length;
-  if (PROFILES[language]?.scoring !== 'word') return Math.max(0, Math.floor(count));
+  if (!PROFILES[language]?.spaced) return Math.max(0, Math.floor(count));
   return Math.max(0, text.lastIndexOf(' ', Math.floor(count)));
 }
 function commonPrefix(a: string, b: string) {

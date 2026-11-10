@@ -132,6 +132,31 @@ def segment_ends(kept, audio_ms):
     return out
 
 
+# A decode for a row with no language yet came back outside the session pair: retry in the pair language detection
+# prefers when the pair holds at least this share of its probability. Measured in the offline language simulator;
+# see docs/log/2026-11-10-other-languages.md.
+PAIR_RETRY_SHARE = 0.2
+
+
+def pair_retry_language(probs, pair):
+    """The pair language to decode again in, or None when detection puts the speech outside the pair."""
+    if sum(probs.get(language, 0) for language in pair) < PAIR_RETRY_SHARE:
+        return None
+    return max(pair, key=lambda language: probs.get(language, 0))
+
+
+def script_matches(text, language):
+    """Whether text is written in the language's script: forced into a language, Whisper may translate instead."""
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return False
+    if PROFILES[language]['scoring'] == 'word':
+        return all('LATIN' in unicodedata.name(c, '') for c in letters)
+    # Character-scored means Japanese today; a script setting in the profiles waits on Chinese.
+    cjk = sum(unicodedata.name(c, '').startswith(('CJK UNIFIED', 'HIRAGANA', 'KATAKANA')) for c in letters)
+    return cjk >= len(letters) / 2
+
+
 def accepted_text(result):
     text, rejected, _ = accepted_result(result)
     return text, rejected

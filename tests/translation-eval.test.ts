@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ChatCompletionsTranslator, chatMessages, chatTranslationRequest, extractObject } from '../packages/providers/chat.ts';
 import { TranslationFailure } from '../packages/providers/types.ts';
-import { applyVariant, blindJobs, degraded, direction, isPaid, parseCandidate, shuffle, percentile, summarize, termScore, usageFrom, type Run } from '../scripts/translation-eval-lib.ts';
+import { applyVariant, blindJobs, degraded, direction, isPaid, judgeInstructions, judgeInstructionsFor, parseCandidate, shuffle, percentile, summarize, termScore, usageFrom, type Run } from '../scripts/translation-eval-lib.ts';
 import { ja } from './helpers.ts';
 
 test('candidate specs parse provider, model, effort and local URL', () => {
@@ -29,6 +29,11 @@ test('term, direction, degradation and usage scoring', () => {
   assert.equal(direction({ language: 'ja' }, { source: 'ja', target: 'en', text: 'x' }), 'correct');
   assert.equal(direction({ language: 'ja' }, { source: 'en', target: 'ja', text: 'x' }), 'wrong');
   assert.equal(direction({ language: 'en' }, { source: 'unknown', target: 'unknown', text: '' }), 'unresolved');
+  assert.equal(direction({ language: 'ja' }, { source: 'ja', target: 'en', text: 'x' }, ['ja', 'en']), 'correct');
+  assert.equal(direction({ language: 'en' }, { source: 'en', target: 'en', text: 'x' }, ['en', 'ja']), 'wrong');
+  // The judge's wording for the default pair is fixed, so judged runs stay comparable.
+  assert.ok(judgeInstructions.startsWith('You grade machine translations of live English and Japanese speech for a captioning system.'));
+  assert.equal(judgeInstructionsFor(['en', 'ja']), judgeInstructions);
   assert.deepEqual(usageFrom({ usage: { input_tokens: 10, output_tokens: 2 } }), { input: 10, output: 2 });
   assert.deepEqual(usageFrom({ usage: { prompt_tokens: 7, completion_tokens: 3 } }), { input: 7, output: 3 });
   assert.equal(usageFrom({ error: 'x' }), undefined);

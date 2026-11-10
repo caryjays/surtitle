@@ -1,6 +1,6 @@
 # Roadmap
 
-Verified: 2026-10-28 · Sources: none
+Verified: 2026-11-10 · Sources: none
 
 Where the project is going and in what order. What is done and open right now lives in [status](status.md); the reasons are in [decisions](decisions.md).
 
@@ -20,9 +20,9 @@ The service and pages stay TypeScript. Recognition stays in a Python worker beca
 
 | Stage | Pair | Notes |
 | --- | --- | --- |
-| 0 | Generalize the pair | Protocol takes a configured pair, modes become `auto` and the two directions, language-specific rules move into one profile per language. Japanese stays the only filled profile. No new language |
+| 0 | Generalize the pair | Protocol takes a configured pair, modes become `auto` and the two directions, language-specific rules move into one profile per language. The gate runner, replay and translation eval take a gate or pair as well. This work does not wait for the Japanese gate. Japanese stays the only filled profile. No new language |
 | 1 | EN ↔ JA | Must pass the Japanese gate below |
-| 2 | EN ↔ ES, FR, IT | Shared profile shape: spaces, Latin punctuation, WER scoring. Risk: per-language stock-phrase hallucinations |
+| 2 | EN ↔ ES, then FR and IT | Shared profile shape: spaces, Latin punctuation, WER scoring. Spanish goes first, alone, as the pilot that proves the per-language gate tooling. Risk: per-language stock-phrase hallucinations, and close neighbours such as Portuguese as third languages |
 | 3 | EN ↔ ZH, Simplified and Traditional | Reuses Japanese CJK work: CER, `。！？`, no spaces. Script normalized with OpenCC as a profile setting; regional vocabulary handled by glossary and context |
 | 4 | EN ↔ KO | Easier recognition than Japanese; translation shares the dropped-subject and word-order problems |
 | 5 | EN ↔ DE | Clause-final verbs make mid-sentence cuts force guessing; depends on rolling mode locking only settled segments |
@@ -34,7 +34,7 @@ Through the medium term every pair includes English, and a session runs one pair
 A language ships when it meets written criteria, measured through the real code path. The targets are in [gates](gates.md):
 
 1. A public licensed fixture set, such as FLEURS or Common Voice, plus held-out recordings.
-2. Held-out error and deletion rates under targets set before the run.
+2. Held-out error and deletions over the model's own one-pass decode of the same recordings, under targets set before the run.
 3. A stock-phrase and repetition sweep for that language.
 4. A translation eval run in both directions.
 5. For Japanese only: one field session with diagnostics and no capture failure, and the calibration warning shipped.

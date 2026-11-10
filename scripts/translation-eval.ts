@@ -3,15 +3,15 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import Anthropic from '@anthropic-ai/sdk';
-import type { TranslationDiagnostic } from '../packages/protocol/index.ts';
+import { inPair, parsePair, type Pair, type TranslationDiagnostic } from '../packages/protocol/index.ts';
 import { OpenAITranslator } from '../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { ChatCompletionsTranslator } from '../packages/providers/chat.ts';
 import { LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { TranslationFailure, type Translator } from '../packages/providers/types.ts';
-import { translationInstructions } from '../packages/providers/translation.ts';
+import { translationInstructionsFor } from '../packages/providers/translation.ts';
 import {
-  CaseFile, JudgeResult, TermFile, VariantFile, applyVariant, blindJobs, direction, isPaid, judgeInstructions, judgeSchema, parseCandidate, summarize, table, termScore, usageFrom,
+  CaseFile, JudgeResult, TermFile, VariantFile, applyVariant, blindJobs, direction, isPaid, judgeInstructionsFor, judgeSchema, parseCandidate, summarize, table, termScore, usageFrom,
   type Candidate, type EvalCase, type Variant, type Judgment, type Price, type Run, type Usage,
 } from './translation-eval-lib.ts';
 
@@ -24,6 +24,7 @@ const { values } = parseArgs({ options: {
   'no-judge': { type: 'boolean', default: false },
   repeats: { type: 'string', default: '2' },
   mode: { type: 'string', default: 'auto' },
+  pair: { type: 'string', default: 'en-ja' },
   'timeout-ms': { type: 'string', default: '12000' },
   limit: { type: 'string' },
   paid: { type: 'boolean', default: false },
@@ -36,6 +37,9 @@ const repeats = Number(values.repeats), timeoutMs = Number(values['timeout-ms'])
 if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10) fail('--repeats must be 1 to 10.');
 if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 60_000) fail('--timeout-ms must be 1000 to 60000.');
 if (values.mode !== 'auto' && values.mode !== 'forced') fail('--mode must be auto or forced.');
+let pair: Pair = ['en', 'ja'];
+try { pair = parsePair(values.pair); } catch { fail('--pair must be two profiled languages, such as en-ja.'); }
+const translationInstructions = translationInstructionsFor(pair), judgeInstructions = judgeInstructionsFor(pair);
 if (!values.candidate.length) fail('Name at least one --candidate, for example --candidate openai:gpt-5.6-terra --candidate anthropic:claude-haiku-5-5.');
 let candidates: Candidate[] = [];
 try { candidates = values.candidate.map(parseCandidate); } catch (error) { fail((error as Error).message); }
@@ -51,6 +55,7 @@ for (const path of values.cases) {
   try { cases.push(...CaseFile.parse(JSON.parse(await readFile(path, 'utf8'))).cases); }
   catch { fail(`Cannot read cases from ${path}. Generate public cases with pnpm eval:translation-cases.`); }
 }
+if (cases.some(item => !inPair(pair, item.language))) fail(`Every case must be in ${pair.join(' or ')}; pass the cases' --pair.`);
 if (values.limit) cases = cases.slice(0, Number(values.limit));
 const variantFile = VariantFile.parse(JSON.parse(await readFile(values.variants, 'utf8'))).variants;
 const variantOf = (c: Candidate): Variant | undefined => {
@@ -91,16 +96,16 @@ function instrumented() {
 const workers: LocalTranslator[] = [];
 function translatorFor(c: Candidate, f: typeof fetch): Translator {
   const instructions = instructionsFor.get(c.label);
-  if (c.provider === 'openai') return new OpenAITranslator({ key: keys.openai, model: c.model, effort: c.effort, instructions, fetch: f });
-  if (c.provider === 'anthropic') return new AnthropicTranslator({ key: keys.anthropic, model: c.model, effort: c.effort, instructions, fetch: f });
-  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: c.model as LocalTranslationModel, instructions }); workers.push(t); return t; }
-  return new ChatCompletionsTranslator({ baseUrl: c.baseUrl!, model: c.model, instructions, fetch: f });
+  if (c.provider === 'openai') return new OpenAITranslator({ key: keys.openai, model: c.model, effort: c.effort, pair, instructions, fetch: f });
+  if (c.provider === 'anthropic') return new AnthropicTranslator({ key: keys.anthropic, model: c.model, effort: c.effort, pair, instructions, fetch: f });
+  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: c.model as LocalTranslationModel, pair, instructions }); workers.push(t); return t; }
+  return new ChatCompletionsTranslator({ baseUrl: c.baseUrl!, model: c.model, pair, instructions, fetch: f });
 }
 const pool = candidates.map(c => { const meter = instrumented(); return { c, meter, translator: translatorFor(c, meter.fetch) }; });
 const inputFor = (item: EvalCase, c: Candidate) => ({
   ...(variantOf(c)?.truncation && item.truncated ? { truncated: item.truncated } : {}),
   text: item.asr, glossary: item.glossary ?? [], sourceLanguage: item.detectedLanguage, context: item.context ?? [],
-  mode: values.mode === 'forced' ? (item.language === 'en' ? 'en-ja' as const : 'ja-en' as const) : 'auto' as const,
+  mode: values.mode === 'forced' ? `${item.language}-${pair.find(language => language !== item.language)}` : 'auto',
 });
 
 async function call(entry: typeof pool[number], item: EvalCase, repeat: number): Promise<Run> {
@@ -112,7 +117,7 @@ async function call(entry: typeof pool[number], item: EvalCase, repeat: number):
     const ms = Math.round(performance.now() - start);
     const groups = item.terms ?? terms[item.referenceId];
     return { candidate: entry.c.label, caseId: item.id, repeat, ms, outcome: 'completed', translation,
-      direction: direction(item, translation), terms: groups ? termScore(translation.text, groups) : undefined, usage: await entry.meter.usage() };
+      direction: direction(item, translation, pair), terms: groups ? termScore(translation.text, groups) : undefined, usage: await entry.meter.usage() };
   } catch (error) {
     const ms = Math.round(performance.now() - start);
     if (signal.aborted) return { candidate: entry.c.label, caseId: item.id, repeat, ms, outcome: 'timeout', failure: 'timeout' };

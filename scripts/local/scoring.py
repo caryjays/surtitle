@@ -45,5 +45,5 @@ def edit_counts(reference, hypothesis, language):
 def score(reference, hypothesis, language):
     ref, hyp = units(reference, language), units(hypothesis, language)
     errors = distance(ref, hyp)
-    return {'metric': 'WER' if language == 'en' else 'CER', 'errors': errors,
+    return {'metric': 'WER' if PROFILES[language]['scoring'] == 'word' else 'CER', 'errors': errors,
             'referenceUnits': len(ref), 'rate': errors / len(ref) if ref else None}

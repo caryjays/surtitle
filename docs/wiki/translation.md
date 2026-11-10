@@ -73,7 +73,7 @@ The controller's `translationUnit` option is `row` by default and in every live 
 - When the row closes, the rest of its text is the last piece, queued like a row. A row whose pieces already covered all of it becomes `ready` without another request.
 - Each piece's text and context are taken when it is sent: earlier finalized rows with `ready` translations, then this row's translated pieces, at most four entries. Every piece but the last carries `continues: true`, and only then does the system message gain one line telling the model the sentence goes on and must not be completed. A whole row's prompt is unchanged.
 - The first translated piece fixes the row's direction; later pieces are sent in that direction, so a reply the other way, or unresolved, fails the direction check.
-- Translations join with a space, or with nothing for a character-scored target language. A piece streams like a row, appended after the finished pieces.
+- Translations join with a space, or with nothing for a target language whose profile is not `spaced`. A piece streams like a row, appended after the finished pieces.
 - A piece before the last that fails, or comes back unresolved, is withdrawn; its text goes to the front of the next piece, which is cut once more text has locked. It sets no error category. A failed last piece fails the row, which keeps the pieces already translated.
 
 Design and evidence: [piece translation design](../log/2026-11-09-piece-translation-design.md).

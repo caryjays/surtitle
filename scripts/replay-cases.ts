@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { basename } from 'node:path';
 import { parseArgs } from 'node:util';
 import { LocalTranscriber } from '../packages/providers/local.ts';
-import { FRAME_BYTES, type TranslationContext } from '../packages/protocol/index.ts';
+import { FRAME_BYTES, inPair, parsePair, profile, type Pair, type TranslationContext } from '../packages/protocol/index.ts';
 
 // Replays one recording in real time through the live local recognizer and writes draft eval cases:
 // one per finalized turn, with up to four preceding originals as context, as the controller sends them.
@@ -18,6 +18,7 @@ const { values } = parseArgs({ options: {
   'max-turn-ms': { type: 'string', default: '12000' },
   // rolling: the experimental segmentation; rows instead of capped turns, see packages/providers/rolling.ts.
   segmentation: { type: 'string', default: 'turns' },
+  pair: { type: 'string', default: 'en-ja' },
 } });
 if (!values.audio || !values.out) { console.error('Usage: --audio <file> --out <cases.json> [--id prefix]'); process.exit(1); }
 const prefix = values.id ?? basename(values.audio).replace(/\.[^.]+$/, '');
@@ -26,6 +27,9 @@ const maxTurnMs = Number(values['max-turn-ms']);
 if (!Number.isInteger(maxTurnMs) || maxTurnMs < 1000 || maxTurnMs > 12_000) { console.error('--max-turn-ms must be 1000 to 12000.'); process.exit(1); }
 const segmentation = values.segmentation;
 if (segmentation !== 'turns' && segmentation !== 'rolling') { console.error('--segmentation must be turns or rolling.'); process.exit(1); }
+
+let pair: Pair;
+try { pair = parsePair(values.pair); } catch { console.error('--pair must be two profiled languages, such as en-ja.'); process.exit(1); }
 
 const converted = spawnSync('ffmpeg', ['-v', 'error', '-i', values.audio, '-f', 's16le', '-ar', '24000', '-ac', '1', 'pipe:1'], { maxBuffer: 200_000_000 });
 if (converted.status !== 0) { console.error('Audio conversion failed.'); process.exit(1); }
@@ -51,7 +55,7 @@ type Turn = { id: string; sequence: number; text: string; language?: string; rej
 const turns: Turn[] = [];
 let failed = false;
 const stream = new LocalTranscriber({
-  model, mode: 'auto', maxTurnMs, segmentation, calibrationMs: values.calibrate ? CALIBRATION_MS : undefined, onFailure: () => { failed = true; },
+  model, mode: 'auto', pair, maxTurnMs, segmentation, calibrationMs: values.calibrate ? CALIBRATION_MS : undefined, onFailure: () => { failed = true; },
   onEvent: event => {
     // Times are audio-clock milliseconds since replay start, excluding calibration.
     const at = Math.round(performance.now() - started) - (values.calibrate ? CALIBRATION_MS : 0);
@@ -82,14 +86,20 @@ stream.close();
 if (failed) { console.error('Local recognition failed during replay.'); process.exit(1); }
 
 const accepted = turns.sort((a, b) => a.sequence - b.sequence).filter(t => !t.rejected && t.text.trim());
-const isJa = (text: string) => (text.match(/[぀-ヿ一-鿿]/g)?.length ?? 0) > text.length / 4;
+// A draft case's language. A pair with one kana or kanji language is told apart by script, as before pairs were
+// configurable; a pair in one script takes the recognizer's word. Hangul needs its own rule when Korean arrives.
+const cjk = pair.find(language => profile(language).scoring === 'character');
+const latin = pair.find(language => language !== cjk) ?? pair[0];
+const languageOf = (turn: Turn) => cjk
+  ? ((turn.text.match(/[぀-ヿ一-鿿]/g)?.length ?? 0) > turn.text.length / 4 ? cjk : latin)
+  : (turn.language && inPair(pair, turn.language) ? turn.language : pair[0]);
 const cases = accepted.map((turn, index) => {
   const context: TranslationContext = accepted.slice(Math.max(0, index - 4), index)
-    .map(t => ({ original: t.text.slice(0, 800), translation: null, source: isJa(t.text) ? 'ja' as const : 'en' as const }));
+    .map(t => ({ original: t.text.slice(0, 800), translation: null, source: languageOf(t) }));
   return {
     id: `${prefix}-${String(index + 1).padStart(2, '0')}`, referenceId: `${prefix}-${String(index + 1).padStart(2, '0')}`,
-    condition: 'own-recording', language: isJa(turn.text) ? 'ja' : 'en',
-    detectedLanguage: turn.language === 'en' || turn.language === 'ja' ? turn.language : 'unknown',
+    condition: 'own-recording', language: languageOf(turn),
+    detectedLanguage: turn.language && inPair(pair, turn.language) ? turn.language : 'unknown',
     reference: turn.text, asr: turn.text, context, terms: [] as string[][],
     // A max-duration boundary cuts this turn's end and the next turn's start.
     truncated: { start: accepted[index - 1]?.boundary === 'max-duration', end: turn.boundary === 'max-duration' },

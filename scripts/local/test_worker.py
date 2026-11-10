@@ -11,7 +11,8 @@ from quality import quality_metadata
 
 
 class WorkerTests(unittest.TestCase):
-    def run_worker(self, language, extra_request=None, audio='AAAA'):
+    def run_worker(self, language, extra_request=None, audio='AAAA', calls=None):
+        calls = [] if calls is None else calls
         class FakeEngine:
             def __init__(self, model):
                 pass
@@ -19,7 +20,8 @@ class WorkerTests(unittest.TestCase):
             def warm(self):
                 pass
 
-            def transcribe(self, pcm, hint, prompt):
+            def transcribe(self, pcm, hint, prompt, pair=None):
+                calls.append(pair)
                 return {'text': 'Synthetic fixture', 'language': language, 'seconds': 0.123,
                         'rejected': False, 'clipped': False, 'quality': quality_metadata(),
                         'segments': [{'endMs': 1200, 'text': 'Synthetic fixture'}]}
