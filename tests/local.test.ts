@@ -32,7 +32,8 @@ test('local worker returns original-language final and forwards direction hints,
 test('local adapter forwards duration, boundary, actual language, partial filtering and timings', async t => {
   const f = fixture('measurement'); t.after(() => f.stream.close()); await f.stream.connect();
   turn(f.stream); await f.stream.finish();
-  assert.deepEqual(f.measurements[0], { boundary: 'silence', audioMs: 750, trailingQuietMs: 700 });
+  // One voiced frame at 6000 of 32768 and fourteen silent ones.
+  assert.deepEqual(f.measurements[0], { boundary: 'silence', audioMs: 750, trailingQuietMs: 700, inputRms: 0.0473, inputPeak: 0.1831 });
   const final = f.measurements.at(-1)!;
   assert.equal(final.recognitionLanguage, 'ja'); assert.equal(final.recognitionClipped, true);
   assert.equal(final.quality?.droppedSegments, 1); assert.equal(final.quality?.lowConfidenceDrops, 1);

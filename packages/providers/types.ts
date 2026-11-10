@@ -14,6 +14,7 @@ export interface Transcriber {
   // Optional capabilities. Mode changes commit the current turn using its OLD hint.
   setMode?(mode: Mode): void;
   flush?(): void;
+  // Recalibration drops recognition work pending on earlier audio: no event for a turn or row heard before it may follow.
   calibrate?(): void;
   close(): void;
 }

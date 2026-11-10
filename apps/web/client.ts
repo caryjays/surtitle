@@ -67,7 +67,7 @@ export function renderSegments(container: HTMLElement, rows: Row[], operator = f
     if (info.hidden !== !operator) info.hidden = !operator;
     const labels = { partial: 'Provisional original · waiting for final', pending: 'Translating…', ready: 'Translated',
       failed: 'Translation unavailable · original preserved', unresolved: 'Language uncertain · original preserved',
-      skipped: 'Translation skipped · backlog', original: 'Original only · translation off' };
+      skipped: 'Translation skipped · backlog or recalibration', original: 'Original only · translation off' };
     const turn = operator ? turns.find(turn => turn.sequence === row.sequence) : undefined;
     const boundaries = { silence: 'quiet boundary', 'max-duration': 'time-limit split · may continue', length: 'row length · speech continues', flush: 'manual flush', 'mode-change': 'direction change', pause: 'capture pause', recalibration: 'recalibration' };
     const infoText = `#${row.sequence} · ${row.source === 'unknown' ? 'Auto' : row.source.toUpperCase()} · ${labels[row.state]}${row.translationMs === null ? '' : ` · request ${row.translationMs} ms`}`

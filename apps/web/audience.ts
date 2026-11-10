@@ -35,7 +35,8 @@ export function audienceView(window: HTMLElement, roll: HTMLElement) {
       window.style.setProperty('--overlay-lines', String(settings.lines));
     },
     render(state: Snapshot | undefined, receivedAt: number, now: number) {
-      const rows = pacer.update(state, now).filter(row => row.original);
+      const paced = pacer.update(state, now);
+      const rows = paced.filter(row => row.original);
       renderSegments(roll, visibleSegments(state, receivedAt, now, rows, 6));
       const grown = roll.offsetHeight - height;
       height = roll.offsetHeight;
@@ -44,6 +45,8 @@ export function audienceView(window: HTMLElement, roll: HTMLElement) {
         roll.getBoundingClientRect();
         roll.style.transition = 'transform 250ms ease-out'; roll.style.transform = '';
       }
+      // Every row as this view's pacer has released it, for diagnostics.
+      return paced;
     },
   };
 }

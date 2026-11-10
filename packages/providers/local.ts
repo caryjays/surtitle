@@ -34,10 +34,14 @@ export type LocalOptions = {
 };
 type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' | 'close'; language: Language | null;
   audio: Buffer; queued: number; sent?: number;
+  // Set by a recalibration while the decode is in flight: its reply is read and ignored.
+  dropped?: boolean;
   // Rolling jobs: the stretch and row they decode for, and the closing boundary.
   stretch?: Stretch; row?: Row; detail?: { boundary: Boundary; trailingQuietMs: number } };
-// A caption row in rolling mode: locked text only grows. Its begin event waits for its first locked text.
-type Row = { id: string; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
+// A caption row in rolling mode: locked text only grows. Its begin event waits for its first locked text, so the row keeps
+// the mode it was heard in; the mode can change before that event.
+type Row = { id: string; mode: Mode; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
+  level: Level;
   decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean;
   // The last partial sent: locked text plus the unlocked tail.
   shown?: string };
@@ -45,6 +49,20 @@ type Row = { id: string; begun: boolean; text: string; audioMs: number; language
 type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
 type RecognitionQuality = z.infer<typeof Quality>;
 const BYTES_PER_MS = 48;
+// Input level over a turn's or row's PCM16 frames, for diagnostics only.
+type Level = { squares: number; samples: number; peak: number };
+function measure(level: Level, pcm: Uint8Array) {
+  const view = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength);
+  for (let i = 0; i + 1 < pcm.byteLength; i += 2) {
+    const value = view.getInt16(i, true) / 32768;
+    level.squares += value * value; level.peak = Math.max(level.peak, Math.abs(value));
+  }
+  level.samples += pcm.byteLength >> 1;
+}
+function levels(level: Level): Pick<TurnMeasurement, 'inputRms' | 'inputPeak'> {
+  const round = (value: number) => Math.min(1, Math.round(value * 10_000) / 10_000);
+  return level.samples ? { inputRms: round(Math.sqrt(level.squares / level.samples)), inputPeak: round(level.peak) } : {};
+}
 export class LocalTranscriber implements Transcriber {
   private worker?: ChildProcessWithoutNullStreams;
   private closed = false;
@@ -52,7 +70,7 @@ export class LocalTranscriber implements Transcriber {
   private output = '';
   private sequence = 0;
   private gateFrames = 0;
-  private current?: { id: string; frames: Buffer[]; language: Language | null;
+  private current?: { id: string; frames: Buffer[]; language: Language | null; level: Level;
     lastPreviewMs: number; hypothesis: string; stable: string };
   private preview?: Job;
   private stretch?: Stretch;
@@ -78,7 +96,7 @@ export class LocalTranscriber implements Transcriber {
       begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', row: this.row() }; },
       append: pcm => {
         if (!this.stretch) return;
-        this.stretch.audio.push(Buffer.from(pcm));
+        this.stretch.audio.push(Buffer.from(pcm)); measure(this.stretch.row.level, pcm);
         this.stretch.windowMs += pcm.byteLength / BYTES_PER_MS; this.stretch.sinceRequestMs += pcm.byteLength / BYTES_PER_MS;
       },
       commit: detail => {
@@ -93,15 +111,15 @@ export class LocalTranscriber implements Transcriber {
       },
     } : {
       begin: () => {
-        this.current = { id: randomUUID(), frames: [],
+        this.current = { id: randomUUID(), frames: [], level: { squares: 0, samples: 0, peak: 0 },
           language: direction(options.mode)?.source ?? null,
           lastPreviewMs: 0, hypothesis: '', stable: '' };
         options.onEvent({ type: 'begin', id: this.current.id, sequence: this.sequence++, mode: options.mode });
       },
-      append: pcm => this.current?.frames.push(Buffer.from(pcm)),
+      append: pcm => { if (this.current) { this.current.frames.push(Buffer.from(pcm)); measure(this.current.level, pcm); } },
       commit: detail => {
         if (!this.current) return;
-        options.onTurnDiagnostic?.(this.current.id, detail);
+        options.onTurnDiagnostic?.(this.current.id, { ...detail, ...levels(this.current.level) });
         if (this.queue.length >= 2) throw new Error('Local inference backlog');
         this.queue.push({ id: this.current.id, requestId: this.current.id, kind: 'final', language: this.current.language,
           audio: Buffer.concat(this.current.frames), queued: performance.now() });
@@ -110,8 +128,9 @@ export class LocalTranscriber implements Transcriber {
     }, { maxTurnMs: rolling ? null : options.maxTurnMs ?? 12_000, calibrationMs: options.calibrationMs });
   }
   private row(): Row {
-    return { id: randomUUID(), begun: false, text: '', audioMs: 0, created: performance.now(), decodes: 0, forced: 0, lags: [],
-      language: direction(this.options.mode)?.source ?? null };
+    const mode = this.options.mode;
+    return { id: randomUUID(), mode, level: { squares: 0, samples: 0, peak: 0 }, begun: false, text: '', audioMs: 0, created: performance.now(), decodes: 0, forced: 0, lags: [],
+      language: direction(mode)?.source ?? null };
   }
   // The unlocked audio as one buffer, capped below Whisper's 30 s input.
   private window(stretch: Stretch) {
@@ -161,6 +180,7 @@ export class LocalTranscriber implements Transcriber {
     const job = this.active;
     if (!job || message.id !== job.requestId) throw new Error('Unexpected local result');
     clearTimeout(this.deadline); this.active = undefined;
+    if (job.dropped) { this.pump(); return; }
     const repeated = !message.rejected && isRepetitiveTranscript(message.text);
     const rejected = message.rejected || repeated;
     const text = rejected ? '' : message.text;
@@ -204,20 +224,23 @@ export class LocalTranscriber implements Transcriber {
     // A lock after a noise trim needs a confident decode; a reply without confidence is not one.
     const unconfirmed = row.afterNoise === true
       && !((message.measurement?.quality?.logprobMin ?? -Infinity) >= ROLLING.noiseConfirmLogprob);
-    const segments: WorkerSegment[] = rejected || (unconfirmed && job.kind === 'close') ? [] : message.segments ?? [];
+    // Auto, before the row has a language: a decode detected outside the pair locks nothing and is handled as wholly
+    // filtered, so third-language speech never displays and a misdetected pair-language window is decoded again.
+    const otherLanguage = !row.language && !inPair(this.pair, message.language);
+    const segments: WorkerSegment[] = rejected || otherLanguage || (unconfirmed && job.kind === 'close') ? [] : message.segments ?? [];
     // Auto: once per row, from the decode whose text locks first; the closing decode locks all it returns. A short opening
     // misheard as the other language can pass the filters once, and keeping that language would force it on every later decode.
     const settle = () => { if (!row.language && inPair(this.pair, message.language)) row.language = message.language; };
     if (job.kind === 'close') {
       if (segments.length) settle();
       // Everything left locks. An older worker without segments still returns its text.
-      row.text = joinText(row.text, rejected || unconfirmed ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
+      row.text = joinText(row.text, rejected || unconfirmed || otherLanguage ? '' : message.segments ? segments.map(s => s.text).join('') : message.text);
       row.audioMs += windowMs;
       this.closeRow(row, job.detail!.boundary, { trailingQuietMs: job.detail!.trailingQuietMs,
         recognitionQueueMs: Math.round(job.sent! - job.queued), recognitionInferenceMs: message.inferenceMs,
         commitToFinalMs: Math.round(performance.now() - job.queued), adapterRepetitionRejected: repeated,
         ...(message.measurement?.recognitionLanguage ? { recognitionLanguage: message.measurement.recognitionLanguage } : {}),
-      }, rejected || unconfirmed);
+      }, rejected || unconfirmed || otherLanguage);
       this.options.onTiming?.({ id: row.id, audioMs: row.audioMs, queueMs: job.sent! - job.queued,
         inferenceMs: message.inferenceMs, commitToFinalMs: performance.now() - job.queued });
       return;
@@ -252,7 +275,7 @@ export class LocalTranscriber implements Transcriber {
       const dropMs = windowMs - ROLLING.keepMs;
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(dropMs * BYTES_PER_MS)];
       stretch!.windowMs -= dropMs; stretch!.previous = ''; row.afterNoise = true;
-      if (!row.text && this.options.mode === 'auto') row.language = null;
+      if (!row.text && row.mode === 'auto') row.language = null;
     } else {
       stretch!.previous = current;
     }
@@ -261,7 +284,7 @@ export class LocalTranscriber implements Transcriber {
   private rowText(row: Row) {
     if (!row.begun) {
       row.begun = true;
-      this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: this.options.mode });
+      this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: row.mode });
     }
     row.firstTextMs ??= performance.now() - row.created;
   }
@@ -278,13 +301,13 @@ export class LocalTranscriber implements Transcriber {
   private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean) {
     // A whole row of stock sign-off from long audio replaced real speech.
     const stock = row.audioMs >= ROLLING.stockMs && isStockPhrase(row.text);
-    if (!row.begun) { row.begun = true; this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: this.options.mode }); }
+    if (!row.begun) { row.begun = true; this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: row.mode }); }
     if (row.text.trim()) row.firstTextMs ??= performance.now() - row.created;
     // A closing decode: the trailing quiet plus the decode. A length close: the lock that closed it.
     const speechEnd = extra.commitToFinalMs !== undefined ? (extra.trailingQuietMs ?? 0) + extra.commitToFinalMs : row.lags.at(-1);
     const lags = [...row.lags].sort((a, b) => a - b);
     const quality = row.quality && stock ? { ...row.quality, stockPhraseDrops: Math.min(10_000, row.quality.stockPhraseDrops + 1) } : row.quality;
-    this.options.onTurnDiagnostic?.(row.id, { boundary, audioMs: Math.min(120_000, Math.round(row.audioMs)), ...extra,
+    this.options.onTurnDiagnostic?.(row.id, { boundary, audioMs: Math.min(120_000, Math.round(row.audioMs)), ...levels(row.level), ...extra,
       decodes: row.decodes, forcedLocks: row.forced,
       ...(row.firstTextMs !== undefined ? { firstTextMs: Math.min(120_000, Math.round(row.firstTextMs)) } : {}),
       ...(lags.length ? { lockLagMs: Math.min(120_000, Math.round(lags[Math.floor((lags.length - 1) / 2)]!)) } : {}),
@@ -304,8 +327,10 @@ export class LocalTranscriber implements Transcriber {
     this.deadline = setTimeout(() => this.failure('inference-timeout'), this.options.inferenceTimeoutMs ?? 12_000);
     const prompt = (this.options.glossary ?? []).flatMap(g => [g.term, g.translation])
       .filter(term => !/[<>\r\n]/.test(term)).join(', ').slice(0, 1000);
+    // Rolling Auto: with the pair, the worker decodes misheard pair speech again in the pair; see packages/providers/rolling.ts.
+    const pair = this.options.segmentation === 'rolling' && !job.language ? { pair: [...this.pair] } : {};
     this.worker!.stdin.write(JSON.stringify({ id: job.requestId, audio: job.audio.toString('base64'),
-      language: job.language, ...(prompt ? { prompt } : {}) }) + '\n');
+      language: job.language, ...(prompt ? { prompt } : {}), ...pair }) + '\n');
   }
   audio(pcm: Uint8Array) {
     if (!this.ready || this.closed) return;
@@ -333,7 +358,13 @@ export class LocalTranscriber implements Transcriber {
     }
   }
   flush() { this.detector.finish(); }
-  calibrate() { this.detector.calibrate(); this.options.onGate?.(this.detector.status()); }
+  // Audio heard before a recalibration never becomes text: the open turn or stretch and the queued decodes are dropped and
+  // the reply to a decode in flight is ignored, so no event follows for them. The worker and its model stay.
+  calibrate() {
+    this.current = undefined; this.stretch = undefined; this.queue = []; this.preview = undefined;
+    if (this.active) this.active.dropped = true;
+    this.detector.finish('recalibration'); this.detector.calibrate(); this.options.onGate?.(this.detector.status());
+  }
   setMode(mode: Mode) { this.detector.finish('mode-change'); this.options.mode = mode; }
   async finish() {
     if (this.closed) throw new Error('Local inference closed');

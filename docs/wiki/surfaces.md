@@ -1,12 +1,12 @@
 # Operator page and overlay
 
-Verified: 2026-11-09 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-10 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
 The operator console and the personal reader, on one page, since only one control socket may be connected; a second tab is refused. It is the only page that touches the microphone. Closing or hiding the tab, a heartbeat gap of 6 s, a stalled audio send or a track ending all stop capture and send `capture-failed`.
 
-Capture request: selected device or System default, mono, `echoCancellation: true`, `noiseSuppression: true`, `autoGainControl` from the Automatic mic gain checkbox, on by default. The actual track label is shown in the status line after Start and never exported. Reload resets the device selection to System default.
+Capture request: selected device or System default, mono, `echoCancellation: true`, `noiseSuppression: true`, `autoGainControl` from the Automatic mic gain checkbox, on by default. The actual track label is shown in the status line after Start and never exported, followed by what the browser applied: echo cancellation, noise suppression, automatic gain and sample rate, which can differ from the request. Reload resets the device selection to System default.
 
 Layout: a top bar with the capture state, the listening presets, the capture controls and the input level; a status line with what is processed where, the direction, the actual input, the service status, the current activity and errors; the transcript; and a sidebar of panels. Reading focus hides the presets, the service status, the input level and the sidebar, and gives the transcript the full width. Below 900 px wide the sidebar stacks under the transcript.
 
@@ -17,7 +17,7 @@ Layout: a top bar with the capture state, the listening presets, the capture con
 | Pause | top bar | stops the input, sends `pause` |
 | Translate now | top bar | `flush`: finalize the current turn, keep listening |
 | Clear screen | top bar | `clear`: drop history and in-flight work |
-| Microphone, Refresh inputs, Recalibrate room noise, Automatic mic gain | Input panel | device choice; `calibrate`, listen mode only, clears history |
+| Microphone, Refresh inputs, Recalibrate room noise, Automatic mic gain | Input panel | device choice; `calibrate`, listen mode only, keeps finished rows and cancels pending translations |
 | Direction, New session | Session panel | any of the three modes; `new-session` |
 | Segmentation | Session panel, when the recognizer offers the choice | `set-segmentation`: turns or rolling, only while capture is off, from the next Start |
 | Translate finalized text | Session panel, when a translator is configured; labeled on this Mac or paid cloud requests | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
@@ -45,7 +45,7 @@ The rows sit in a roll-up window anchored at the bottom: when released text adds
 
 ## Pacing
 
-`apps/web/pacer.ts` releases text in each client, so the protocol carries no timing and each surface sets its own. Originals and translations are separate lanes, each released in row order. A lane's rate drains its backlog over about 4 s, held between the floor and ceiling of the language being released, from `reading` in its profile: 8 to 25 characters per second in English, 3 to 10 in Japanese. Other rows' backlog converts by the ratio of ceilings. New text raises the rate smoothly over about half a second; a draining backlog keeps the rate it has until the lane is empty, so a row's end does not slow to the floor. Over 10 s of backlog at the ceiling, the ceiling rises by half again per second, up to three times, and falls back once caught up. English is shown in whole words, Japanese by character. A partial row in Auto has no language yet; its script picks the rates. A display generation or session change, or a lost connection, starts again with existing text shown at once. In turns mode a final can differ from its preview; released text that no longer matches is released again from where they diverge.
+`apps/web/pacer.ts` releases text in each client, so the protocol carries no timing and each surface sets its own. Originals and translations are separate lanes, each released in row order. A lane's rate drains its backlog over about 4 s, held between the floor and ceiling of the language being released, from `reading` in its profile: 8 to 25 characters per second in English, 3 to 10 in Japanese. Other rows' backlog converts by the ratio of ceilings. New text raises the rate smoothly over about half a second; a draining backlog keeps the rate it has until the lane is empty, so a row's end does not slow to the floor. Over 10 s of backlog at the ceiling, the ceiling rises by half again per second, up to three times, and falls back once caught up. A language written with spaces, `spaced` in its profile, is shown in whole words; Japanese is shown by character. A partial row in Auto has no language yet; its script picks the rates. A display generation or session change, or a lost connection, starts again with existing text shown at once. In turns mode a final can differ from its preview; released text that no longer matches is released again from where they diverge.
 
 ## Shared schema
 

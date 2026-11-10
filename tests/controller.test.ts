@@ -218,14 +218,23 @@ test('model-rejected non-speech does not translate even when text is not repetit
   assert.equal(h.requests.length, 0); assert.equal(h.controller.snapshot().segments.length, 0);
   assert.equal(h.controller.snapshot().rejected, 1);
 });
-test('recalibration cancels old translations/context without restarting capture', async t => {
-  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto'); h.final('old');
+test('recalibration keeps finalized rows, cancels pending translations and context, and drops open rows without restarting capture', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('done'); h.requests[0]!.result.resolve(ja); await tick();
+  h.final('pending'); h.requests[1]!.partial({ source: 'en', target: 'ja', text: 'こん' }); h.begin('open');
+  assert.equal(h.controller.snapshot().segments[1]!.translation, 'こん');
   const before = h.controller.snapshot(); h.controller.calibrate();
   assert.equal(h.streams.length, 1); assert.equal(h.streams[0]!.closed, false); assert.equal(h.streams[0]!.calibrations, 1);
-  assert(h.requests[0]!.signal.aborted); assert.equal(h.controller.snapshot().sessionId, before.sessionId);
-  assert(h.controller.snapshot().generation > before.generation); assert.equal(h.controller.snapshot().gate?.state, 'calibrating');
-  h.requests[0]!.result.resolve(ja); await tick(); assert.deepEqual(h.controller.snapshot().segments, []);
-  h.final('fresh'); assert.deepEqual(h.requests[1]!.input.context, []);
+  assert(h.requests[1]!.signal.aborted); assert.equal(h.controller.snapshot().sessionId, before.sessionId);
+  assert.equal(h.controller.snapshot().generation, before.generation); assert.equal(h.controller.snapshot().gate?.state, 'calibrating');
+  h.requests[1]!.result.resolve(ja); h.streams[0]!.emit({ type: 'final', id: 'open', text: 'late' }); await tick();
+  const after = h.controller.snapshot();
+  assert.deepEqual(after.segments.map(row => [row.id, row.state, row.translation]), [['done', 'ready', ja.text], ['pending', 'skipped', null]]);
+  assert.deepEqual(after.turns.map(turn => turn.outcome), ['ready', 'skipped']);
+  assert.equal(after.queue, 0); assert.equal(after.running, 0);
+  h.final('fresh'); assert.deepEqual(h.requests[2]!.input.context, []);
+  h.requests[2]!.result.resolve(ja); await tick();
+  h.final('next'); assert.deepEqual(h.requests[3]!.input.context!.map(row => row.translation), [ja.text]);
 });
 test('segmentation switches only while capture is off and applies from the next Start', async t => {
   const h = harness({ segmentation: 'turns' }); t.after(() => h.controller.dispose());

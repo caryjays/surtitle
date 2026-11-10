@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 import re
 import unittest
-from gate import edits, held_out, p90
+import subprocess
+import tempfile
+from gate import digest, edits, held_out, implementation, load_gate, p90, public_clips
 from scoring import edit_counts
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,6 +36,47 @@ class GateScoringTests(unittest.TestCase):
     def test_held_out_manifests_stay_private(self):
         with self.assertRaises(ValueError):
             held_out(ROOT / 'benchmarks/held-out.json')
+
+
+class RunIdentityTests(unittest.TestCase):
+    def test_the_implementation_digest_follows_uncommitted_and_untracked_files_and_skips_ignored_ones(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            subprocess.run(['git', 'init', '-q'], cwd=root, check=True)
+            (root / 'scripts').mkdir()
+            (root / 'scripts/a.py').write_text('one')
+            (root / '.gitignore').write_text('scripts/secret\n')
+            (root / 'README.md').write_text('outside the implementation')
+            first = implementation(root)
+            self.assertEqual(first['files'], 1)
+            (root / 'README.md').write_text('changed')
+            (root / 'scripts/secret').write_text('ignored')
+            self.assertEqual(implementation(root), first)
+            (root / 'scripts/a.py').write_text('two')
+            second = implementation(root)
+            self.assertNotEqual(second['sha256'], first['sha256'])
+            (root / 'scripts/b.py').write_text('new')
+            self.assertEqual(implementation(root)['files'], 2)
+            self.assertNotEqual(implementation(root)['sha256'], second['sha256'])
+
+    def test_a_gate_digest_changes_with_a_target_and_not_with_key_order(self):
+        gate = load_gate('ja')
+        self.assertEqual(digest(gate), digest(dict(reversed(list(gate.items())))))
+        changed = json.loads(json.dumps(gate))
+        changed['targets'][0]['max']['ja'] += 0.001
+        self.assertNotEqual(digest(gate), digest(changed))
+
+
+class GateFileTests(unittest.TestCase):
+    def test_a_gate_names_its_languages_pair_and_public_clips(self):
+        gate = load_gate('ja')
+        self.assertEqual((gate['languages'], gate['pair']), (['ja', 'en'], 'en-ja'))
+        clips = public_clips(gate)
+        self.assertEqual({c['language'] for c in clips}, {'ja', 'en'})
+        self.assertEqual([c['language'] for c in public_clips(gate, 3)], ['ja'] * 3 + ['en'] * 3)
+        for bad in ('xx', '../gate-ja', 'fleurs'):
+            with self.assertRaises((ValueError, OSError, KeyError)):
+                load_gate(bad)
 
 
 class GateTargetsTests(unittest.TestCase):

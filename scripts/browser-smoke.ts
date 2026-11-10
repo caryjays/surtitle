@@ -122,7 +122,7 @@ try {
   assert.equal(await control.locator('#layout-preview').isDisabled(), true);
   assert.equal(await control.locator('[data-id^="layout-preview-"]').count(), 0);
   await overlay.waitForSelector('.translation[lang="ja"]');
-  assert.match(await control.locator('#capture-input').textContent() ?? '', /^Actual input:/);
+  assert.match(await control.locator('#capture-input').textContent() ?? '', /^Actual input:.* · applied: echo cancellation .* · noise suppression .* · automatic gain /);
   assert.equal(await control.locator('#gate-advice').isVisible(), true);
   assert(totalFrames >= 10);
   assert.equal(await overlay.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
@@ -222,11 +222,12 @@ try {
   await control.locator('#health-panel > summary').click();
   assert.equal(await control.locator('#state-pill').textContent(), 'ACTIVE');
   await control.locator('#diagnostics > summary').click();
-  const beforeCalibration = controller.snapshot().generation;
+  const beforeCalibration = controller.snapshot();
   await control.getByRole('button', { name: 'Recalibrate room noise', exact: true }).click();
   await control.waitForFunction(() => document.getElementById('activity')!.textContent!.startsWith('Stay quiet'));
   assert.equal(calibrations, 1); assert.equal(opened, 1);
-  assert(controller.snapshot().generation > beforeCalibration); assert.equal(controller.snapshot().segments.length, 0);
+  assert.equal(controller.snapshot().generation, beforeCalibration.generation);
+  assert.deepEqual(controller.snapshot().segments.map(row => row.id), beforeCalibration.segments.filter(row => row.final).map(row => row.id));
   await control.locator('#diagnostics > summary').click();
   await overlay.waitForSelector('.translation');
   const beforeReload = totalFrames;
@@ -277,6 +278,9 @@ try {
   assert(report.events.some((event: any) => event.type === 'health' && event.health.mode === 'ja-en'));
   assert(report.events.some((event: any) => event.type === 'segment' && event.row.state === 'ready'));
   assert(report.events.some((event: any) => event.type === 'command' && event.command.type === 'pause'));
+  const captured = report.events.find((event: any) => event.type === 'capture');
+  assert(captured && Object.keys(captured.settings).sort().join() === 'autoGainControl,channelCount,echoCancellation,noiseSuppression,sampleRate');
+  for (const stage of ['original-all', 'translation-first', 'translation-all']) assert(report.events.some((event: any) => event.type === 'display' && event.stage === stage), stage);
   assert(!json.includes('Hello from the synthetic microphone.'));
   assert(!json.includes('合成マイクからこんにちは。'));
   assert(!json.includes('layout-preview-')); assert(!json.includes('Synthetic smoke test'));

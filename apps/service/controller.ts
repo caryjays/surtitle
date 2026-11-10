@@ -32,6 +32,8 @@ export class Controller {
   private rejected = 0;
   private rows: Segment[] = [];
   private nextSequence = 0;
+  // Rows before this sequence were finalized before a recalibration and are not translation context.
+  private contextFloor = 0;
   private rowModes = new WeakMap<Segment, Mode>();
   private traces: TurnTrace[] = [];
   private rowTraces = new WeakMap<Segment, TurnTrace>();
@@ -107,6 +109,7 @@ export class Controller {
     this.queue = [];
     for (const abort of this.running) abort.abort();
     this.running.clear(); this.rows = []; this.traces = []; this.error = null; this.gate = null; this.rejected = 0;
+    this.contextFloor = this.nextSequence;
   }
   private closeStream() { this.streamToken++; this.transcriber?.close(); this.transcriber = undefined; this.gate = null; }
   // Modes outside the session's pair are refused; the server treats them as a protocol error.
@@ -163,9 +166,20 @@ export class Controller {
   }
   calibrate() {
     if (this.capture !== 'active' || !this.transcriber?.calibrate) return;
-    // Drop stale/noisy rows, pending translations and context without reloading
-    // the model. A pre-calibration turn finishing later has no surviving row.
-    this.invalidate();
+    // Finalized rows stay as reading history. Open rows go, pending translations are cancelled and their rows keep the
+    // original, and earlier rows stop being context, all without reloading the model. The transcriber drops its pending
+    // recognition work too: rolling rows begin late, so an old decode could otherwise start a row after this.
+    this.epoch++; this.queue = [];
+    for (const abort of this.running) abort.abort();
+    this.running.clear(); this.error = null; this.gate = null; this.contextFloor = this.nextSequence;
+    const open = this.rows.filter(row => !row.final);
+    this.traces = this.traces.filter(trace => !open.some(row => this.rowTraces.get(row) === trace));
+    this.rows = this.rows.filter(row => row.final);
+    for (const row of this.rows) if (row.state === 'pending') {
+      row.state = 'skipped'; row.translation = null;
+      const trace = this.trace(row);
+      if (trace) trace.outcome = 'skipped';
+    }
     try { this.transcriber.calibrate(); } catch { this.fail('transcription'); }
     this.changed();
   }
@@ -250,7 +264,7 @@ export class Controller {
         else {
           // Snapshot ONLY earlier finalized rows at commit time. Never include future
           // turns or let later translations mutate an already queued request's context.
-          const preceding = this.rows.filter(r => r.final && r.sequence < row!.sequence).slice(-4);
+          const preceding = this.rows.filter(r => r.final && r.sequence >= this.contextFloor && r.sequence < row!.sequence).slice(-4);
           if (trace) {
             trace.contextSequences = preceding.map(r => r.sequence);
             trace.contextMissingTranslations = preceding.filter(r => r.state !== 'ready' || !r.translation).length;
@@ -305,7 +319,7 @@ export class Controller {
   }
   // The row's translated pieces, joined as the target language writes words.
   private joined(pieces: Pieces, more = '') {
-    const separator = pieces.target && pieces.target !== 'unknown' && profile(pieces.target).scoring === 'character' ? '' : ' ';
+    const separator = pieces.target && pieces.target !== 'unknown' && !profile(pieces.target).spaced ? '' : ' ';
     return [...pieces.parts.map(part => part.translation), more].filter(Boolean).join(separator).slice(0, 4000);
   }
   private async translate(job: Job, abort: AbortController) {
@@ -392,7 +406,7 @@ export class Controller {
       const source = pieces.direction ? direction(pieces.direction)!.source : pieces.language;
       // Earlier rows' finished translations, then this row's translated pieces, at most four.
       const context = [
-        ...this.rows.filter(r => r.final && r.sequence < row.sequence).slice(-4).map(r => ({ original: r.original.slice(0, 800),
+        ...this.rows.filter(r => r.final && r.sequence >= this.contextFloor && r.sequence < row.sequence).slice(-4).map(r => ({ original: r.original.slice(0, 800),
           translation: r.state === 'ready' ? r.translation?.slice(0, 800) ?? null : null, source: r.source })),
         ...pieces.parts.map(part => ({ original: part.original.slice(0, 800), translation: part.translation.slice(0, 800) || null, source })),
       ].slice(-4);

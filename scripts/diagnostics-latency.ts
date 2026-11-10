@@ -3,7 +3,8 @@
 import { readFileSync } from 'node:fs';
 
 type Event = { type: string; atMs: number; command?: { type: string }; turn?: Record<string, unknown> & { sequence: number; outcome: string };
-  row?: { sequence: number; final: boolean; state: string; originalChars: number; translationChars: number } };
+  row?: { sequence: number; final: boolean; state: string; originalChars: number; translationChars: number };
+  sequence?: number; stage?: string; paced?: boolean; settings?: Record<string, unknown> };
 const path = process.argv[2];
 if (!path) { console.error('Usage: pnpm diag:latency <captions-diagnostics.json>'); process.exit(2); }
 const events = (JSON.parse(readFileSync(path, 'utf8')) as { events: Event[] }).events;
@@ -43,9 +44,14 @@ starts.forEach((start, i) => {
     if (e.row.state === 'ready' && !ready.has(e.row.sequence)) ready.set(e.row.sequence, { at: e.atMs, original: e.row.originalChars, translation: e.row.translationChars });
   }
   const rows = [...turns.values()].filter(t => ready.has(t.sequence as number) && firstText.has(t.sequence as number));
+  // When the console's audience preview released each row's text: `${sequence}:${stage}` to its time.
+  const displayed = new Map<string, number>();
+  for (const e of within) if (e.type === 'display' && !displayed.has(`${e.sequence}:${e.stage}`)) displayed.set(`${e.sequence}:${e.stage}`, e.atMs);
+  const capture = within.find(e => e.type === 'capture')?.settings;
   const n = (key: string) => rows.map(t => t[key] as number | undefined);
   console.log(`Start ${i + 1}: ${end === Infinity ? 'not paused' : `${Math.round((end - start.atMs) / 1000)} s`}, ${turns.size} rows, ${rows.length} translated`);
   console.log(`  closed by: ${tally(n('boundary'))}; outcomes: ${tally([...turns.values()].map(t => t.outcome))}`);
+  if (capture) console.log(`  applied capture settings: ${Object.entries(capture).map(([k, v]) => `${k} ${v}`).join(', ')}`);
   // Recognition over every kept row, translated or not, so a run without translation compares with one with it.
   const kept = [...turns.values()].filter(t => !['rejected', 'capturing', 'empty'].includes(t.outcome as string));
   console.log('  Recognition, all kept rows');
@@ -53,6 +59,11 @@ starts.forEach((start, i) => {
   line('lock lag (locked audio end to lock)', kept.map(t => t.lockLagMs as number | undefined));
   line('closing decode inference', kept.map(t => t.recognitionInferenceMs as number | undefined));
   line('speech end to final text', kept.map(t => t.speechEndToFinalMs as number | undefined));
+  const level = (key: string) => {
+    const values = kept.map(t => t[key]).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+    return values.length ? `p10 ${values[Math.floor(0.1 * (values.length - 1))]!.toFixed(4)}, p50 ${values[Math.floor(0.5 * (values.length - 1))]!.toFixed(4)}, max ${values.at(-1)!.toFixed(4)}` : 'not recorded';
+  };
+  console.log(`  Input level per row, share of full scale: RMS ${level('inputRms')}; peak ${level('inputPeak')}`);
   console.log('  Translated rows (seconds unless noted)');
   line('row audio', n('audioMs'));
   line('original characters', rows.map(t => ready.get(t.sequence as number)!.original), 'n');
@@ -85,6 +96,27 @@ starts.forEach((start, i) => {
   line('last word of the row', rows.map(t => heard(t, 0)));
   line('middle of the row', rows.map(t => heard(t, 0.5)));
   line('first word of the row', rows.map(t => heard(t, 1)));
+  // Display pacing on the console's audience preview, which paces as an overlay does. A word's translation is on screen
+  // somewhere between the translation's first and last released text; the middle of the row takes their midpoint.
+  const shown = (t: Record<string, unknown>, stage: string) => displayed.get(`${t.sequence}:${stage}`);
+  if (rows.some(t => shown(t, 'translation-all') !== undefined)) {
+    const paced = within.filter(e => e.type === 'display').every(e => e.paced);
+    console.log(`  Display pacing (audience preview, pacing ${paced ? 'on' : 'off or changed'})`);
+    line('original: final text to all released', rows.map(t => shown(t, 'original-all') === undefined || t['at:translating'] === undefined ? undefined
+      : Math.max(0, shown(t, 'original-all')! - (t['at:translating'] as number))));
+    line('translation: first text to first released', rows.map(t => shown(t, 'translation-first') === undefined ? undefined
+      : Math.max(0, shown(t, 'translation-first')! - firstTranslation.get(t.sequence as number)!)));
+    line('translation: ready to all released', rows.map(t => shown(t, 'translation-all') === undefined ? undefined
+      : Math.max(0, shown(t, 'translation-all')! - ready.get(t.sequence as number)!.at)));
+    const seen = (t: Record<string, unknown>, share: number, at: number | undefined) => at === undefined || t.speechEndToFinalMs === undefined
+      || t['at:translating'] === undefined ? undefined : (t.speechEndToFinalMs as number) + at - (t['at:translating'] as number) + share * (t.audioMs as number);
+    const mid = (t: Record<string, unknown>) => shown(t, 'translation-first') === undefined || shown(t, 'translation-all') === undefined ? undefined
+      : (shown(t, 'translation-first')! + shown(t, 'translation-all')!) / 2;
+    console.log('  Speech to displayed translation (rolling): row length, lock lag, translation and pacing together');
+    line('last word to translation all released', rows.map(t => seen(t, 0, shown(t, 'translation-all'))));
+    line('middle of the row to mid-release', rows.map(t => seen(t, 0.5, mid(t))));
+    line('first word to first released text', rows.map(t => seen(t, 1, shown(t, 'translation-first'))));
+  }
   const pieced = rows.filter(t => Array.isArray(t.pieces) && (t.pieces as unknown[]).length);
   if (!pieced.length) {
     console.log('  Speech to first translated text (rolling; the same as above unless the translator streams)');

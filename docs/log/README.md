@@ -42,6 +42,12 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-10-piece-quality.md](2026-11-10-piece-quality.md) | Piece translation quality read against rows: worse on every talk, live stays row |
 | [2026-11-10-prompt-order.md](2026-11-10-prompt-order.md) | Padded replies traced to the local prompt's order; text now last; glossary filter tried and reverted |
 | [2026-11-10-offline-rehearsal.md](2026-11-10-offline-rehearsal.md) | Maintainer's two offline rehearsal sessions on fast technical Japanese, matching replay timings, names misrecognized; `diag:latency` reads files without a Start |
+| [2026-11-10-held-out-targets.md](2026-11-10-held-out-targets.md) | Held-out gate targets become differences from the model's own one-pass decode; scorer changed and checked |
+| [2026-11-10-other-languages.md](2026-11-10-other-languages.md) | The held-out talk with stray rows: Whisper loops on short stretches, and rolling rows outside the pair now lock nothing after a retry in the pair |
+| [2026-11-10-gate-tooling.md](2026-11-10-gate-tooling.md) | Gate runner, replay and translation eval take a gate or pair; profiles gain `spaced`; Spanish chosen as the stage 2 pilot |
+| [2026-11-10-state-review.md](2026-11-10-state-review.md) | Working-tree review, verification results, rolling recalibration and direction-change defects, recommendations |
+| [2026-11-10-rolling-lifecycle-fixes.md](2026-11-10-rolling-lifecycle-fixes.md) | Fixes for those two defects: rolling rows keep their mode, recalibration drops pending recognition; adapter and controller regression tests |
+| [2026-11-10-reliability-and-measurement.md](2026-11-10-reliability-and-measurement.md) | Recalibration keeps finished rows; per-turn input level, applied capture settings and display pacing in diagnostics; speech to displayed translation in `diag:latency`; gate runs record their gate file and implementation digest |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

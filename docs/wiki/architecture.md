@@ -38,7 +38,7 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 | `apps/service/server.ts` | Loopback HTTP and WebSocket, origin checks, one control owner, snapshot broadcast |
 | `apps/service/controller.ts` | Session, generation and epoch, rows and traces, translation queue |
 | `packages/protocol/` | Zod schemas shared by service and browser: `Command`, `Snapshot`, `Segment`, `Translation`, `TurnTrace`; `languages.ts` holds language codes, modes, the pair and the profiles |
-| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, sentence-end characters, stock phrases, display release rates |
+| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, whether it writes spaces, sentence-end and clause-end characters, stock phrases, display release rates |
 | `packages/providers/turns.ts` | Energy turn detector, fixed or calibrated |
 | `packages/providers/local.ts` | Local adapter: worker lifecycle, job queue, previews, repetition check |
 | `packages/providers/openai.ts` | Cloud transcriber, opt-in and never run live, plus the Responses translator |
@@ -51,9 +51,9 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 
 ## One turn, end to end
 
-1. The operator clicks Start. The page opens the selected input with mono, echo cancellation and noise suppression on, automatic gain off unless enabled, loads the worklet and sends `start`. The service opens a transcriber stream; local mode spawns and warms the worker before reporting ACTIVE.
+1. The operator clicks Start. The page opens the selected input with mono, echo cancellation and noise suppression on, automatic gain on unless the operator unchecks it, shows what the browser applied to the track, loads the worklet and sends `start`. The service opens a transcriber stream; local mode spawns and warms the worker before reporting ACTIVE.
 2. Each 50 ms frame travels as a binary WebSocket message to the controller, then to the detector. In listen mode the first 1.5 s calibrate the noise floor and never reach recognition.
-3. The detector opens a turn on onset, replays 300 ms of pre-roll, and commits on 700 ms of quiet, at the 12 s cap, or on flush, direction change, pause or recalibration. The commit carries its boundary reason and durations. With the experimental rolling segmentation, there is no cap and steps 4 to 6 repeat about once a second within the turn; see [recognition](recognition.md#node-side-segmentation).
+3. The detector opens a turn on onset, replays 300 ms of pre-roll, and commits on 700 ms of quiet, at the 12 s cap, or on flush, direction change or pause. A recalibration ends the turn without committing it. The commit carries its boundary reason and durations. With the experimental rolling segmentation, there is no cap and steps 4 to 6 repeat about once a second within the turn; see [recognition](recognition.md#node-side-segmentation).
 4. The local adapter queues a final job and writes base64 PCM to the worker. In listen mode it also requests a preview every 3 s of turn audio; a preview shows only the prefix two consecutive hypotheses agree on.
 5. The worker resamples to 16 kHz, runs the Silero speech gate, decodes with Whisper at temperature 0, drops low-confidence, no-speech and repetitive pieces, and replies with text, language, timing and quality counters. See [recognition](recognition.md).
 6. The adapter rejects repetitive output again and emits a final event with a turn measurement. The controller finalizes the row, drops it if rejected or empty, or marks it original-only when translation is off.
@@ -65,12 +65,12 @@ A session pairs two languages, set by `LANGUAGE_PAIR` (default `en-ja`) and chec
 | Token | Changes on | Guards |
 | --- | --- | --- |
 | `sessionId` | Start, New session | Browser diagnostics session numbering |
-| `generation` | Start, Clear, Recalibrate, New session | Rows, traces, rejected counter and gate reset |
-| `epoch` | Same as generation | Late translation results and diagnostics are discarded |
+| `generation` | Start, Clear, New session | Rows, traces, rejected counter and gate reset |
+| `epoch` | Same as generation, and Recalibrate | Late translation results and diagnostics are discarded |
 | `streamToken` | Any transcriber open or close | Late transcriber callbacks are ignored |
-| `sequence` | Each new turn | Monotonic row order; context uses only lower sequences |
+| `sequence` | Each new turn | Monotonic row order; context uses only lower sequences, and none from before the last Recalibrate |
 
-Operations: Start begins a fresh session. Pause finishes the current turn, waits up to 8 s for finals, then releases the microphone. Translate now flushes the current turn and keeps listening. Set mode commits the current turn with its old hint and applies the new one to later turns without reloading the worker. Clear invalidates everything and recreates the worker if capture was active. Set segmentation, refused while capture is on, applies at the next Start; local recognition starts with `LOCAL_SEGMENTATION`. Set translation switches a configured translator off or on for the session: off drops queued requests and marks their rows original, and changes the reported processing. Recalibrate invalidates rows and pending translations and keeps the worker. New session stops capture and clears all text.
+Operations: Start begins a fresh session. Pause finishes the current turn, waits up to 8 s for finals, then releases the microphone. Translate now flushes the current turn and keeps listening. Set mode commits the current turn with its old hint and applies the new one to later turns without reloading the worker; a rolling row keeps the mode it was heard in, although its begin event can follow the change. Clear invalidates everything and recreates the worker if capture was active. Set segmentation, refused while capture is on, applies at the next Start; local recognition starts with `LOCAL_SEGMENTATION`. Set translation switches a configured translator off or on for the session: off drops queued requests and marks their rows original, and changes the reported processing. Recalibrate keeps finalized rows as reading history and the worker: it removes open rows, cancels queued and running translations, whose rows keep their original as `skipped`, and stops earlier rows being translation context; the adapter drops the open turn, its queued decodes and the reply to a decode in flight, so audio heard before it never becomes a row. New session stops capture and clears all text.
 
 ## Bounds
 

@@ -34,7 +34,7 @@ export function setupAudience() {
   const stage = element('audience').querySelector<HTMLElement>('.stage')!;
   new ResizeObserver(() => stage.style.setProperty('--stage-scale', String(element('audience').clientWidth / 1920))).observe(element('audience'));
   apply(settings);
-  return (state: Snapshot | undefined, receivedAt: number) => view.render(state, receivedAt, Date.now());
+  return (state: Snapshot | undefined, receivedAt: number) => ({ rows: view.render(state, receivedAt, Date.now()), paced: settings.pace });
 }
 
 // Direction, segmentation and translation for the session. Segmentation applies at the next Start.

@@ -105,6 +105,9 @@ test('rolling locks agreed words, never retracts them, closes rows by length and
   const diagnostics = rows.map(r => f.measurements.find(m => m.id === r.id && m.value.boundary)!.value);
   assert.deepEqual(diagnostics.map(d => d.boundary), ['length', 'silence']);
   assert.equal(diagnostics[0]!.audioMs, 8000);
+  // Voiced test frames hold 6000 of 32768; the row that closes at the quiet boundary also heard the trailing quiet.
+  assert(Math.abs(diagnostics[0]!.inputRms! - 0.183) < 0.002 && Math.abs(diagnostics[0]!.inputPeak! - 0.183) < 0.002);
+  assert(diagnostics[1]!.inputRms! < diagnostics[0]!.inputRms! && diagnostics[1]!.inputRms! > 0.1);
   assert(diagnostics.every(d => d.decodes! > 0 && d.forcedLocks === 0 && d.firstTextMs !== undefined && d.lockLagMs !== undefined));
   // Locked audio is trimmed, so no request grows past a few seconds in agreeing speech.
   assert(Math.max(...f.requests) <= 3000);
@@ -153,6 +156,19 @@ test('in Auto a row takes its language from a decode with accepted text, not fro
 });
 test('in Auto a short opening misheard as accepted text does not settle the row; the language of the first locked text does', async t => {
   const f = fixture('rolling-misheard-pass', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6); f.quiet(); await f.stream.finish();
+  const rows = finals(f.events);
+  assert.equal(rows[0]!.language, 'ja');
+  assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
+});
+test('in Auto, decodes detected outside the pair lock nothing, and a row of them closes rejected', async t => {
+  const f = fixture('rolling-third', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6); f.quiet(); await f.stream.finish();
+  assert(!f.events.some(e => e.type === 'partial' && e.text), 'no text displayed');
+  assert.deepEqual(finals(f.events).map(r => [r.text, r.rejected]), [['', true]]);
+});
+test('in Auto, an opening detected outside the pair is decoded again, not lost, once detection finds the pair', async t => {
+  const f = fixture('rolling-third-opening', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(6); f.quiet(); await f.stream.finish();
   const rows = finals(f.events);
   assert.equal(rows[0]!.language, 'ja');
@@ -228,4 +244,87 @@ test('through the controller, rolling rows show locked text while open and are t
   assert.deepEqual(inputs.map(input => input.text), [words(0, 8), words(160, 2)]);
   assert(inputs.every(input => !input.truncated?.start && !input.truncated?.end));
   assert(shown.length > 3 && shown.every(text => !/t\d/.test(text)), 'only locked text is shown while a row is open');
+});
+
+// The real adapter and controller over the fake rolling worker. Voiced frames carry their index, so a word names its audio.
+function session(t: { after(fn: () => void): void }, mode: 'ja-en' | 'en-ja', calibrationMs?: number) {
+  const inputs: Parameters<Translator['translate']>[0][] = [];
+  const controller = new Controller({ glossary: [], backend: 'Fake providers',
+    transcriber: localTranscriberFactory({ model: 'small-q4', segmentation: 'rolling', ...(calibrationMs ? { calibrationMs } : {}),
+      workerFactory: () => spawn(process.execPath, ['tests/fixtures/fake-local-worker.mjs', 'rolling'], { stdio: ['pipe', 'pipe', 'pipe'], env: {} }) }),
+    translator: { async translate(input) {
+      inputs.push(input);
+      return input.sourceLanguage === 'ja' ? { source: 'ja', target: 'en', text: `T ${input.text}` } : { source: 'en', target: 'ja', text: `T ${input.text}` };
+    } } });
+  t.after(() => controller.dispose());
+  let index = 0;
+  const frames = (count: number, voiced: boolean) => {
+    for (let i = 0; i < count; i++) {
+      const pcm = Buffer.alloc(2400);
+      if (voiced) { for (let j = 0; j < 2400; j += 2) pcm.writeInt16LE(6000, j); pcm.writeInt16LE(index, 0); }
+      index++; controller.audio(pcm);
+    }
+  };
+  const wait = (ms = 40) => new Promise(r => setTimeout(r, ms));
+  return { controller, inputs, wait, start: () => controller.start(mode), index: () => index,
+    quiet: (count = 30) => frames(count, false),
+    // Without a wait, the first decode is still in flight when this returns and no text has locked.
+    voiced: (seconds: number) => frames(20 * seconds, true),
+    async speak(seconds: number) { for (let s = 0; s < seconds; s++) { frames(20, true); await wait(); } },
+    rows: () => Snapshot.parse(controller.snapshot()).segments };
+}
+const indexes = (text: string) => [...text.matchAll(/w(\d+)/g)].map(match => Number(match[1]));
+
+test('recalibrating before the first lock drops the old speech: no late row, no translation', async t => {
+  const s = session(t, 'ja-en', 1500); await s.start();
+  s.quiet(); s.voiced(1);
+  s.controller.calibrate();
+  await s.wait(80);
+  const snapshot = Snapshot.parse(s.controller.snapshot());
+  assert.deepEqual(snapshot.segments, []); assert.deepEqual(snapshot.turns, []);
+  assert.equal(snapshot.rejected, 0); assert.equal(snapshot.capture, 'active');
+  assert.equal(s.inputs.length, 0);
+  // Speech after the new calibration is recognized and translated as usual, from its own audio only.
+  s.quiet(); const from = s.index();
+  await s.speak(3); s.quiet(14); await s.controller.pause(); await s.wait(20);
+  assert.equal(s.rows().length, 1); assert.equal(s.rows()[0]!.state, 'ready');
+  assert(indexes(s.rows()[0]!.original).length > 0 && indexes(s.rows()[0]!.original).every(i => i >= from), s.rows()[0]!.original);
+  assert.deepEqual(s.inputs.map(input => input.text), [s.rows()[0]!.original]);
+});
+test('recalibrating an open row with locked text removes it, and its later decodes do not bring it back', async t => {
+  const s = session(t, 'ja-en', 1500); await s.start();
+  s.quiet(); await s.speak(4);
+  assert(s.rows()[0]?.original, 'the row shows locked text before recalibration');
+  s.voiced(1); s.controller.calibrate();
+  await s.wait(80);
+  assert.deepEqual(s.rows(), []); assert.equal(s.inputs.length, 0);
+  s.quiet(); const from = s.index();
+  await s.speak(3); s.quiet(14); await s.controller.pause(); await s.wait(20);
+  assert.equal(s.rows().length, 1);
+  assert(indexes(s.rows()[0]!.original).every(i => i >= from), s.rows()[0]!.original);
+  assert.equal(s.inputs.length, 1);
+});
+test('a direction change before the first lock leaves the old speech its own direction', async t => {
+  const s = session(t, 'ja-en'); await s.start();
+  s.voiced(1);
+  s.controller.setMode('en-ja');
+  await s.wait(80);
+  assert.deepEqual(s.inputs.map(input => [input.mode, input.sourceLanguage]), [['ja-en', 'ja']]);
+  assert.deepEqual(s.rows().map(row => [row.source, row.target, row.state]), [['ja', 'en', 'ready']]);
+  await s.speak(3); s.quiet(14); await s.controller.pause(); await s.wait(20);
+  assert.deepEqual(s.inputs.map(input => [input.mode, input.sourceLanguage]), [['ja-en', 'ja'], ['en-ja', 'en']]);
+  assert.deepEqual(s.rows().map(row => [row.source, row.target, row.state]), [['ja', 'en', 'ready'], ['en', 'ja', 'ready']]);
+  assert.deepEqual(Snapshot.parse(s.controller.snapshot()).turns.map(turn => turn.mode), ['ja-en', 'en-ja']);
+});
+test('a rolling row begins with the mode it was heard in, and recalibration ends its events', async t => {
+  const f = fixture('rolling', { calibrationMs: 1500 }); t.after(() => f.stream.close()); await f.stream.connect();
+  const calibration = () => { for (let i = 0; i < 30; i++) f.stream.audio(Buffer.alloc(2400)); };
+  calibration(); f.push(1); f.stream.setMode('en-ja'); await f.stream.finish();
+  assert.deepEqual(f.events.map(e => [e.type, e.type === 'begin' ? e.mode : null]), [['begin', 'ja-en'], ['final', null]]);
+  f.push(1); f.stream.calibrate();
+  await new Promise(r => setTimeout(r, 80));
+  assert.equal(f.events.length, 2);
+  calibration(); await f.speak(3); f.quiet(); await f.stream.finish();
+  assert.deepEqual(f.events.slice(2).filter(e => e.type !== 'partial').map(e => [e.type, e.type === 'begin' ? e.mode : null]), [['begin', 'en-ja'], ['final', null]]);
+  assert.equal(f.failures(), 0);
 });

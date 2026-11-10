@@ -1,6 +1,6 @@
 import { connect } from './client.ts';
 import { setupHistory } from './history.ts';
-import { setupDiagnostics } from './diagnostics.ts';
+import { captureSettings, describeCapture, setupDiagnostics, type CaptureSettings } from './diagnostics.ts';
 import { setupReadingControls } from './reading.ts';
 import { renderHealth, setupAudience, setupSession, setupShortcuts } from './console.ts';
 import { HEARTBEAT_TIMEOUT_MS, Mode, PROFILES, direction, type Pair, type Snapshot } from '../../packages/protocol/index.ts';
@@ -32,6 +32,8 @@ let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let source: MediaStreamAudioSourceNode | undefined;
 let captureToken = 0;
+// What the browser applied to the open microphone track.
+let applied: CaptureSettings | undefined;
 let selectedMode = Mode.parse(mode.value);
 // The page ships labelled for en-ja; the first snapshot relabels it for the service's pair.
 // The pair lists English first, so Lecture reads the other language into English.
@@ -86,7 +88,7 @@ function stopLocal() {
   captureToken++; busy = false;
   node?.disconnect(); source?.disconnect(); node = undefined; source = undefined;
   stream?.getTracks().forEach(track => { track.onended = null; track.stop(); }); stream = undefined;
-  void context?.close().catch(() => {}); context = undefined; meter.value = 0;
+  void context?.close().catch(() => {}); context = undefined; meter.value = 0; applied = undefined;
   element('capture-input').textContent = 'Input: microphone off. Reload resets selection to System default; verify the named input.';
   buttons();
 }
@@ -102,8 +104,13 @@ function preserveReadingPosition(update: () => void) {
 }
 setupReadingControls(preserveReadingPosition);
 const renderHistory = setupHistory(preserveReadingPosition);
-const diagnostics = setupDiagnostics(() => ({ snapshot: state, online: connected }));
-const renderAudience = setupAudience();
+const diagnostics = setupDiagnostics(() => ({ snapshot: state, online: connected, ...(applied ? { capture: applied } : {}) }));
+const audience = setupAudience();
+// The audience preview paces text as an overlay does; diagnostics record when it released each row, never the text.
+function renderAudience(snapshot: Snapshot | undefined, receivedAt: number) {
+  const { rows, paced } = audience(snapshot, receivedAt);
+  if (snapshot) diagnostics.display(rows, paced);
+}
 const pill = element('state-pill');
 const renderSession = setupSession(command => send(command));
 function renderConsole(snapshot: Snapshot | undefined) {
@@ -192,8 +199,10 @@ start.onclick = async () => {
     }, video: false });
     if (token !== captureToken || !connected) { media.getTracks().forEach(t => t.stop()); return; }
     stream = media;
-    const inputName = media.getAudioTracks()[0]?.label;
-    element('capture-input').textContent = `Actual input: ${inputName || 'Unnamed browser input — verify microphone settings'}${device.value ? '' : ' · selected via System default'}`;
+    const track = media.getAudioTracks()[0];
+    const inputName = track?.label;
+    applied = captureSettings(track?.getSettings()); diagnostics.capture(applied);
+    element('capture-input').textContent = `Actual input: ${inputName || 'Unnamed browser input — verify microphone settings'}${device.value ? '' : ' · selected via System default'} · applied: ${describeCapture(applied)}`;
     await audioContext.audioWorklet.addModule('/worklet.js');
     if (token !== captureToken) return;
     source = audioContext.createMediaStreamSource(media);

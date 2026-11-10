@@ -14,6 +14,9 @@ export const RecognitionQuality = z.object({
 }).strict();
 export const TurnMeasurement = z.object({
   boundary: Boundary.optional(), audioMs: ms.optional(), trailingQuietMs: ms.optional(),
+  // Input level of the turn's captured audio as a share of full scale, before any worker processing. In rolling mode,
+  // of the audio heard while the row was the open one.
+  inputRms: z.number().finite().min(0).max(1).optional(), inputPeak: z.number().finite().min(0).max(1).optional(),
   recognitionQueueMs: ms.optional(), recognitionInferenceMs: ms.optional(), commitToFinalMs: ms.optional(),
   recognitionLanguage: z.string().regex(/^(?:[a-z]{2,3}|unknown)$/).optional(),
   recognitionClipped: z.boolean().optional(), adapterRepetitionRejected: z.boolean().optional(),

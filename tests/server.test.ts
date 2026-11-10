@@ -79,13 +79,13 @@ test('mode and flush commands keep the microphone session and history', async t 
   assert.equal(f.streams.length, 1); assert.equal(f.streams[0]!.closed, false);
   assert.equal(f.controller.snapshot().sessionId, session); assert.equal(f.controller.snapshot().segments[0]!.id, 'a');
 });
-test('calibration command clears noise context without opening another capture stream', async t => {
+test('calibration command cancels pending translation and keeps the finalized row without opening another capture stream', async t => {
   const f = await fixture(t); const control = await f.connect('control');
   control.ws.send(JSON.stringify({ type: 'start', mode: 'auto' }));
   await until(() => f.controller.snapshot().capture === 'active'); f.final('old');
   control.ws.send(JSON.stringify({ type: 'calibrate' }));
   await until(() => f.controller.snapshot().gate?.state === 'calibrating');
-  assert.equal(f.controller.snapshot().segments.length, 0); assert.equal(f.streams.length, 1);
+  assert.deepEqual(f.controller.snapshot().segments.map(row => [row.id, row.state]), [['old', 'skipped']]); assert.equal(f.streams.length, 1);
   assert(f.requests[0]!.signal.aborted);
 });
 test('audio frames have exact format, single owner, malformed messages stop capture safely', async t => {
