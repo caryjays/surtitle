@@ -294,7 +294,12 @@ export class LocalTranscriber implements Transcriber {
       const dropMs = windowMs - ROLLING.keepMs;
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(dropMs * BYTES_PER_MS)];
       stretch!.windowMs -= dropMs; stretch!.previous = ''; row.afterNoise = true;
-      if (!row.text && row.mode === 'auto') row.language = null;
+      if (row.text) {
+        // What the row locked is finished: close it, so it translates now and the stretch goes on in a row that learns
+        // its language again. A talker who changes language without a pause otherwise stays decoded in the first one.
+        this.closeRow(row, 'length', {}, false);
+        stretch!.row = { ...this.row(), afterNoise: true, ...(row.marked ? { marked: true } : {}) };
+      } else if (row.mode === 'auto') row.language = null;
     } else {
       stretch!.previous = current;
     }

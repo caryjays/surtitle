@@ -125,3 +125,16 @@ test('with pacing off, locked text shows at once and the tail still does not', (
   assert.equal(r!.original, 'one two');
   assert.equal(r!.originalRest, ' three');
 });
+
+test('the audience window follows the earliest row whose translation is still owed, and keeps its text inside', async () => {
+  const { readingRow, rollShift } = await import('../apps/web/audience.ts');
+  const shown = (id: string, state: Segment['state'], translationRest = ''): ShownRow => ({ ...row(id, 'text', { state }), originalRest: '', translationRest });
+  assert.equal(readingRow([shown('r1', 'ready'), shown('r2', 'ready', 'rest'), shown('r3', 'pending')])!.id, 'r2');
+  assert.equal(readingRow([shown('r1', 'ready'), shown('r2', 'pending'), shown('r3', 'ready', 'rest')])!.id, 'r2');
+  // Translation off, failed rows and an open row hold nothing back.
+  assert.equal(readingRow([shown('r1', 'original'), shown('r2', 'failed'), shown('r3', 'partial')]), undefined);
+  assert.equal(rollShift(0, 112, 272), 0); // the newest text: bottom anchored
+  assert.equal(rollShift(100, 112, 272), 0); // still fits above later rows
+  assert.equal(rollShift(250, 112, 272), 90); // later rows would push it out: the roll moves down by the overlap
+  assert.equal(rollShift(250, 400, 272), 250); // taller than the window: its end stays in view
+});

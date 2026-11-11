@@ -293,6 +293,44 @@ try {
   await control.locator('#diagnostics > summary').click();
   await control.getByRole('button', { name: 'New session' }).click();
   await overlay.waitForFunction(() => document.querySelectorAll('#captions article').length === 0);
+  // The overlay window follows the translation being read: short rows that arrive while a long translation is still being
+  // released wait below the window instead of pushing it out. Snapshots here come from a mocked socket, not the service.
+  const rollup = await context.newPage(); rollup.on('pageerror', () => errors.push('rollup'));
+  let feed: { send(message: string): void } | undefined;
+  await rollup.routeWebSocket(/\/ws\/overlay$/, socket => { feed = socket; });
+  await rollup.setViewportSize({ width: 1920, height: 1080 });
+  await rollup.goto(app.origin + '/overlay');
+  for (let i = 0; i < 100 && !feed; i++) await rollup.waitForTimeout(20);
+  assert(feed);
+  const words = (count: number) => Array.from({ length: count }, (_, i) => `word${i}`).join(' ');
+  const base = controller.snapshot();
+  const rollRow = (sequence: number, original: string, translation: string | null) => ({ id: `roll-${sequence}`, sequence, original, final: true,
+    translation, source: 'ja', target: 'en', state: translation ? 'ready' : 'pending', finalizedAt: Date.now(), translationMs: translation ? 5 : null });
+  const send = (generation: number, segments: unknown[]) => feed!.send(JSON.stringify({ ...base, generation, capture: 'active',
+    translation: { available: true, enabled: true }, segments, turns: [], sentAt: Date.now() }));
+  send(1, [rollRow(0, words(30), null)]);
+  await rollup.waitForSelector('article[data-id="roll-0"]');
+  send(1, [rollRow(0, words(30), words(60)), rollRow(1, 'Left.', null), rollRow(2, 'Or right.', null), rollRow(3, 'Left or right.', null)]);
+  await rollup.waitForFunction(() => document.querySelector('article[data-id="roll-3"][data-waiting]'));
+  await rollup.waitForTimeout(400);
+  const reading = await rollup.evaluate(() => {
+    const frame = document.getElementById('captions')!.getBoundingClientRect();
+    const text = document.querySelector('article[data-id="roll-0"] .translation')!.getBoundingClientRect();
+    return { inside: text.bottom <= frame.bottom + 1 && text.bottom - 40 >= frame.top, released: document.querySelector('article[data-id="roll-0"] .translation')!.textContent!.length,
+      waiting: [...document.querySelectorAll<HTMLElement>('article[data-waiting]')].map(node => node.dataset.id) };
+  });
+  assert(reading.inside, 'the translation being released stays in the window');
+  assert(reading.released > 0 && reading.released < words(60).length, 'the translation is still being released');
+  assert(reading.waiting.includes('roll-3'));
+  // Once nothing is left to release, the window returns to its bottom anchor and every row shows.
+  send(2, [rollRow(0, words(30), words(60)), rollRow(1, 'Left.', 'L'), rollRow(2, 'Or right.', 'R'), rollRow(3, 'Left or right.', 'LR')]);
+  await rollup.waitForFunction(() => document.querySelectorAll('article').length === 4 && !document.querySelector('article[data-waiting]'));
+  await rollup.waitForTimeout(400);
+  assert(await rollup.evaluate(() => {
+    const frame = document.getElementById('captions')!.getBoundingClientRect();
+    return Math.abs(document.querySelector('article[data-id="roll-3"]')!.getBoundingClientRect().bottom - frame.bottom) <= 1;
+  }));
+  await rollup.close();
   assert.deepEqual(errors, []);
   await control.close();
   // A denied microphone must fail visibly, not leave capture looking active.

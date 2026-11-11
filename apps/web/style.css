@@ -131,3 +131,6 @@ kbd { font: inherit; font-size: .8rem; padding: .05rem .4rem; border: 1px solid 
 .overlay #captions, .stage-captions { position: fixed; bottom: 5%; left: 6%; right: 6%; --overlay-lines: 4; max-height: calc(var(--overlay-lines) * 56px + 48px);
   overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
 .stage-captions { position: absolute; }
+/* The roll is its rows' offset parent, so the view can measure them; a row waiting below the window is not shown in part. */
+.overlay #roll, #audience-roll { position: relative; }
+.overlay article[data-waiting], #audience-roll article[data-waiting] { visibility: hidden; }

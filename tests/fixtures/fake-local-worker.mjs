@@ -50,6 +50,20 @@ function rolling(request) {
     return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: off ? 'pl' : 'en', inferenceMs: 1,
       rejected: !segments.length, segments };
   }
+  // switch: Japanese up to frame 100, then English with no pause. Decoding English as Japanese yields only low-confidence
+  // text, which the filters drop; Auto on a window that starts in the English hears English.
+  if (behavior === 'rolling-switch') {
+    const english = start >= 100;
+    const segments = [];
+    for (let k = 0; (k + 1) * 1000 <= ms; k++) {
+      if ((start + 20 * k >= 100) === english && !(english && request.language === 'ja')) segments.push({ endMs: (k + 1) * 1000, text: ` ${english ? 'e' : 'w'}${start + 20 * k}` });
+    }
+    const dropped = english && request.language === 'ja' ? 1 : 0;
+    return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: request.language ?? (english ? 'en' : 'ja'),
+      inferenceMs: 1, rejected: !segments.length, segments, measurement: { quality: { speechGateRejected: false,
+        decodedSegments: segments.length + dropped, droppedSegments: dropped, noSpeechDrops: 0, lowConfidenceDrops: dropped, repetitionDrops: 0,
+        stockPhraseDrops: 0, invalidScoreDrops: 0, noSpeechMax: 0, logprobMin: dropped ? -1.7 : -0.2 } } };
+  }
   // third: Auto detection always picks a language outside the pair, with text that would otherwise lock.
   // third-opening: only the first 2.5 s of a row are detected outside the pair, then the speech is Japanese.
   const other = !request.language && (behavior === 'rolling-third' || (behavior === 'rolling-third-opening' && ms < 2500));

@@ -210,6 +210,15 @@ test('in Auto, text outside the pair between two decodes that agree stops them l
   assert(!f.events.some(e => e.type === 'partial' && e.text), 'no text displayed');
   f.quiet(); await f.stream.finish();
 });
+test('in Auto, a switch of language inside a row without a pause closes the row and the stretch relearns its language', async t => {
+  const f = fixture('rolling-switch', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(16); f.quiet(); await f.stream.finish();
+  const rows = finals(f.events);
+  assert.deepEqual(rows.map(r => r.language), ['ja', 'en']);
+  assert.equal(rows[0]!.text, words(0, 5));
+  assert(rows[1]!.text.startsWith('e') && rows[1]!.text.endsWith('e300'), rows[1]!.text);
+  assert.deepEqual(f.measurements.filter(m => m.value.boundary).map(m => m.value.boundary), ['length', 'silence']);
+});
 test('after a noise trim, two low-confidence decodes that agree do not lock, even in the closing decode', async t => {
   const f = fixture('rolling-after-noise-hallucination'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(12); f.quiet(); await f.stream.finish();
