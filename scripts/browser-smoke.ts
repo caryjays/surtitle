@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { Controller } from '../apps/service/controller.ts';
 import { createCaptionServer } from '../apps/service/server.ts';
-import type { Mode, TranslationInput } from '../packages/protocol/index.ts';
+import { offeredPairs, type Mode, type TranslationInput } from '../packages/protocol/index.ts';
 
 // Synthetic microphone + fake providers only. No .env, keys, retention, or paid calls.
 let totalFrames = 0; let opened = 0; let closed = 0; let flushes = 0; let calibrations = 0;
 const requests: TranslationInput[] = []; const modes: Mode[] = [];
-const controller = new Controller({ backend: 'Synthetic smoke test', processing: 'local-audio-cloud-text', glossary: [], sessionLimitMs: null, segmentation: 'turns',
+const controller = new Controller({ pairs: offeredPairs(), backend: 'Synthetic smoke test', processing: 'local-audio-cloud-text', glossary: [], sessionLimitMs: null, segmentation: 'turns',
   transcriber: options => {
     const stream = ++opened; let frames = 0; let turn = 0; let mode = options.mode; let quietFrames = 30;
     const gate = () => options.onGate?.({ state: quietFrames ? 'calibrating' : 'quiet', level: 0.01, threshold: quietFrames ? 0.025 : 0.04, remainingMs: quietFrames * 50 });
@@ -302,5 +302,18 @@ try {
   await denied.getByRole('button', { name: 'Start microphone' }).click();
   await denied.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('FAILED'));
   assert.equal(controller.snapshot().error, 'capture');
+  // With capture off, the pair selector switches the session's pair and the page relabels itself; and back.
+  // The page that owns control now; a second control tab would be disconnected.
+  const pairs = denied; const pairErrors: string[] = []; pairs.on('pageerror', () => pairErrors.push('control'));
+  await pairs.waitForFunction(() => !(document.getElementById('pair') as HTMLSelectElement).disabled && !document.getElementById('pair-row')!.hidden);
+  await pairs.locator('#pair').selectOption('en-es');
+  await pairs.waitForFunction(() => document.querySelector('.brand h1')!.textContent === 'English ↔ Spanish');
+  assert.equal(await pairs.locator('#lecture').textContent(), 'Lecture · Spanish → English');
+  assert.deepEqual(await pairs.locator('#mode option').evaluateAll(options => options.map(option => (option as HTMLOptionElement).value)), ['auto', 'en-es', 'es-en']);
+  assert.deepEqual(controller.snapshot().pair, ['en', 'es']);
+  await pairs.locator('#pair').selectOption('en-ja');
+  await pairs.waitForFunction(() => document.querySelector('.brand h1')!.textContent === 'English ↔ Japanese');
+  assert.deepEqual(controller.snapshot().pair, ['en', 'ja']);
+  assert.deepEqual(pairErrors, []);
   console.log('PASS: continuous EN/JA/JA conversation, lecture switch without capture restart, long fictional preview/search/order, reader sizing/width/scroll anchors, reading history, quiet calibration/recalibration, opt-in content-free diagnostic download, overlay reload, clear/pause and denied mic. Fake providers only; no paid calls or recordings.');
 } finally { await browser?.close(); await app.close(); }

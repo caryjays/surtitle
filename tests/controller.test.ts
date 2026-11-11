@@ -55,6 +55,25 @@ test('clear aborts translations and upstream, old callbacks cannot repaint; new 
   h.final('new'); h.requests[1]!.result.resolve(ja); await tick();
   assert.equal(h.controller.snapshot().segments[0]!.id, 'new');
 });
+test('the pair changes only while capture is off, among the offered pairs, and starts a new session in Auto', async t => {
+  const h = harness({ pairs: [['en', 'ja'], ['en', 'es']] }); t.after(() => h.controller.dispose());
+  assert.deepEqual(h.controller.snapshot().pairs, [['en', 'es'], ['en', 'ja']]);
+  await h.controller.start('ja-en'); h.final('a');
+  const before = h.controller.snapshot();
+  h.controller.setPair(['en', 'es']);
+  assert.deepEqual(h.controller.snapshot().pair, ['en', 'ja'], 'ignored while capturing');
+  await h.controller.pause();
+  h.controller.setPair(['en', 'zh' as never]);
+  assert.deepEqual(h.controller.snapshot().pair, ['en', 'ja'], 'a pair that is not offered is ignored');
+  h.controller.setPair(['en', 'es']);
+  const after = h.controller.snapshot(); Snapshot.parse(after);
+  assert.deepEqual([after.pair, after.mode, after.capture, after.segments.length], [['en', 'es'], 'auto', 'paused', 0]);
+  assert.notEqual(after.sessionId, before.sessionId);
+  assert.deepEqual(h.translatorPairs, [['en', 'es']]);
+  assert(h.controller.accepts('es-en') && !h.controller.accepts('ja-en'));
+  await h.controller.start('auto'); h.final('b', 'Hola');
+  assert.deepEqual(h.streams.at(-1)!.pair, ['en', 'es']);
+});
 test('new session rejects prior work; pause flushes and leaves finalized originals', async t => {
   const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto'); h.final('a');
   await h.controller.pause(); assert.equal(h.controller.snapshot().capture, 'paused');

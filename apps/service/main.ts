@@ -1,6 +1,6 @@
 import { access } from 'node:fs/promises';
 import { z } from 'zod';
-import { parsePair, type Glossary } from '../../packages/protocol/index.ts';
+import { offeredPairs, parsePair, type Glossary } from '../../packages/protocol/index.ts';
 import { OpenAITranslator, openAITranscriberFactory } from '../../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../../packages/providers/anthropic.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator } from '../../packages/providers/local-translator.ts';
@@ -91,6 +91,8 @@ async function main() {
       ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR })
       : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR }),
     pair: config.LANGUAGE_PAIR,
+    // The operator page can switch among English with each profiled language while capture is off.
+    pairs: offeredPairs(),
     // The starting segmentation; the operator page can switch it while capture is off.
     ...(local ? { segmentation: config.LOCAL_SEGMENTATION } : {}),
     sessionLimitMs: local ? null : 25 * 60_000,

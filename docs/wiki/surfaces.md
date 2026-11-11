@@ -19,6 +19,7 @@ Layout: a top bar with the capture state, the listening presets, the capture con
 | Clear screen | top bar | `clear`: drop history and in-flight work |
 | Microphone, Refresh inputs, Recalibrate room noise, Automatic mic gain | Input panel | device choice; `calibrate`, listen mode only, keeps finished rows and cancels pending translations |
 | Direction, New session | Session panel | any of the three modes; `new-session` |
+| Language pair | Session panel, when the service offers more than one pair | `set-pair`: English with any profiled language, only while capture is off; starts a new session in Auto, so the screen and translation context are cleared, and the page relabels itself. Not remembered across a restart, which returns to `LANGUAGE_PAIR` |
 | Segmentation | Session panel, when the recognizer offers the choice | `set-segmentation`: turns or rolling, only while capture is off, from the next Start |
 | Translate finalized text | Session panel, when a translator is configured; labeled on this Mac or paid cloud requests | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
 
@@ -53,7 +54,7 @@ Speech that was heard but is not captioned leaves a marker row instead of empty 
 
 | Schema | Values |
 | --- | --- |
-| `Command` | `start{mode}`, `set-mode{mode}`, `flush`, `calibrate`, `pause`, `clear`, `new-session`, `capture-failed`, `set-segmentation{segmentation}`, `set-translation{enabled}` |
+| `Command` | `start{mode}`, `set-mode{mode}`, `flush`, `calibrate`, `pause`, `clear`, `new-session`, `capture-failed`, `set-segmentation{segmentation}`, `set-translation{enabled}`, `set-pair{pair}` |
 | `Snapshot.segmentation` | `turns`, `rolling`, or null when the recognizer has one fixed segmentation |
 | `Snapshot.translation` | `available`: a translator was configured at startup; `enabled`: it is on for this session |
 | `Snapshot.capture` | `paused`, `connecting`, `active`, `stopping`, `failed`; `restarting` is set while `connecting` after a recognizer failure, and `restarts` counts those since Start |

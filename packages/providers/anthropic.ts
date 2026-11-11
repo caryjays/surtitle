@@ -34,6 +34,7 @@ export class AnthropicTranslator implements Translator {
     // Nothing is retried, matching the Responses translator; the controller owns timeouts.
     this.client = new Anthropic({ apiKey: options.key, maxRetries: 0, fetch: options.fetch });
   }
+  setPair(pair: Pair) { this.options = { ...this.options, pair }; }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
     let reported = false;
     const report = (value: TranslationDiagnostic) => { reported = true; diagnostic?.(value); };

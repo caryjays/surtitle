@@ -38,4 +38,6 @@ export interface Translator {
   // partial: translators that stream report the text so far; the returned translation is still the only validated one.
   translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void,
     partial?: (value: PartialTranslation) => void): Promise<Translation>;
+  // The session's pair changed; later requests are for it. A translator without this keeps the pair it was built with.
+  setPair?(pair: Pair): void;
 }

@@ -16,6 +16,7 @@ const newSession = element<HTMLButtonElement>('new');
 const refresh = element<HTMLButtonElement>('refresh');
 const calibrate = element<HTMLButtonElement>('calibrate');
 const autoGain = element<HTMLInputElement>('auto-gain');
+const pairSelect = element<HTMLSelectElement>('pair');
 const conversation = element<HTMLButtonElement>('conversation');
 const lecture = element<HTMLButtonElement>('lecture');
 const follow = element<HTMLInputElement>('follow');
@@ -54,6 +55,15 @@ function labelPair(next: Pair) {
   if (![...mode.options].some(option => option.value === selectedMode)) selectedMode = 'auto';
   mode.value = selectedMode;
 }
+// The pairs the service offers; hidden when it offers only the one in use.
+function offerPairs(snapshot: Snapshot) {
+  const offered = snapshot.pairs.map(p => p.join('-')), current = snapshot.pair.join('-');
+  if ([...pairSelect.options].map(option => option.value).join() !== offered.join()) {
+    pairSelect.replaceChildren(...snapshot.pairs.map(p => new Option(`${name(p[0])} ↔ ${name(p[1])}`, p.join('-'))));
+  }
+  pairSelect.value = current;
+  element('pair-row').hidden = element('pair-note').hidden = offered.length < 2;
+}
 function describe(value: Mode, listening: boolean) {
   const forced = direction(value);
   if (!forced) return listening ? `Listening · automatic ${pair[0].toUpperCase()} ↔ ${pair[1].toUpperCase()}.` : `Automatic ${pair[0].toUpperCase()} ↔ ${pair[1].toUpperCase()}`;
@@ -81,6 +91,7 @@ function buttons() {
   clear.disabled = !connected;
   newSession.disabled = !connected;
   mode.disabled = !connected || transitioning;
+  pairSelect.disabled = !connected || active;
   conversation.disabled = lecture.disabled = !connected || transitioning;
   device.disabled = active; refresh.disabled = active; autoGain.disabled = active;
   calibrate.disabled = !connected || state?.capture !== 'active' || !state.gate || state.gate.state === 'calibrating';
@@ -122,7 +133,7 @@ function renderConsole(snapshot: Snapshot | undefined) {
   renderSession(snapshot, connected); renderHealth(snapshot, connected);
 }
 const connection = connect('control', snapshot => {
-  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair);
+  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair); offerPairs(snapshot);
   element('active-direction').textContent = `Direction: ${describe(snapshot.mode, false)}`;
   // Paused selection remains local until Start; active changes are acknowledged by snapshots.
   if (['active', 'connecting', 'stopping'].includes(snapshot.capture)) {
@@ -166,6 +177,10 @@ void fetch('/health').then(response => response.json()).then((health: unknown) =
     configured = false; error.textContent = errors.credentials; buttons();
   }
 }).catch(() => { /* WebSocket status remains authoritative for connection health. */ });
+pairSelect.onchange = () => {
+  const next = pairSelect.value.split('-');
+  if (next.length === 2 && !pairSelect.disabled) send({ type: 'set-pair', pair: [next[0]!, next[1]!] });
+};
 function changeMode(value: string) {
   selectedMode = Mode.parse(value); mode.value = selectedMode;
   if (state?.capture === 'active') send({ type: 'set-mode', mode: selectedMode });

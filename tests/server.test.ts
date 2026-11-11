@@ -11,8 +11,8 @@ import { Snapshot } from '../packages/protocol/index.ts';
 import { visibleSegments } from '../apps/web/visibility.ts';
 import { harness, tick, ja } from './helpers.ts';
 
-async function fixture(t: { after(fn: () => Promise<void>): void }) {
-  const h = harness(); const webDir = await mkdtemp(join(tmpdir(), 'captions-test-'));
+async function fixture(t: { after(fn: () => Promise<void>): void }, extra: Parameters<typeof harness>[0] = {}) {
+  const h = harness(extra); const webDir = await mkdtemp(join(tmpdir(), 'captions-test-'));
   for (const name of ['control.html', 'overlay.html', 'control.js', 'overlay.js', 'worklet.js', 'style.css']) await writeFile(join(webDir, name), 'fixture');
   const app = await createCaptionServer({ controller: h.controller, port: 0, webDir, configured: true });
   t.after(async () => { await app.close(); await rm(webDir, { recursive: true, force: true }); });
@@ -78,6 +78,15 @@ test('mode and flush commands keep the microphone session and history', async t 
   await until(() => f.controller.snapshot().mode === 'ja-en' && f.streams[0]!.flushes === 1);
   assert.equal(f.streams.length, 1); assert.equal(f.streams[0]!.closed, false);
   assert.equal(f.controller.snapshot().sessionId, session); assert.equal(f.controller.snapshot().segments[0]!.id, 'a');
+});
+test('a pair command switches an offered pair while paused; a pair that is not offered is a protocol error', async t => {
+  const f = await fixture(t, { pairs: [['en', 'ja'], ['en', 'es']] }); const control = await f.connect('control');
+  control.ws.send(JSON.stringify({ type: 'set-pair', pair: ['en', 'es'] }));
+  await until(() => f.controller.snapshot().pair[1] === 'es');
+  assert.equal(f.controller.snapshot().capture, 'paused');
+  control.ws.send(JSON.stringify({ type: 'set-pair', pair: ['es', 'ja'] }));
+  await until(() => f.controller.snapshot().capture === 'failed');
+  assert.equal(f.controller.snapshot().error, 'protocol');
 });
 test('calibration command cancels pending translation and keeps the finalized row without opening another capture stream', async t => {
   const f = await fixture(t); const control = await f.connect('control');

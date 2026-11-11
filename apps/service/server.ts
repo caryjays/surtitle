@@ -83,6 +83,10 @@ export async function createCaptionServer(options: { controller: Controller; por
             case 'capture-failed': options.controller.fail('capture'); break;
             case 'set-segmentation': options.controller.setSegmentation(command.segmentation); break;
             case 'set-translation': options.controller.setTranslation(command.enabled); break;
+            case 'set-pair':
+              if (!options.controller.offers(command.pair)) throw new Error('pair');
+              options.controller.setPair(command.pair);
+              break;
           }
         } catch { options.controller.fail('protocol'); ws.close(1008, 'Invalid command'); }
       });

@@ -1,6 +1,6 @@
 # Content-free diagnostics
 
-Verified: 2026-11-11 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
+Verified: 2026-11-12 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
 
 Diagnostics answer what the pipeline did with each turn without storing what anyone said. The service keeps up to 60 recent turn traces in memory; the browser records them only after the operator opts in.
 

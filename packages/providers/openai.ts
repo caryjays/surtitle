@@ -182,6 +182,7 @@ const ResponseEnvelope = z.object({
 });
 export class OpenAITranslator implements Translator {
   constructor(private options: { key: string; model: string; effort: string; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {}
+  setPair(pair: Pair) { this.options = { ...this.options, pair }; }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
     let reported = false;
     const report = (value: TranslationDiagnostic) => { reported = true; diagnostic?.(value); };

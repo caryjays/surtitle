@@ -52,7 +52,8 @@ export class Controller {
   private started = 0;
   private listeners = new Set<() => void>();
   private clock: ReturnType<typeof setInterval>;
-  readonly pair: Pair;
+  pair: Pair;
+  private readonly pairs: Pair[];
   private segmentation: Segmentation | null;
   // Translation can be switched off for a session; it can only be switched on when a translator was configured.
   private translating: boolean;
@@ -62,12 +63,16 @@ export class Controller {
     // Local inference has no upstream session lifetime. Cloud ASR keeps its conservative cap.
     sessionLimitMs?: number | null;
     pair?: Pair;
+    // Pairs the operator may switch to while capture is off; default only the session's own.
+    pairs?: Pair[];
     // The recognizer's segmentation when it can be switched while capture is off.
     segmentation?: Segmentation;
     // What one translation request covers: a closed row, or locked pieces of a row before it closes. Replay only for now.
     translationUnit?: 'row' | 'piece';
   }) {
     this.pair = options.pair ?? DEFAULT_PAIR;
+    const same = (a: Pair, b: Pair) => a[0] === b[0] && a[1] === b[1];
+    this.pairs = [...(options.pairs ?? []).filter(pair => !same(pair, this.pair)), this.pair].sort((a, b) => a.join().localeCompare(b.join()));
     this.segmentation = options.segmentation ?? null;
     this.translating = Boolean(options.translator);
     this.clock = setInterval(() => {
@@ -80,7 +85,7 @@ export class Controller {
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   snapshot(): Snapshot {
     return { type: 'snapshot', sessionId: this.sessionId, generation: this.generation, revision: this.revision,
-      pair: [...this.pair], mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
+      pair: [...this.pair], pairs: this.pairs.map(pair => [...pair] as Pair), mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
       processing: this.processing(), segmentation: this.segmentation,
       translation: { available: Boolean(this.options.translator), enabled: this.translating },
       restarts: this.restarts, ...(this.restarting ? { restarting: true as const } : {}),
@@ -92,6 +97,17 @@ export class Controller {
     return configured === 'local-audio-cloud-text' ? 'local-only' : configured === 'cloud-audio-and-text' ? 'cloud-audio-only' : configured;
   }
   // Takes effect at the next Start, so a row never mixes two segmentations.
+  offers(pair: Pair) { return this.pairs.some(offered => offered[0] === pair[0] && offered[1] === pair[1]); }
+  // Only while capture is off: a new session in the other pair, in Auto, with nothing of the old pair left on screen or in
+  // translation context. A request while capturing is ignored; the page disables the control then.
+  setPair(pair: Pair) {
+    if (!this.offers(pair) || (pair[0] === this.pair[0] && pair[1] === this.pair[1])) return;
+    if (['active', 'connecting', 'stopping'].includes(this.capture)) return;
+    this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.capture = 'paused';
+    this.pair = [...pair] as Pair; this.mode = 'auto';
+    this.options.translator?.setPair?.(this.pair);
+    this.changed();
+  }
   setSegmentation(value: Segmentation) {
     if (this.segmentation === null || this.segmentation === value || ['active', 'connecting', 'stopping'].includes(this.capture)) return;
     this.segmentation = value; this.changed();

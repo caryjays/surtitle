@@ -132,6 +132,7 @@ export class LocalTranslator implements Translator {
       throw new Error('translation response unavailable');
     }
   }
+  setPair(pair: Pair) { this.options = { ...this.options, pair }; }
   close() {
     const worker = this.worker; this.worker = undefined; this.starting = undefined;
     for (const job of this.pending.values()) job.reject(new Error('closed'));

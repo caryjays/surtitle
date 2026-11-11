@@ -37,6 +37,10 @@ export function parsePair(value: string): Pair {
   for (const language of pair) if (!PROFILES[language]) throw new Error(`No language profile for ${language}`);
   return pair;
 }
+// The pairs a session can be switched to: English with each other profiled language.
+export function offeredPairs(): Pair[] {
+  return Object.keys(PROFILES).filter(language => language !== 'en').map(language => ['en', language] as Pair);
+}
 export function profile(language: Language) {
   const found = PROFILES[language];
   if (!found) throw new Error(`No language profile for ${language}`);

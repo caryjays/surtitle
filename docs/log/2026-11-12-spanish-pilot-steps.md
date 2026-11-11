@@ -72,6 +72,12 @@ The first is limited to pairs of one script because the Japanese pair's defaults
 
 The operator page's diagnostics help named the Japanese lecture preset in every pair; it now says the Lecture preset. Also seen in that session: there is no pair selector in the operator page; the pair is set at startup by `LANGUAGE_PAIR`. And the session ran in turns, where a 12 s limit cuts continuous speech mid-sentence; the Spanish gate results are for rolling.
 
+## Pair selector
+
+At the maintainer's request the operator page has a Language pair selector in the Session panel. The service offers English with each profiled language, today Japanese and Spanish. A `set-pair` command applies only while capture is off: the controller closes the stream, starts a new session in Auto in that pair, and tells the translator; the next Start hands the pair to the recognizer. While capturing it is ignored and the control is disabled. A pair that is not offered closes the control socket as a protocol error. `LANGUAGE_PAIR` still sets the pair at startup, and a switch is not remembered across a restart.
+
+Tested with fake providers: a controller test, a server test, and the browser test, which switches to Spanish and back on the tab that owns control and reads the heading, the lecture preset and the direction menu. Not yet run with the real recognizer and translator; the maintainer's glossary is not per pair, so the same glossary is sent in every pair.
+
 ## Verification
 
 `pnpm check`, the Python unit tests and both real-model browser runs pass.
