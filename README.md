@@ -1,8 +1,10 @@
 # Surtitle
 
-Local English ↔ Japanese live captions for one Mac. Surtitles are the translated text projected above a stage during a live performance; this does the same for a talk, a lecture or a conversation. Chrome captures the microphone, a loopback Node service runs MLX Whisper in an isolated Python worker and can send finalized text to cloud translation, and OBS can compose a transparent overlay. Nothing is recorded or persisted.
+Live captions on one Mac, pairing English with one other language per session. Surtitles are the translated text projected above a stage during a live performance; this does the same for a talk, a lecture or a conversation. Chrome captures the microphone, a loopback Node service runs MLX Whisper in an isolated Python worker, and OBS can compose a transparent overlay. Translation is off by default and can run on the same Mac with a local model, or in the cloud. Nothing is recorded or persisted.
 
-Japanese is the first language pair. More pairs with English are planned, each after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md).
+Japanese is the first language pair. Spanish runs as a pilot beside it. Each pair ships after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md) and [gates](docs/wiki/gates.md).
+
+Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
 ## Quick start
 
@@ -12,14 +14,32 @@ pnpm local:setup   # Python venv, pinned models and public fixtures; no key need
 pnpm dev:local     # local recognition, translation off, never reads .env
 ```
 
-Open `http://127.0.0.1:4317/control` in Chrome, pick the input, click Start, wait for ACTIVE, speak. OBS Browser Source: `http://127.0.0.1:4317/overlay` at 1920 × 1080 with Local file unchecked.
+Open `http://127.0.0.1:4317/control` in Chrome, pick the input, click Start, stay quiet through the short calibration, then speak. The page is the operator console: session controls, an audience view of what the overlay shows, health and settings.
 
-For Japanese lecture reading or EN↔JA conversation with paid cloud translation:
+## Translation
 
-```sh
-pnpm preflight:listen   # presence checks only, no API call
-pnpm dev:listen         # local recognition + cloud text translation
-```
+Three profiles, all with local recognition:
+
+| Command | Translation | Needs |
+| --- | --- | --- |
+| `pnpm dev:local` | off | nothing |
+| `pnpm dev:offline` | a pinned local model, streamed as it is written | `pnpm local:setup-translator` once, about 3 GB |
+| `pnpm dev:listen` | paid cloud text translation | a key in `.env`; `pnpm preflight:listen` checks presence without an API call |
+
+`dev:local` and `dev:offline` make no network calls and never read `.env`.
+
+## Recognition modes
+
+- Turns, the default: text appears when a speech turn ends.
+- Rolling: the worker decodes about once a second and shows text that consecutive decodes agree on, so captions follow continuous speech. Start with `LOCAL_SEGMENTATION=rolling`, or switch in the console's Session panel while capture is off.
+
+## Language pair
+
+`LANGUAGE_PAIR=en-ja` is the default; `en-es` selects the Spanish pilot. The console can switch the pair while capture is off. Speech outside the pair is not captioned and leaves a marker row.
+
+## Overlay for OBS
+
+Add a Browser Source at `http://127.0.0.1:4317/overlay`, 1920 × 1080, Local file unchecked. Originals show smaller and translations larger, rolled up and paced at reading speed. The console's Overlay for OBS panel builds the URL with its settings: `lines=3` for the window height, `pace=off` to show text at once, and `early=off` to hold rolling text until it locks instead of showing agreed text sooner. See [operations](docs/wiki/operations.md).
 
 ## Documentation
 
@@ -48,10 +68,10 @@ The full list is in [testing](docs/wiki/testing.md).
 apps/web/            Operator page, overlay, AudioWorklet
 apps/service/        Loopback HTTP/WebSocket service and caption controller
 packages/protocol/   Runtime-validated shared schemas
-packages/providers/  Local worker adapter, turn detector, cloud adapters
+packages/providers/  Local worker and translator adapters, turn and rolling segmentation, cloud adapters
 scripts/local/       Python worker, setup, scoring, benchmarks, experiments
-benchmarks/          Public fixture manifests and attribution; no audio in Git
-profiles/            Example translation glossary; a private one can override it
+benchmarks/          Gate targets, public fixture manifests and attribution; no audio in Git
+profiles/            Language profiles and an example translation glossary; a private one can override it
 docs/wiki, docs/log  Current state and history
 ```
 
@@ -59,4 +79,4 @@ Standalone: no accounts, hosted infrastructure or external backend.
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Public speech fixtures are Google FLEURS, CC BY 4.0, attributed in [benchmarks/README.md](benchmarks/README.md).
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). No audio is in Git; the public fixtures and their licenses are listed in [benchmarks/README.md](benchmarks/README.md).
