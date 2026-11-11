@@ -93,10 +93,45 @@ Every target measured on this material passes; the scorer reports INCOMPLETE bec
 
 Run: `benchmarks/results/gate-ja-rolling-20261111T205145`.
 
+## Spanish held-out set
+
+The maintainer chose Multilingual TEDx, https://www.openslr.org/100, CC BY-NC-ND 4.0, over VoxPopuli Spanish, whose prepared parliamentary speeches come cut into short utterances. The full Spanish archive is 35 GB; instead one 245 MB file was read, the Spanish test split of the Hugging Face mirror `deepdml/mtedx`, pinned by revision and checksum. That the mirror matches the original archive is not verified.
+
+The split holds 1003 segments of 12 talks, each with talk, start, end, transcript and its own audio clip. Within a talk the segments do not overlap and cover 80 to 93% of the span between the first and the last; 7 talks span at least 8 minutes.
+
+`pnpm gate:held-out-fixtures --language es`, run with a Python that has `pyarrow`, selects before any recognition: talks in talk-ID order whose segments span at least 480 s; from each, whole segments from the first starting at or after 60 s until at least 300 s; until 1800 s. Six talks, 30.8 minutes. Each excerpt is its segment clips placed at their own times over digital silence, so pauses keep their lengths and sound nobody transcribed, such as applause, is not in the audio. References are the corpus transcripts without bracketed sound annotations, which 75 of the 1003 segments carry. They have not been hand-checked; the Japanese set's were corrected by its authors. The gate manifest in the cache joins them to the first gate's six English excerpts.
+
+Digital silence between segments is cleaner than a room, which favours the energy detector; the held-out targets are differences against a one-pass decode of the same audio, which shares that advantage.
+
+## Full Spanish gate run
+
+`pnpm gate:run --gate es --segmentation rolling --held-out <manifest>`, real time, settle 0.5 s, both pair rules of this entry in the tree, started 2026-11-11 and scored with `pnpm gate:score`. Load average median 2.0, maximum 3.3. The tree carried the uncommitted held-out script change, which the run's implementation digest covers.
+
+| Measure | Target | Spanish | English |
+| --- | --- | --- | --- |
+| Held-out error over one-pass | ≤ 1.5 points | 0.64 | 0.61 |
+| Held-out deletions over one-pass | ≤ 1.0 point | 0.52 | 0.28 |
+| Public error | ≤ 8% | 2.63% | 4.55% |
+| Public error over full clip | ≤ 1.5 points | −0.07 | 0.24 |
+| Wrong-language share | ≤ 2% | 0.00% | 0.00% |
+| Lock lag p90 | ≤ 3 s | 3.23 s, fail | 3.52 s, fail |
+| First text p90 | ≤ 8 s | 8.41 s, fail | 9.01 s, fail |
+| Non-speech rows | 0 | 0, both together | |
+| Stock or repetitive rows | 0 | 0 | 0 |
+| Third-language rows, reported only | | 0 | |
+
+Held-out error: Spanish 5.78% live against 5.14% one-pass, deletions 2.30%; English 11.99% against 11.38%, deletions 4.65%. The major-error share was not measured; it needs the maintainer's rating.
+
+- Spanish passes every accuracy target on its first held-out run. Rolling loses little against a one-pass decode on these talks, and no row took the wrong language on continuous speech either.
+- Both languages miss the two timing targets, Spanish by 0.2 and 0.4 s. These are the same misses the Japanese gate has for English on continuous speech.
+- The English held-out excerpts are the Japanese gate's, so this is their first run at settle 0.5 and with the two pair rules. Against the run of the same day at 1.0: lock lag p90 3.52 s against 4.28 s and first text p90 9.01 s against 9.48 s, both still over target; error over one-pass 0.61 points against 0.20 and deletions 0.28 against −0.02, both inside target. One run each. The Japanese held-out talks have not been run at 0.5.
+- Caveats on the Spanish held-out numbers: the references are unchecked, and the excerpts carry digital silence between segments, which no room does.
+
+Run: `benchmarks/results/gate-es-rolling-20261111T221524`.
+
 ## Not done for Spanish
 
-- A held-out source with human references, its licence checked first. Without it the gate's main recognition targets and both timing targets are unmeasured.
-  Two candidates, licences read from their public pages on 2026-11-11, neither downloaded: the Spanish part of Multilingual TEDx, https://www.openslr.org/100, CC BY-NC-ND 4.0, whole talks with transcripts in a 35 GB archive, the closest match to the Japanese held-out set and under the same terms as its talks, so audio and references would stay in the ignored cache; and VoxPopuli Spanish, https://huggingface.co/datasets/facebook/voxpopuli, CC0 annotations over European Parliament recordings, prepared speeches cut into short utterances, which suits lock lag and first text less. The choice is the maintainer's.
+
 - A stock-phrase sweep for the Spanish list.
 - French and Italian clips in the third-language set; Portuguese is the close neighbour to watch.
 - Translation cases and required terms for `en-es`; the local translator has not been asked for Spanish.

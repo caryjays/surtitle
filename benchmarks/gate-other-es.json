@@ -1,0 +1,278 @@
+{
+  "dataset": "Google FLEURS",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "scope": "Further third-language set of the es gate: the first 10 distinct sentence IDs per language in test-archive order, 4 to 16 s, chosen before recognition. Replayed after gate-other.json. These IDs are excluded from a future gate in their own language.",
+  "fixtures": [
+    {
+      "id": "gate-fr-1987",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10043298898524273336.wav",
+      "sha256": "c834367fd212902124bdd0e0f6c1f16b5561af6386600f145e5aec50008b298d",
+      "seconds": 10.2,
+      "reference": "L’accident a eu lieu en terrain montagneux, et il semblerait que cela ait été causé par un incendie malveillant."
+    },
+    {
+      "id": "gate-fr-1857",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10138021779681596478.wav",
+      "sha256": "05ccf3ccc2ab4b72d056c3f02e3ffcf6ea0f37b1c42bea5c35789c85291fbdc5",
+      "seconds": 8.28,
+      "reference": "Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. »"
+    },
+    {
+      "id": "gate-fr-1913",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10143749263702132703.wav",
+      "sha256": "fc42db1a8eb9339fa89be21f013b2e2ea231b3eb9b4af3bf82c7a3a1aae78b3b",
+      "seconds": 10.2,
+      "reference": "Le rugissement du tigre ne ressemble pas au rugissement ample du lion, mais plutôt à une phrase dont les mots seraient des cris et des grondements."
+    },
+    {
+      "id": "gate-fr-2004",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10166091086920486572.wav",
+      "sha256": "315a3fc3328acea267098f2cbc0cfa5dccee6e125c6861c229335f9b476cb4b9",
+      "seconds": 8.34,
+      "reference": "Le même mois, un autre avion de ligne a fait une sortie de piste à Mashhad et a heurté un mur, tuant ainsi dix-sept personnes."
+    },
+    {
+      "id": "gate-fr-1853",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10174413140250646001.wav",
+      "sha256": "bbd0709fac97a44791bceecac6d7e9ebf799625bbe62f13658d5634c7a8ddc2e",
+      "seconds": 7.2,
+      "reference": "Giancarlo Fisichella a perdu le contrôle de sa voiture et a terminé la course peu après le démarrage."
+    },
+    {
+      "id": "gate-fr-1929",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10221277978969763776.wav",
+      "sha256": "f149d230427496afa3223808edee58e64316f2bd3d879ad9c962b12d2f0bf9a3",
+      "seconds": 8.4,
+      "reference": "Malgré le net avantage de Del Potro pendant le deuxième set, il a fallu passer par un tie-break une fois que le score a atteint 6-6."
+    },
+    {
+      "id": "gate-fr-1980",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10334413597118469552.wav",
+      "sha256": "7ec432adcd9dc8b56c41238f16fd11ec3acd93a9fd8c4b5d14a567e59aa9e7c3",
+      "seconds": 11.64,
+      "reference": "Malheureusement, il est difficile d'étudier le flux de circulation car le comportement des conducteurs ne peut être prédit avec cent pour cent de certitude."
+    },
+    {
+      "id": "gate-fr-1696",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10385751433252343757.wav",
+      "sha256": "b9de46d46d5204457de15fb7a7dec50bb2e6d1f6353a871e238efcbcb0da57e6",
+      "seconds": 7.68,
+      "reference": "Les deux composés réagissent l'un avec l'autre pour former des cristaux qui peuvent bloquer la fonction rénale, ont déclaré des chercheurs de l'université."
+    },
+    {
+      "id": "gate-fr-1729",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10399459061919571703.wav",
+      "sha256": "6e9abd557045f80d61c388412c99e5bfb2989f3d77504db10ed2fcf430c65cda",
+      "seconds": 14.82,
+      "reference": "Par exemple, des étudiants de l'école Bennet en Caroline du Nord conçoivent chaque année un site web consacré à leur visite de la capitale de l'État. Chaque année, le site est remis à jour, mais les anciennes versions sont conservées en ligne pour servir d'album."
+    },
+    {
+      "id": "gate-fr-1685",
+      "language": "fr",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10451502537136425109.wav",
+      "sha256": "5685abb65ef34861710663e20655cb4d4e4bf4ec58809c04070f45ae14732a0f",
+      "seconds": 8.1,
+      "reference": "Par exemple, le format de photographie le plus courant au monde est le 35 mm ; c'était le format de pellicule le plus répandu à la fin de l'ère des films analogiques."
+    },
+    {
+      "id": "gate-it-1787",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10000151032537989529.wav",
+      "sha256": "65e5fc8ce454bf33767fb2aa2f85f7c1b4409ec55579c79824a325d33480d374",
+      "seconds": 11.52,
+      "reference": "Il blog è uno strumento che si prefigge di incoraggiare la collaborazione e sviluppare l'apprendimento degli studenti ben oltre la giornata scolastica normale."
+    },
+    {
+      "id": "gate-it-1849",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10017896147709177739.wav",
+      "sha256": "7c9a0fb7bd7faa6bc6e37ef9c8313c15b16f9fb20f7b40b0fd7046a9ac907d93",
+      "seconds": 11.4,
+      "reference": "Se avete visto il film \"Il mistero dei Templari\", potreste pensare che sul retro della Dichiarazione d'Indipendenza sia disegnata una mappa del tesoro."
+    },
+    {
+      "id": "gate-it-1814",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10037759924455051213.wav",
+      "sha256": "24d8b5e731e96139eff13be427a541389c4c9349a9be687eab9930c5ca133f1c",
+      "seconds": 11.28,
+      "reference": "Con ioni idrogeno si intendono dei protoni cui sono stati strappati via gli elettroni (dato che gli atomi di idrogeno sono formati da un protone e da un elettrone)."
+    },
+    {
+      "id": "gate-it-1987",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1006729518827641482.wav",
+      "sha256": "5672391e9d06efa5d7c46adb35494575d2dc39b836abba7ea120953aab660757",
+      "seconds": 7.08,
+      "reference": "L'incidente è avvenuto in alta montagna e si ritiene sia stato causato da fuoco nemico."
+    },
+    {
+      "id": "gate-it-1974",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10127750728509182272.wav",
+      "sha256": "5a1ba84d97b4bc24bff172a5cb9c8416a1acc3c816aa2967c1d435236a6fcf9c",
+      "seconds": 12.0,
+      "reference": "In maniera analoga, agli uomini è richiesto di indossare pantaloni lunghi fin sotto le ginocchia."
+    },
+    {
+      "id": "gate-it-1830",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10166843301601278560.wav",
+      "sha256": "bb0021cbc9d24620a561a9b893b6a03b8ba759b64b2485eb55f21180d8ee6cd9",
+      "seconds": 11.88,
+      "reference": "Anche nelle elezioni parlamentari la maggioranza resta in mano al partito di governo, l'Organizzazione del Popolo dell'Africa del Sud-Ovest (SWAPO)."
+    },
+    {
+      "id": "gate-it-1739",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10168148107941542925.wav",
+      "sha256": "e95f675f6fce4b07c19b29f3ba9810d9c4c9e1e6bf22d005fbf60cb1b119e652",
+      "seconds": 12.12,
+      "reference": "La grotta poggia sulla sommità di una delle montagne a nord della Mecca, completamente distaccata dal resto del mondo."
+    },
+    {
+      "id": "gate-it-1669",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10173541521390065753.wav",
+      "sha256": "337a28fbf86cfddc64c056de10e5d0fba5878f5e7fded140a085e6ea72afc1f0",
+      "seconds": 9.54,
+      "reference": "Secondo il sovrintendente della polizia Chandra Shekhar Solanki, gli imputati sono apparsi in tribunale con il volto coperto."
+    },
+    {
+      "id": "gate-it-2005",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10210638754804006465.wav",
+      "sha256": "6c0b6970fe21c22105f359804bee2d3bfa6b6c5cd5ee62bb5a1f8bcecb0ca3a5",
+      "seconds": 6.54,
+      "reference": "Eppure gli uccelli hanno molte caratteristiche che li accomunano ai dinosauri."
+    },
+    {
+      "id": "gate-it-1960",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1021451608744266497.wav",
+      "sha256": "16523f08e8db67188fce5b383cf33da1814a835d3d39f912494d9707a6cfccc1",
+      "seconds": 15.18,
+      "reference": "Stando a quanto riferito aveva circa 20 anni. Bieber ha dichiarato \"Anche se non ero presente né direttamente coinvolto in questo terribile incidente, i miei pensieri e le mie preghiere vanno ai familiari della vittima\"."
+    },
+    {
+      "id": "gate-pt-1769",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10047022047800689031.wav",
+      "sha256": "810845723a7d5c35d12bada43c6fafe612042ed3e37ed4e6c8de3f6e6cc2ee35",
+      "seconds": 13.62,
+      "reference": "Construída pelos egípcios no século 3 A.C., a Grande Pirâmide é uma das muitas grandes estruturas de pirâmide construídas para honrar faraós mortos."
+    },
+    {
+      "id": "gate-pt-1853",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10083615766068544069.wav",
+      "sha256": "41624139a1ca1213a461a97ed4e2641e5fb27a3a4e1a783fd834f0197ab1beae",
+      "seconds": 8.4,
+      "reference": "Giancarlo Fisichella perdeu o controle do carro e acabou a corrida logo após a largada."
+    },
+    {
+      "id": "gate-pt-1660",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10103427908302527934.wav",
+      "sha256": "67d1875b08d9c67f684c20a5f479f3d59fcb876f55a61d1ba3ed5333d748bd9e",
+      "seconds": 10.68,
+      "reference": "O romantismo tinha um grande elemento de determinismo cultural, extraído de escritores como Goethe, Fichte e Schlegel."
+    },
+    {
+      "id": "gate-pt-1785",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10116774789336634117.wav",
+      "sha256": "2d2283d3e1c3468df711daf078a500531de647861672cad30449e04a3d1a4795",
+      "seconds": 12.72,
+      "reference": "O scaffolding não é um método de aprendizado, mas sim uma ajuda para alunos que estão passando por uma nova experiência de aprendizado, como usar um novo computador ou começar um novo projeto."
+    },
+    {
+      "id": "gate-pt-1869",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10124265429093233069.wav",
+      "sha256": "783315e176d5599fbd46f3d696703558b8537b1028cb3cbdabde08a01a8124c0",
+      "seconds": 14.4,
+      "reference": "Suas longas mandíbulas eram cravejadas com mais de 70 dentes afiados, junto com um conjunto extra no céu da boca, o que mostra que nada que cruzasse seu caminho poderia escapar."
+    },
+    {
+      "id": "gate-pt-1987",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/101298017130488094.wav",
+      "sha256": "db729c64e6d8edccb87656edbab2e8c9cb7be1feb2e05e40f3243341c6e8e732",
+      "seconds": 8.82,
+      "reference": "O acidente ocorreu em grande altitude no terreno montanhoso, e acredita-se que tenha sido causado por fogo inimigo."
+    },
+    {
+      "id": "gate-pt-1752",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10181435093488396236.wav",
+      "sha256": "4725da99905e04d60b6446ca68f68deb3b3108edecc99582da6bb006388bb7cb",
+      "seconds": 14.4,
+      "reference": "Consequentemente, duas espécies de peixe entraram em extinção, e duas outras passaram a correr risco, como a espécie Gila cypha."
+    },
+    {
+      "id": "gate-pt-1696",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10182869931433112315.wav",
+      "sha256": "be6d878572ae535223caa895737240d218753781a2e7365b945993a15fbf25b9",
+      "seconds": 11.4,
+      "reference": "Os dois compostos reagem um com o outro para formar cristais que podem bloquear a função renal, afirmaram os pesquisadores da universidade."
+    },
+    {
+      "id": "gate-pt-1968",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10250542229422804450.wav",
+      "sha256": "c36fd9a4ef55d900ff0b329f91ad9998d6661c351f0dcb93f66f45bf33ca8888",
+      "seconds": 15.12,
+      "reference": "Alguns cruzeiros mostram Berlim, Alemanha, nos panfletos. Como você pode ver no mapa acima, Berlim não fica perto do mar, e uma visita à cidade não está incluída no preço do cruzeiro."
+    },
+    {
+      "id": "gate-pt-1671",
+      "language": "pt",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/pt_br/audio/test.tar.gz",
+      "member": "test/10396608688977778715.wav",
+      "sha256": "d685eb0b0aa2eb369368eaf973e3847acbd2b0c0980d3b419d68b0df573a0366",
+      "seconds": 12.48,
+      "reference": "O Congresso começou a financiar a iniciativa de obscenidade no ano fiscal de 2005 e especificou que o FBI deve dedicar 10 agentes à pornografia adulta."
+    }
+  ]
+}

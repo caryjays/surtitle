@@ -149,6 +149,8 @@ def run(args):
     started = implementation()
     nonspeech = json.loads((ROOT / 'benchmarks/gate-nonspeech.json').read_text())['fixtures']
     other = json.loads((ROOT / 'benchmarks/gate-other.json').read_text())['fixtures']
+    if gate.get('other'):  # the gate's own further third languages
+        other += json.loads((ROOT / 'benchmarks' / gate['other']).read_text())['fixtures']
     stamp = time.strftime('%Y%m%dT%H%M%S')
     out = ROOT / 'benchmarks/results' / f"gate-{args.gate}-{'smoke-' if args.smoke else ''}{args.segmentation}-{stamp}"
     out.mkdir(parents=True)

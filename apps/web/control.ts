@@ -46,6 +46,9 @@ function labelPair(next: Pair) {
   const [a, b] = pair.map(code => code.toUpperCase()) as [string, string];
   conversation.textContent = `Conversation · ${a} ↔ ${b}`;
   lecture.textContent = `Lecture · ${name(pair[1])} → ${name(pair[0])}`;
+  const heading = `${name(pair[0])} ↔ ${name(pair[1])}`;
+  document.title = `${heading} companion`;
+  const title = document.querySelector('.brand h1'); if (title) title.textContent = heading;
   mode.replaceChildren(...[['auto', `Auto · ${a} ↔ ${b}`], [`${pair[0]}-${pair[1]}`, `${a} → ${b}`], [`${pair[1]}-${pair[0]}`, `${b} → ${a}`]]
     .map(([value, text]) => new Option(text, value)));
   if (![...mode.options].some(option => option.value === selectedMode)) selectedMode = 'auto';

@@ -4,6 +4,7 @@
   "languages": ["es", "en"],
   "pair": "en-es",
   "public": "gate-fleurs-es.json",
+  "other": "gate-other-es.json",
   "targets": [
     { "key": "heldoutOverOffline", "label": "Held-out live error minus one-pass decode of the same excerpts", "unit": "points", "max": { "es": 0.015, "en": 0.015 } },
     { "key": "heldoutDeletionsOverOffline", "label": "Held-out live deletions minus one-pass decode of the same excerpts", "unit": "points", "max": { "es": 0.01, "en": 0.01 } },

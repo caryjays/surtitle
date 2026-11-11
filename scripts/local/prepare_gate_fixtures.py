@@ -25,6 +25,8 @@ GATE_LOCALES = {'es': 'es_419'}
 # Speech outside the pair, which Auto should reject: a kanji language and three Latin-script ones.
 OTHER_LOCALES = {'zh': 'cmn_hans_cn', 'ko': 'ko_kr', 'es': 'es_419', 'de': 'de_de'}
 PER_OTHER = 10
+# A gate's own further third languages, its close neighbours, beside the shared set; see select_neighbours.
+GATE_OTHER_LOCALES = {'es': {'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br'}}
 MUSAN_REVISION = '3edcfdf89b56dbe6a395ff29f9c29489e03d1321'
 MUSAN_MIRROR = f'https://huggingface.co/datasets/FluidInference/musan/resolve/{MUSAN_REVISION}/'
 MUSAN_ARCHIVE = 'https://www.openslr.org/resources/17/musan.tar.gz'
@@ -173,6 +175,17 @@ def select_language(language):
             'fixtures': fixtures + english}
 
 
+def select_neighbours(language):
+    """A gate's further third-language clips: the first FLEURS test clips of each close neighbour of its language."""
+    fixtures = [f for other, locale in GATE_OTHER_LOCALES[language].items()
+                for f in first_clips(other, locale, fleurs_references(locale), set(), PER_OTHER)]
+    return {'dataset': 'Google FLEURS', 'revision': FLEURS_REVISION, 'license': 'CC-BY-4.0',
+            'scope': f'Further third-language set of the {language} gate: the first {PER_OTHER} distinct sentence IDs per language in '
+                     f'test-archive order, {SECONDS[0]} to {SECONDS[1]} s, chosen before recognition. Replayed after gate-other.json. '
+                     'These IDs are excluded from a future gate in their own language.',
+            'fixtures': fixtures}
+
+
 def select_other():
     """Speech outside the pair, which should display nothing: the first FLEURS test clips of each other language."""
     fixtures = [f for language, locale in OTHER_LOCALES.items()
@@ -249,6 +262,8 @@ def main():
     sets = [('gate-fleurs.json', select_fleurs), ('gate-nonspeech.json', select_nonspeech), ('gate-other.json', select_other)]
     if args.language:
         sets.append((f'gate-fleurs-{args.language}.json', lambda: select_language(args.language)))
+        if args.language in GATE_OTHER_LOCALES:
+            sets.append((f'gate-other-{args.language}.json', lambda: select_neighbours(args.language)))
     for name, select in sets:
         path = ROOT / 'benchmarks' / name
         if path.exists():

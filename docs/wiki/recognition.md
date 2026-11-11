@@ -1,6 +1,6 @@
 # Local recognition
 
-Verified: 2026-11-11 · Sources: scripts/local/worker.py, scripts/local/engine.py, scripts/local/speech_gate.py, scripts/local/quality.py, scripts/local/models.json, scripts/local/vad-model.json, scripts/local/requirements.lock, packages/providers/local.ts, packages/providers/rolling.ts, packages/providers/turns.ts, packages/providers/quality.ts, scripts/local/languages.py, profiles/languages.json
+Verified: 2026-11-12 · Sources: scripts/local/worker.py, scripts/local/engine.py, scripts/local/speech_gate.py, scripts/local/quality.py, scripts/local/models.json, scripts/local/vad-model.json, scripts/local/requirements.lock, packages/providers/local.ts, packages/providers/rolling.ts, packages/providers/turns.ts, packages/providers/quality.ts, scripts/local/languages.py, profiles/languages.json
 
 Recognition is Apple MLX Whisper in an isolated Python child, with a CPU Silero speech gate in front of it. Node owns capture, segmentation and session state; the worker only decodes the audio it is handed.
 

@@ -5,7 +5,7 @@ import { Controller } from '../apps/service/controller.ts';
 import { localTranscriberFactory } from '../packages/providers/local.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
-import { FRAME_BYTES } from '../packages/protocol/index.ts';
+import { FRAME_BYTES, parsePair, type Pair } from '../packages/protocol/index.ts';
 
 // Replays recordings in real time through the live controller with rolling recognition, with the local translator or
 // without it, and writes a diagnostics file in the control page's format for `pnpm diag:latency`. It measures what
@@ -21,6 +21,7 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   units: { type: 'string', default: 'row' },
   // The local translator computes the shared start of its prompts for every request, as before 2026-11-11; live reuses it.
   'no-prompt-cache': { type: 'boolean', default: false },
+  pair: { type: 'string', default: 'en-ja' },
 } });
 const [sentenceMs, maxMs, clause] = values.rows!.split(',');
 const rows = { sentenceMs: Number(sentenceMs), maxMs: Number(maxMs), clauseMs: clause === 'off' ? null : Number(clause) };
@@ -34,9 +35,11 @@ if (!values.out || !positionals.length || !['local', 'off'].includes(values.tran
   console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
-const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel, promptCache: !values['no-prompt-cache'] }) : null;
+let pair: Pair;
+try { pair = parsePair(values.pair!); } catch { console.error('--pair must be two profiled languages, such as en-ja.'); process.exit(1); }
+const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel, promptCache: !values['no-prompt-cache'], pair }) : null;
 await translator?.start();
-const controller = new Controller({ backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
+const controller = new Controller({ pair, backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
   transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence }) });
 // Collected as rows change: a snapshot holds only the latest rows. Keyed by recording and sequence.

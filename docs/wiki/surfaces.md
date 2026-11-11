@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-11-11 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-12 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
@@ -12,7 +12,7 @@ Layout: a top bar with the capture state, the listening presets, the capture con
 
 | Control | Where | Effect |
 | --- | --- | --- |
-| Conversation / Lecture | top bar | `auto` / the other language into English, `ja-en` for the Japanese pair; labels follow the snapshot's pair; sends `set-mode` while active |
+| Conversation / Lecture | top bar | `auto` / the other language into English, `ja-en` for the Japanese pair; labels, the page heading and the tab title follow the snapshot's pair; sends `set-mode` while active |
 | Start microphone | top bar | opens the input, sends `start` with the selected mode |
 | Pause | top bar | stops the input, sends `pause` |
 | Translate now | top bar | `flush`: finalize the current turn, keep listening |
