@@ -6,7 +6,7 @@ import { DEFAULT_PAIR, Source, TurnMeasurement, RecognitionQuality as Quality, d
 import type { Transcriber, TranscriberFactory } from './types.ts';
 import { TurnDetector } from './turns.ts';
 import { isRepetitiveTranscript } from './quality.ts';
-import { ROLLING, endsSentence, hypothesis, isStockPhrase, joinText, lockCount, stablePrefix, type WorkerSegment } from './rolling.ts';
+import { ROLLING, agreedRest, agreedTail, endsSentence, hypothesis, isStockPhrase, joinText, lockCount, stablePrefix, tailAfterAgreed, type WorkerSegment } from './rolling.ts';
 
 const Reply = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ready') }).strict(),
@@ -43,13 +43,14 @@ type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' |
 type Row = { id: string; mode: Mode; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
   level: Level;
   decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean;
-  // The last partial sent: locked text plus the unlocked tail.
-  shown?: string;
+  // The last partial sent: locked text plus the unlocked tail, and how much of it was agreed.
+  shown?: string; shownAgreed?: number;
   // Decodes outside the pair that locked nothing: in a row, and since the last decode in the pair. marked: this stretch
   // already showed a marker for speech outside the pair, so the row shows no other.
   otherRun: number; otherDrops: number; marked?: boolean };
 // One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
-type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; row: Row };
+// agreed: the start of the unlocked text that consecutive decodes agree on, which displays may show before it locks.
+type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; agreed: string; row: Row };
 type RecognitionQuality = z.infer<typeof Quality>;
 const BYTES_PER_MS = 48;
 // Input level over a turn's or row's PCM16 frames, for diagnostics only.
@@ -96,7 +97,7 @@ export class LocalTranscriber implements Transcriber {
     this.cadence = options.cadence ?? { intervalMs: ROLLING.intervalMs, settleMs: ROLLING.settleMs };
     const rolling = options.segmentation === 'rolling';
     this.detector = new TurnDetector(rolling ? {
-      begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', row: this.row() }; },
+      begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', agreed: '', row: this.row() }; },
       append: pcm => {
         if (!this.stretch) return;
         this.stretch.audio.push(Buffer.from(pcm)); measure(this.stretch.row.level, pcm);
@@ -261,7 +262,10 @@ export class LocalTranscriber implements Transcriber {
       return;
     }
     const current = hypothesis(segments);
-    const locks = lockCount(segments, stablePrefix(stretch!.previous, current), windowMs, false, this.cadence.settleMs);
+    const agreement = stablePrefix(stretch!.previous, current).trimEnd();
+    const locks = lockCount(segments, agreement, windowMs, false, this.cadence.settleMs);
+    // Before a row has locked text, agreed text may show only from a decode as confident as one that locks after noise.
+    const confident = (message.measurement?.quality?.logprobMin ?? -Infinity) >= ROLLING.noiseConfirmLogprob;
     const { count, forced } = unconfirmed ? { count: 0, forced: false } : locks;
     if (count) {
       settle();
@@ -269,6 +273,7 @@ export class LocalTranscriber implements Transcriber {
       const locked = segments.slice(0, count);
       const endMs = locked.at(-1)!.endMs;
       stretch!.previous = current.slice(hypothesis(locked).length).trimStart();
+      stretch!.agreed = agreedTail(agreedRest(stretch!.agreed, hypothesis(locked)), agreement.slice(hypothesis(locked).length).trimStart());
       // Replies arrive in order and only replies trim, so the request's window still starts where this stretch's does.
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(endMs * BYTES_PER_MS)];
       stretch!.windowMs -= endMs;
@@ -285,7 +290,7 @@ export class LocalTranscriber implements Transcriber {
     } else if (otherLanguage && !rejected && message.segments?.length && stretch!.previous && windowMs < ROLLING.forceMs) {
       // Text outside the pair between two decodes is evidence against them, not a gap to skip: on noise, Auto alternates
       // a stock word in a pair language with text in another, and skipping the second let the first agree with itself.
-      stretch!.previous = '';
+      stretch!.previous = ''; stretch!.agreed = '';
     } else if (!segments.length && stretch!.previous && windowMs < ROLLING.forceMs) {
       // One wholly filtered decode, such as a repetition loop, inside text the previous decode returned: skip it, so the
       // decodes on either side can still agree, rather than trim the unlocked speech.
@@ -293,7 +298,7 @@ export class LocalTranscriber implements Transcriber {
       // Noise held the gate open: keep only the last second, and in Auto relearn the language.
       const dropMs = windowMs - ROLLING.keepMs;
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(dropMs * BYTES_PER_MS)];
-      stretch!.windowMs -= dropMs; stretch!.previous = ''; row.afterNoise = true;
+      stretch!.windowMs -= dropMs; stretch!.previous = ''; stretch!.agreed = ''; row.afterNoise = true;
       if (row.text) {
         // What the row locked is finished: close it, so it translates now and the stretch goes on in a row that learns
         // its language again. A talker who changes language without a pause otherwise stays decoded in the first one.
@@ -301,6 +306,7 @@ export class LocalTranscriber implements Transcriber {
         stretch!.row = { ...this.row(), afterNoise: true, ...(row.marked ? { marked: true } : {}) };
       } else if (row.mode === 'auto') row.language = null;
     } else {
+      stretch!.agreed = agreedTail(stretch!.agreed, unconfirmed || !(row.text || confident) ? '' : agreement);
       stretch!.previous = current;
     }
     if (row === stretch!.row && !row.text && !row.marked && row.otherRun >= ROLLING.otherMarkDecodes) {
@@ -309,7 +315,7 @@ export class LocalTranscriber implements Transcriber {
       this.closeRow(row, 'length', {}, true, 'language');
       stretch!.row = { ...this.row(), marked: true, ...(row.afterNoise ? { afterNoise: true } : {}) };
     }
-    this.partial(stretch!.row, stretch!.previous);
+    this.partial(stretch!.row, stretch!.previous, stretch!.agreed);
   }
   private rowText(row: Row) {
     if (!row.begun) {
@@ -318,14 +324,26 @@ export class LocalTranscriber implements Transcriber {
     }
     row.firstTextMs ??= performance.now() - row.created;
   }
-  // Locked text plus the unlocked tail, for the operator's view; displays reveal only the first `stable` characters.
-  // A row shows a tail only once it has locked text, and not while a noise trim waits for a confident decode.
-  private partial(row: Row, tail: string) {
-    if (!row.begun || !row.text) return;
-    const text = row.afterNoise ? row.text : joinText(row.text, tail);
-    if (text === row.shown) return;
-    row.shown = text;
+  // Locked text plus the unlocked tail, for the operator's view. Displays reveal the first `stable` characters, which never
+  // change, or by their own setting the first `agreed`, which can. A row begins at its first locked or agreed text, and
+  // shows no tail while a noise trim waits for a confident decode.
+  private partial(row: Row, tail: string, agreed: string) {
+    if (row.afterNoise) agreed = '';
+    if (!row.text && !agreed) {
+      // Agreed text that showed and did not hold is withdrawn.
+      if (row.begun && row.shown) { row.shown = ''; row.shownAgreed = 0; this.options.onEvent({ type: 'partial', id: row.id, text: '' }); }
+      return;
+    }
+    if (!row.begun) {
+      row.begun = true;
+      this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: row.mode });
+    }
+    const text = row.afterNoise ? row.text : joinText(row.text, tailAfterAgreed(agreed, tail));
+    const agreedLength = agreed ? joinText(row.text, agreed).length : row.text.length;
+    if (text === row.shown && agreedLength === row.shownAgreed) return;
+    row.shown = text; row.shownAgreed = agreedLength;
     this.options.onEvent({ type: 'partial', id: row.id, text, stable: row.text.length,
+      ...(agreedLength > row.text.length ? { agreed: agreedLength } : {}),
       locked: { audioMs: Math.round(row.audioMs), lagMs: Math.round(row.lags.at(-1) ?? 0), language: row.language ?? 'unknown' } });
   }
   private closeRow(row: Row, boundary: Boundary, extra: TurnMeasurement, rejected: boolean, uncaptioned?: 'language' | 'filtered') {

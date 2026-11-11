@@ -3,7 +3,8 @@ import { PROFILES, type Pair, type Segment, type Snapshot } from '../../packages
 // A row as displayed: original and translation hold the released text; the rests hold what is not released yet,
 // including a partial row's unlocked tail, which only the operator sees.
 export type ShownRow = Segment & { originalRest: string; translationRest: string };
-export type PaceSettings = { enabled: boolean; drainMs: number; catchUpMs: number };
+// early: release a partial row's agreed text, which can still change, instead of only its locked text.
+export type PaceSettings = { enabled: boolean; drainMs: number; catchUpMs: number; early?: boolean };
 export const DEFAULT_PACE: PaceSettings = { enabled: true, drainMs: 4000, catchUpMs: 10_000 };
 // A throttled or sleeping page releases at most a second's worth per step, then catches up.
 const MAX_STEP_MS = 1000;
@@ -57,7 +58,7 @@ export class Pacer {
     this.last = now;
     const rows = state.segments;
     const items = (lane: 'original' | 'translation') => rows.map(row => {
-      const text = lane === 'original' ? row.original.slice(0, row.stable ?? row.original.length) : row.translation ?? '';
+      const text = lane === 'original' ? row.original.slice(0, (this.settings.early ? row.agreed : undefined) ?? row.stable ?? row.original.length) : row.translation ?? '';
       return { key: `${lane}:${row.id}`, text, language: rateLanguage(text, lane === 'original' ? row.source : row.target, state.pair) };
     });
     const original = items('original'); const translation = items('translation');

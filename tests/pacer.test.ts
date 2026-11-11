@@ -138,3 +138,15 @@ test('the audience window follows the earliest row whose translation is still ow
   assert.equal(rollShift(250, 112, 272), 90); // later rows would push it out: the roll moves down by the overlap
   assert.equal(rollShift(250, 400, 272), 250); // taller than the window: its end stays in view
 });
+
+test('a display set to show text early releases agreed text beyond the locked prefix; others never do', () => {
+  const partial = (original: string, stable: number, agreed?: number) => snapshot([row('r1', 'history'), row('r2', original,
+    { final: false, state: 'partial', stable, finalizedAt: null, ...(agreed === undefined ? {} : { agreed }) })]);
+  const early = new Pacer({ ...DEFAULT_PACE, enabled: false, early: true }); const locked = new Pacer({ ...DEFAULT_PACE, enabled: false });
+  for (const pacer of [early, locked]) pacer.update(snapshot([row('r1', 'history')]), 0);
+  assert.equal(early.update(partial('one two three four', 3, 13), 100)[1]!.original, 'one two three');
+  assert.equal(locked.update(partial('one two three four', 3, 13), 100)[1]!.original, 'one');
+  // Agreed text that changes is shown as it now stands; a row without agreed text falls back to its locked prefix.
+  assert.equal(early.update(partial('one two tree for', 3, 12), 200)[1]!.original, 'one two tree');
+  assert.equal(early.update(partial('one two tree for', 7), 300)[1]!.original, 'one two');
+});

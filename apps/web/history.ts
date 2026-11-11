@@ -39,7 +39,7 @@ export function readingContentChanged(before: Pick<Snapshot, 'segments' | 'turns
     const a = before.segments[i]!; const b = after.segments[i]!;
     if (a.id !== b.id || a.sequence !== b.sequence || a.original !== b.original || a.translation !== b.translation
       || a.source !== b.source || a.target !== b.target || a.state !== b.state || a.final !== b.final || a.translationMs !== b.translationMs
-      || a.stable !== b.stable || a.uncaptioned !== b.uncaptioned) return true;
+      || a.stable !== b.stable || a.agreed !== b.agreed || a.uncaptioned !== b.uncaptioned) return true;
   }
   for (let i = 0; i < after.turns.length; i++) {
     const a = before.turns[i]!; const b = after.turns[i]!;

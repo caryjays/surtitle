@@ -39,7 +39,7 @@ Keep the tab open and the Mac awake and powered. Paid requests begin after Start
 ## OBS
 
 1. Start the service and capture in Chrome first.
-2. Add a Browser Source with Local file unchecked, URL `http://127.0.0.1:4317/overlay`, 1920 × 1080 to begin. `localhost` is refused. Add `?lines=3` to change the caption window's height in translation lines, 1 to 8, or `pace=off` to show locked text at once, for example `/overlay?lines=3&pace=off`. The console's Overlay for OBS panel builds and copies this URL, and its Audience view shows the result.
+2. Add a Browser Source with Local file unchecked, URL `http://127.0.0.1:4317/overlay`, 1920 × 1080 to begin. `localhost` is refused. Add `?lines=3` to change the caption window's height in translation lines, 1 to 8, `pace=off` to show locked text at once, or `early=on` to show rolling text before it locks, at the price of an occasional rewrite on screen, for example `/overlay?lines=3&pace=off`. The console's Overlay for OBS panel builds and copies this URL, and its Audience view shows the result.
 3. Place it above slides, Chrome, Ghostty or camera sources. No permission prompt should appear.
 4. Test source reload and scene switching: capture must continue, and the overlay recovers from a snapshot without new inference.
 5. Disconnect the overlay to confirm captions disappear within 6 s.

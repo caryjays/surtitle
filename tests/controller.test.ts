@@ -345,3 +345,17 @@ test('a recognizer that fails while restarting fails capture, and Pause during a
   await h.controller.pause(); await tick();
   assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().restarting], ['paused', undefined]);
 });
+
+test('a partial row carries its agreed length only while it exceeds the locked one, and a final drops both', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.begin('a');
+  const row = () => h.controller.snapshot().segments.at(-1)!;
+  h.streams[0]!.emit({ type: 'partial', id: 'a', text: 'one two three four', stable: 3, agreed: 13 });
+  assert.deepEqual([row().stable, row().agreed], [3, 13]);
+  h.streams[0]!.emit({ type: 'partial', id: 'a', text: 'one two', stable: 7, agreed: 40 });
+  assert.deepEqual([row().stable, row().agreed], [7, undefined]);
+  h.streams[0]!.emit({ type: 'partial', id: 'a', text: 'one two three', stable: 7, agreed: 40 });
+  assert.deepEqual([row().stable, row().agreed], [7, 13]);
+  h.streams[0]!.emit({ type: 'final', id: 'a', text: 'one two three four.', language: 'en' });
+  assert.deepEqual([row().stable, row().agreed], [undefined, undefined]);
+});

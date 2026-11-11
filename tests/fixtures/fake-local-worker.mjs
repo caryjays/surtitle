@@ -50,6 +50,16 @@ function rolling(request) {
     return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: off ? 'pl' : 'en', inferenceMs: 1,
       rejected: !segments.length, segments };
   }
+  // long: the whole speech is one growing segment, as Whisper returns for continuous speech, which locks only at the end.
+  // Its newest word changes every decode. long-faint: the same at the confidence of a hallucination.
+  if (behavior.startsWith('rolling-long')) {
+    const settled = Array.from({ length: Math.max(0, Math.floor(ms / 1000) - 1) }, (_, k) => ` w${start + 20 * k}`).join('');
+    const text = ms >= 1000 ? `${settled} t${decodes}` : '';
+    return { type: 'final', id: request.id, text: text.trim(), language: request.language ?? 'ja', inferenceMs: 1, rejected: !text,
+      segments: text ? [{ endMs: Math.floor(ms), text }] : [], measurement: { quality: { speechGateRejected: false, decodedSegments: 1,
+        droppedSegments: 0, noSpeechDrops: 0, lowConfidenceDrops: 0, repetitionDrops: 0, stockPhraseDrops: 0, invalidScoreDrops: 0,
+        noSpeechMax: 0, logprobMin: behavior.endsWith('faint') ? -0.7 : -0.2 } } };
+  }
   // switch: Japanese up to frame 100, then English with no pause. Decoding English as Japanese yields only low-confidence
   // text, which the filters drop; Auto on a window that starts in the English hears English.
   if (behavior === 'rolling-switch') {

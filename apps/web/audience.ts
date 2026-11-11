@@ -5,22 +5,22 @@ import { visibleSegments } from './visibility.ts';
 import type { Snapshot } from '../../packages/protocol/index.ts';
 
 // Overlay settings travel in the Browser Source URL; the operator page keeps its copy in browser storage.
-const OverlaySettings = z.object({ lines: z.number().int().min(1).max(8), pace: z.boolean() }).strict();
+const OverlaySettings = z.object({ lines: z.number().int().min(1).max(8), pace: z.boolean(), early: z.boolean().default(false) }).strict();
 export type OverlaySettings = z.infer<typeof OverlaySettings>;
-export const DEFAULT_OVERLAY: OverlaySettings = { lines: 4, pace: true };
+export const DEFAULT_OVERLAY: OverlaySettings = { lines: 4, pace: true, early: false };
 export const OVERLAY_KEY = 'captions.overlay.v1';
 export function overlaySettings(value: unknown): OverlaySettings {
   const parsed = OverlaySettings.safeParse(value);
   return parsed.success ? parsed.data : { ...DEFAULT_OVERLAY };
 }
 export function overlayQuery(settings: OverlaySettings) {
-  const parts = [...(settings.lines === DEFAULT_OVERLAY.lines ? [] : [`lines=${settings.lines}`]), ...(settings.pace ? [] : ['pace=off'])];
+  const parts = [...(settings.lines === DEFAULT_OVERLAY.lines ? [] : [`lines=${settings.lines}`]), ...(settings.pace ? [] : ['pace=off']), ...(settings.early ? ['early=on'] : [])];
   return parts.length ? `?${parts.join('&')}` : '';
 }
 export function parseOverlayQuery(search: string): OverlaySettings {
   const params = new URLSearchParams(search);
   const lines = Number(params.get('lines') ?? DEFAULT_OVERLAY.lines);
-  return overlaySettings({ lines: Number.isInteger(lines) ? lines : DEFAULT_OVERLAY.lines, pace: params.get('pace') !== 'off' });
+  return overlaySettings({ lines: Number.isInteger(lines) ? lines : DEFAULT_OVERLAY.lines, pace: params.get('pace') !== 'off', early: params.get('early') === 'on' });
 }
 
 // The row the audience is reading: the earliest shown row whose translation has not all been released, or has not come yet.
@@ -44,7 +44,7 @@ export function audienceView(window: HTMLElement, roll: HTMLElement) {
   let shift = 0;
   return {
     configure(settings: OverlaySettings) {
-      pacer.configure({ ...DEFAULT_PACE, enabled: settings.pace });
+      pacer.configure({ ...DEFAULT_PACE, enabled: settings.pace, early: settings.early });
       window.style.setProperty('--overlay-lines', String(settings.lines));
     },
     render(state: Snapshot | undefined, receivedAt: number, now: number) {

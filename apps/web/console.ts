@@ -12,19 +12,20 @@ export function setupAudience() {
   const view = audienceView(element('audience').querySelector<HTMLElement>('.stage-captions')!, element('audience-roll'));
   const lines = element<HTMLSelectElement>('overlay-lines');
   const pace = element<HTMLInputElement>('overlay-pace');
+  const early = element<HTMLInputElement>('overlay-early');
   const url = element<HTMLInputElement>('overlay-url');
   let settings = DEFAULT_OVERLAY;
   try { settings = overlaySettings(JSON.parse(storage()?.getItem(OVERLAY_KEY) ?? 'null')); } catch { /* Malformed storage: defaults. */ }
   function apply(next: OverlaySettings) {
     settings = next; view.configure(settings);
-    lines.value = String(settings.lines); pace.checked = settings.pace;
+    lines.value = String(settings.lines); pace.checked = settings.pace; early.checked = settings.early;
     url.value = `${location.origin}/overlay${overlayQuery(settings)}`;
     element<HTMLAnchorElement>('overlay-open').href = `/overlay${overlayQuery(settings)}`;
     // Persist ONLY the validated overlay settings.
     try { storage()?.setItem(OVERLAY_KEY, JSON.stringify(settings)); } catch { /* Storage may be disabled or full. */ }
   }
-  const change = () => apply(overlaySettings({ lines: Number(lines.value), pace: pace.checked }));
-  lines.addEventListener('change', change); pace.addEventListener('change', change);
+  const change = () => apply(overlaySettings({ lines: Number(lines.value), pace: pace.checked, early: early.checked }));
+  lines.addEventListener('change', change); pace.addEventListener('change', change); early.addEventListener('change', change);
   element('overlay-copy').addEventListener('click', () => {
     url.select();
     const done = (text: string) => { element('overlay-copied').textContent = text; };

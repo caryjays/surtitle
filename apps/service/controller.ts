@@ -282,6 +282,9 @@ export class Controller {
       row.original = rejected ? '' : event.text.slice(0, 4000);
       if (event.type === 'partial' && event.stable !== undefined && row.original) row.stable = Math.min(event.stable, row.original.length);
       else delete row.stable;
+      const agreed = event.type === 'partial' && event.agreed !== undefined ? Math.min(event.agreed, row.original.length) : 0;
+      if (row.stable !== undefined && agreed > row.stable) row.agreed = agreed;
+      else delete row.agreed;
       if (event.type === 'partial' && event.locked && row.stable !== undefined && this.options.translationUnit === 'piece') {
         const pieces = this.pieces(row);
         if (event.locked.audioMs > pieces.lockedMs) {

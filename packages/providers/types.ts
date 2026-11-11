@@ -5,7 +5,8 @@ export type TranscriptEvent =
   // stable: how many leading characters of text are locked and never rewritten; absent means all of it is.
   // locked, rolling only: the row's locked audio, the lag of its latest lock (that audio's end to the lock), and the row's
   // language once settled, so the controller can translate locked pieces before the row closes.
-  | { type: 'partial'; id: string; text: string; stable?: number; locked?: { audioMs: number; lagMs: number; language: Source } }
+  // agreed, rolling only: how many leading characters consecutive decodes agree on, at least stable; these can still change.
+  | { type: 'partial'; id: string; text: string; stable?: number; agreed?: number; locked?: { audioMs: number; lagMs: number; language: Source } }
   // uncaptioned, with rejected: the row held speech that shows no text, outside the pair or rejected by the filters; it
   // stays as a marker. Without it, a rejected row was non-speech and disappears.
   | { type: 'final'; id: string; text: string; language?: Source; rejected?: boolean; uncaptioned?: Uncaptioned };

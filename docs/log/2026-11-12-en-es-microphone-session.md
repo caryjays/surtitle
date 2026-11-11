@@ -33,4 +33,20 @@ Replays of public gate clips through the rolling provider in real time, Spanish 
 
 When the forced decode stays confident, Whisper writes the English speech as Spanish, a translation shown as the original, until the row closes; the next row detects again. The damage is bounded by the row. Catching it needs detection during a row. One detection call takes about 310 ms, a full encoder pass, against a decode every second, and on 2 s and 5 s windows of four English clips it gave English 0.99 or more. It is not built: a row's language is kept because detection on short windows is upset by loanwords in the Japanese pair, so a rule that lets detection override it needs the language simulator and a gate run first, and recognition tuning is paused.
 
-Not verified: either fix in a session with real models and a microphone.
+## A second session, with both fixes
+
+The maintainer ran 24.5 minutes in rolling with offline translation and reported being pleased with it. From the diagnostics download:
+
+| Measure | Value |
+| --- | --- |
+| Rows translated | 186 of 186 shown: 115 English, 71 Spanish |
+| Rows rejected | 7, none shown |
+| Changes of language between shown rows | 10, each followed by rows in the new language |
+| Longest row | 17.4 s of audio; no row stayed open as in the first session |
+| Lock lag, median and p90 | 2.1 s, 3.7 s |
+| First text, median and p90 | 5.2 s, 9.8 s |
+| Speech end to final, median and p90 | 2.0 s, 3.7 s |
+| Translation request, median and p90 | 1.9 s, 2.8 s |
+| Recognizer restarts, queued decodes, translation failures | 0, 0, 0 |
+
+Lock lag and first text sit over the gate's targets by about what the gate runs show. The download cannot tell whether a change of language fell inside a row, so it does not show the row close at a noise trim at work; it shows no stuck row. The overlay window rule is seen only through the maintainer's report.

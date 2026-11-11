@@ -70,3 +70,30 @@ export function isStockPhrase(text: string) {
   for (const phrase of STOCK_PHRASES) rest = rest.replaceAll(compact(phrase), '');
   return !rest;
 }
+
+// Text without case, spacing or punctuation: two decodes of the same speech often differ only in those.
+export function loose(text: string) {
+  return text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+// The position in text just after its first `count` letters and digits.
+function afterLoose(text: string, count: number) {
+  let n = 0;
+  for (let seen = 0; n < text.length && seen < count; n++) if (/[\p{L}\p{N}]/u.test(text[n]!)) seen++;
+  return n;
+}
+// What is left of an agreed tail once `locked` text, heard at its start, has locked: nothing if they do not match.
+export function agreedRest(agreed: string, locked: string) {
+  const start = loose(locked);
+  return loose(agreed).startsWith(start) ? agreed.slice(afterLoose(agreed, start.length)).replace(/^[^\p{L}\p{N}]+/u, '') : '';
+}
+// The agreed tail to show: the newest agreement, unless it covers less speech than the one shown, which then stays.
+// Agreement shrinks when one decode wavers and after every lock, whose trimmed window is decoded afresh.
+export function agreedTail(shown: string, candidate: string) {
+  return loose(candidate).length < loose(shown).length ? shown : candidate;
+}
+// An unlocked tail for display: the agreed text as shown, then what the newest decode adds to it.
+export function tailAfterAgreed(agreed: string, tail: string) {
+  if (!agreed) return tail;
+  const start = loose(agreed);
+  return loose(tail).startsWith(start) ? agreed + tail.slice(afterLoose(tail, start.length)) : agreed;
+}

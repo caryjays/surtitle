@@ -51,6 +51,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-11-settle-time.md](2026-11-11-settle-time.md) | Settle time 0.5 s against the live 1.0 s: simulator sweep and real-time replays; English lock lag 0.3 to 0.6 s lower, not yet adopted |
 | [2026-11-12-spanish-pilot-steps.md](2026-11-12-spanish-pilot-steps.md) | Spanish stock-phrase sweep, neighbour languages as third languages, local translation in the pair, and a session in `en-es` |
 | [2026-11-12-en-es-microphone-session.md](2026-11-12-en-es-microphone-session.md) | An `en-es` microphone session: a long translation pushed out of the overlay window by short rows, and no rows after a change to English inside a row; both fixed |
+| [2026-11-12-early-text.md](2026-11-12-early-text.md) | Why first text is late on continuous speech, a simulation of showing agreed text before it locks, and the overlay setting built from it |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

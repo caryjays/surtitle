@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { LocalTranscriber, localTranscriberFactory, type LocalOptions } from '../packages/providers/local.ts';
 import { Controller } from '../apps/service/controller.ts';
-import { endsSentence, isStockPhrase, joinText, lockCount, stablePrefix } from '../packages/providers/rolling.ts';
+import { agreedRest, agreedTail, endsSentence, isStockPhrase, joinText, lockCount, stablePrefix, tailAfterAgreed } from '../packages/providers/rolling.ts';
 import { Snapshot, type TurnMeasurement } from '../packages/protocol/index.ts';
 import type { TranscriptEvent, Translator } from '../packages/providers/types.ts';
 
@@ -218,6 +218,36 @@ test('in Auto, a switch of language inside a row without a pause closes the row 
   assert.equal(rows[0]!.text, words(0, 5));
   assert(rows[1]!.text.startsWith('e') && rows[1]!.text.endsWith('e300'), rows[1]!.text);
   assert.deepEqual(f.measurements.filter(m => m.value.boundary).map(m => m.value.boundary), ['length', 'silence']);
+});
+test('an agreed tail survives a lock and a wavering decode, and gives way to a longer agreement', () => {
+  assert.equal(agreedRest('So here we have two', 'So, here we'), 'have two');
+  assert.equal(agreedRest('So here we have two', 'And here'), '');
+  assert.equal(agreedTail('have two photographs', 'Have two'), 'have two photographs'); // less speech agreed: what shows stays
+  assert.equal(agreedTail('have two', 'have to photograph'), 'have to photograph'); // more speech agreed: it replaces
+  assert.equal(tailAfterAgreed('have two', 'Have two, photographs on'), 'have two, photographs on');
+  assert.equal(tailAfterAgreed('have two', 'half a'), 'have two');
+  assert.equal(tailAfterAgreed('', 'anything'), 'anything');
+});
+test('text two decodes agree on is reported before its segment locks, and a row can begin with it', async t => {
+  const f = fixture('rolling-long'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6);
+  const partials = f.events.filter(e => e.type === 'partial') as Extract<TranscriptEvent, { type: 'partial' }>[];
+  assert.equal(f.events[0]!.type, 'begin');
+  assert(partials.length >= 3 && partials.every(p => p.stable === 0), 'nothing has locked');
+  const agreed = partials.map(p => p.text.slice(0, p.agreed ?? 0));
+  for (let i = 1; i < agreed.length; i++) assert(agreed[i]!.startsWith(agreed[i - 1]!), 'agreed text shrank');
+  assert.equal(agreed.at(-1), words(0, 4));
+  assert(partials.at(-1)!.text.length > agreed.at(-1)!.length, 'the newest word is in the tail, not agreed');
+  f.quiet(); await f.stream.finish();
+  assert(finals(f.events)[0]!.text.startsWith(words(0, 4)));
+  assert.equal(f.measurements.find(m => m.value.boundary)!.value.boundary, 'silence');
+});
+test('before a row has locked text, agreed text from a low-confidence decode is not reported', async t => {
+  const f = fixture('rolling-long-faint'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6);
+  assert.equal(f.events.length, 0);
+  f.quiet(); await f.stream.finish();
+  assert.deepEqual(f.events.map(e => e.type), ['begin', 'final']);
 });
 test('after a noise trim, two low-confidence decodes that agree do not lock, even in the closing decode', async t => {
   const f = fixture('rolling-after-noise-hallucination'); t.after(() => f.stream.close()); await f.stream.connect();

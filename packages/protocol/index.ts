@@ -56,6 +56,8 @@ export const Segment = z.object({
   finalizedAt: z.number().nullable(), translationMs: z.number().nonnegative().nullable(),
   // Leading characters of a partial original that are locked; displays reveal only these. Absent: all of it.
   stable: z.number().int().nonnegative().max(4000).optional(),
+  // Leading characters consecutive decodes agree on, more than stable; a display may reveal them early, and they can change.
+  agreed: z.number().int().nonnegative().max(4000).optional(),
   // A marker row: speech was heard and is not captioned. Its original stays empty and it is never translated or context.
   uncaptioned: Uncaptioned.optional(),
 });
