@@ -55,6 +55,7 @@ RATE = 24_000  # gate streams and the live worker input
 PAIR = ('ja', 'en')
 INTERVAL, MIN_WINDOW, SETTLE, FORCE, NOISE, KEEP = 1.0, 0.5, 0.5, 25.0, 3.0, 1.0
 SENTENCE_ROW, MAX_ROW = 3.0, 8.0
+OTHER = 'other'  # choose(): accepted text detected outside the pair, not replaced by a retry
 THIRD = 0.5  # detection probability outside the pair that rejects a window as another language
 UNCERTAIN = 0.2  # below this, retry-uncertain also decodes the other pair language
 SETTLE_AT_LOCK = {'auto-lock', 'retry', 'retry-uncertain'}
@@ -122,23 +123,31 @@ class Decoder:
             self.dirty = 0
 
 
-def choose(rule, decoder, pcm, a, b, pair_only=False, pair_retry=None):
-    """Decode a window of a row with no language yet: (segments, language or None, seconds)."""
+RETRIES = []  # lowest segment log probability of every retried decode that passed the script check
+
+
+def choose(rule, decoder, pcm, a, b, pair_only=False, pair_retry=None, retry_confirm=None):
+    """Decode a window of a row with no language yet: (segments, language or None, seconds). The language is OTHER
+    when the window's accepted text was detected outside the pair and no retry replaced it."""
     if rule in ('auto', 'auto-lock'):
         d = decoder.decode(pcm, a, b, None)
         if pair_only and d['language'] not in PAIR:
-            if pair_retry is None or not d['segments']:
+            if not d['segments']:
                 return [], None, d['seconds']
+            if pair_retry is None:
+                return [], OTHER, d['seconds']
             detection = decoder.detect(pcm, a, b)
             seconds = d['seconds'] + detection['seconds']
             if sum(detection['probs'][k] for k in PAIR) < pair_retry:
-                return [], None, seconds
+                return [], OTHER, seconds
             language = max(PAIR, key=lambda k: detection['probs'][k])
             retry = decoder.decode(pcm, a, b, language)
             seconds += retry['seconds']
             if retry['segments'] and script_ok(''.join(s['text'] for s in retry['segments']), language):
-                return retry['segments'], language, seconds
-            return [], None, seconds
+                RETRIES.append(retry['logprob'])
+                if retry_confirm is None or (retry['logprob'] is not None and retry['logprob'] >= retry_confirm):
+                    return retry['segments'], language, seconds
+            return [], OTHER, seconds
         return d['segments'], d['language'] if d['segments'] and d['language'] in PAIR else None, d['seconds']
     detection = decoder.detect(pcm, a, b)
     seconds, probs = detection['seconds'], detection['probs']
@@ -209,7 +218,7 @@ def third_language(decoder, pcm, a, b):
 
 
 def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False, noise_confirm=None, pair_only=False, pair_retry=None,
-            lags=None):
+            lags=None, retry_confirm=None, other_resets=False):
     """One stretch of speech, samples a to b. Returns rows [(language, text)], the clock, and decode count."""
     rows, row = [], {'language': None, 'text': '', 'audio': 0.0, 'start': a}
 
@@ -225,12 +234,13 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False,
         final = until >= b
         win = max(win, until - int(29 * RATE))  # live rolling never sends Whisper more than its 30 s input
         if (until - win) / RATE >= MIN_WINDOW or (final and until - win >= RATE // 10):
-            logprob = None
+            logprob, other = None, False
             if row['language']:
                 d = decoder.decode(pcm, win, until, row['language'])
                 segments, seconds, logprob = d['segments'], d['seconds'], d['logprob']
             else:
-                segments, language, seconds = choose(rule, decoder, pcm, win, until, pair_only, pair_retry)
+                segments, language, seconds = choose(rule, decoder, pcm, win, until, pair_only, pair_retry, retry_confirm)
+                other, language = language == OTHER, None if language == OTHER else language
                 if rule in ('auto', 'auto-lock'):
                     logprob = decoder.decode(pcm, win, until, None)['logprob']
                 # auto keeps the live rule; the others settle the row's language only when its text locks.
@@ -256,6 +266,8 @@ def stretch(rule, decoder, pcm, a, b, clock, keep_agreed=False, third_row=False,
                 if not final and (row['audio'] >= MAX_ROW or (row['audio'] >= SENTENCE_ROW and row['text'].rstrip()[-1:] in '.!?。！？')):
                     close(win)
                     row = {'language': None, 'text': '', 'audio': 0.0, 'start': win}
+            elif other and other_resets and keep_agreed and previous and window_ms < FORCE * 1000:
+                previous = ''  # text outside the pair is evidence against the text before it, not a gap to skip
             elif not segments and keep_agreed and previous and window_ms < FORCE * 1000:
                 pass
             elif not segments and window_ms > NOISE * 1000 and not final:
@@ -343,12 +355,18 @@ def run(args):
                 clock = max(clock, a / RATE)
                 before = clock
                 found, clock, n = stretch(rule, decoder, pcm, a, min(b, len(pcm) // 2), clock, args.keep_agreed, args.third_row,
-                                          args.noise_confirm, args.pair_only, args.pair_retry, lags)
+                                          args.noise_confirm, args.pair_only, args.pair_retry, lags,
+                                          args.retry_confirm, args.other_resets)
                 rows += [(clip.get('id'), language, text) for language, text in found]
                 decodes += n
                 busy += clock - before
             decoder.save(force=True)
             result = {'rows': len(rows), 'decodes': decodes, 'wallSeconds': round(time.perf_counter() - started, 1)}
+            if RETRIES:
+                kept = sorted(v for v in RETRIES if v is not None)
+                result['retryLogprob'] = {'n': len(RETRIES), 'min': round(kept[0], 2), 'p10': round(kept[len(kept) // 10], 2),
+                                          'under-0.5': sum(v < -0.5 for v in kept)}
+                RETRIES.clear()
             if lags:
                 lags.sort()
                 result['lockLag'] = {'n': len(lags), 'p50': round(lags[len(lags) // 2], 2), 'p90': round(lags[int(len(lags) * 0.9)], 2)}
@@ -363,6 +381,7 @@ def run(args):
                 result['texts'] = [text for _, _, text in rows]
             name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '') + ('+pair' if args.pair_only else '') + (
                 f'+retry{args.pair_retry}' if args.pair_retry is not None else '') + (
+                f'+retryconfirm{args.retry_confirm}' if args.retry_confirm is not None else '') + ('+otherresets' if args.other_resets else '') + (
                 f'+settle{args.settle}' if args.settle != 0.5 else '') + (
                 f'+confirm{args.noise_confirm}' if args.noise_confirm is not None else '')
             report.setdefault(stream, {})[name] = result
@@ -384,6 +403,8 @@ def main():
     run_parser.add_argument('--third-row', action='store_true')
     run_parser.add_argument('--pair-only', action='store_true')
     run_parser.add_argument('--pair-retry', type=float)
+    run_parser.add_argument('--retry-confirm', type=float)
+    run_parser.add_argument('--other-resets', action='store_true')
     run_parser.add_argument('--settle', type=float, default=0.5)
     run_parser.add_argument('--noise-confirm', type=float)
     run(parser.parse_args())

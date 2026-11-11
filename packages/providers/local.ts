@@ -282,6 +282,10 @@ export class LocalTranscriber implements Transcriber {
         this.closeRow(row, 'length', {}, false);
         stretch!.row = this.row();
       }
+    } else if (otherLanguage && !rejected && message.segments?.length && stretch!.previous && windowMs < ROLLING.forceMs) {
+      // Text outside the pair between two decodes is evidence against them, not a gap to skip: on noise, Auto alternates
+      // a stock word in a pair language with text in another, and skipping the second let the first agree with itself.
+      stretch!.previous = '';
     } else if (!segments.length && stretch!.previous && windowMs < ROLLING.forceMs) {
       // One wholly filtered decode, such as a repetition loop, inside text the previous decode returned: skip it, so the
       // decodes on either side can still agree, rather than trim the unlocked speech.

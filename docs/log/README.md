@@ -49,6 +49,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-10-rolling-lifecycle-fixes.md](2026-11-10-rolling-lifecycle-fixes.md) | Fixes for those two defects: rolling rows keep their mode, recalibration drops pending recognition; adapter and controller regression tests |
 | [2026-11-10-reliability-and-measurement.md](2026-11-10-reliability-and-measurement.md) | Recalibration keeps finished rows; per-turn input level, applied capture settings and display pacing in diagnostics; speech to displayed translation in `diag:latency`; gate runs record their gate file and implementation digest |
 | [2026-11-11-settle-time.md](2026-11-11-settle-time.md) | Settle time 0.5 s against the live 1.0 s: simulator sweep and real-time replays; English lock lag 0.3 to 0.6 s lower, not yet adopted |
+| [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26
 

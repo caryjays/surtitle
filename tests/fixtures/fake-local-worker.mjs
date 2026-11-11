@@ -43,6 +43,13 @@ function rolling(request) {
     return { type: 'final', id: request.id, text: loop ? '' : words.trim(), language: request.language ?? 'ja', inferenceMs: 1,
       rejected: loop || !words, segments: loop || !words ? [] : [{ endMs: Math.floor(ms), text: words }] };
   }
+  // alternate: noise that Auto hears as a stock word in the pair on even seconds and as text outside the pair on odd ones.
+  if (behavior === 'rolling-alternate') {
+    const off = Math.floor(ms / 1000) % 2 === 1;
+    const segments = ms >= 1000 ? [{ endMs: 1000, text: off ? ' Tak' : ' You' }] : [];
+    return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: off ? 'pl' : 'en', inferenceMs: 1,
+      rejected: !segments.length, segments };
+  }
   // third: Auto detection always picks a language outside the pair, with text that would otherwise lock.
   // third-opening: only the first 2.5 s of a row are detected outside the pair, then the speech is Japanese.
   const other = !request.language && (behavior === 'rolling-third' || (behavior === 'rolling-third-opening' && ms < 2500));

@@ -204,6 +204,12 @@ test('one wholly filtered decode inside unlocked speech is skipped, not trimmed'
   assert(rows[0]!.text.startsWith('w0 w20'), rows[0]!.text);
   assert.equal(f.failures(), 0);
 });
+test('in Auto, text outside the pair between two decodes that agree stops them locking', async t => {
+  const f = fixture('rolling-alternate', { mode: 'auto' }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(6.5);
+  assert(!f.events.some(e => e.type === 'partial' && e.text), 'no text displayed');
+  f.quiet(); await f.stream.finish();
+});
 test('after a noise trim, two low-confidence decodes that agree do not lock, even in the closing decode', async t => {
   const f = fixture('rolling-after-noise-hallucination'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(12); f.quiet(); await f.stream.finish();

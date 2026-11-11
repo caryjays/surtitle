@@ -13,7 +13,7 @@ from mlx_whisper.transcribe import ModelHolder
 import numpy as np
 from scipy.signal import resample_poly
 from languages import PROFILES
-from quality import accepted_segments, pair_retry_language, quality_metadata, script_matches, segment_ends
+from quality import PAIR_RETRY_LOGPROB, accepted_segments, pair_retry_language, quality_metadata, script_matches, segment_ends
 from speech_gate import SpeechGate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -78,7 +78,8 @@ class Engine:
                 again = self._decode(audio, retry, prompt)
                 mx.synchronize()
                 kept2, rejected2, quality2 = accepted_segments(again, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
-                if kept2 and script_matches(''.join(s['text'] for s in kept2), retry):
+                confident = (quality2.get('logprobMin') if quality2.get('logprobMin') is not None else float('-inf')) >= PAIR_RETRY_LOGPROB
+                if kept2 and confident and script_matches(''.join(s['text'] for s in kept2), retry):
                     result, kept, rejected, quality = {**again, 'language': retry}, kept2, rejected2, {**quality2, 'pairRetries': 1}
         text = ''.join(s['text'] for s in kept).strip()
         return {'text': text[:4000], 'rejected': rejected, 'segments': segment_ends(kept, len(audio) / 16),

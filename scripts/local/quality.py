@@ -136,6 +136,10 @@ def segment_ends(kept, audio_ms):
 # prefers when the pair holds at least this share of its probability. Measured in the offline language simulator;
 # see docs/log/2026-11-10-other-languages.md.
 PAIR_RETRY_SHARE = 0.2
+# The retried decode replaces the first only when its lowest segment log probability is at least this. Forced into a pair
+# language, noise decodes to a short stock word at about -1.0, which then agrees with the Auto decodes on either side; see
+# docs/log/2026-11-11-spanish-pilot.md.
+PAIR_RETRY_LOGPROB = -0.5
 
 
 def pair_retry_language(probs, pair):
