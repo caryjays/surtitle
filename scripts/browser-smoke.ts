@@ -188,9 +188,9 @@ try {
   await control.locator('#overlay-pace').uncheck();
   assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3&pace=off`);
   assert.equal(await control.locator('#audience .stage-captions').evaluate(node => getComputedStyle(node).getPropertyValue('--overlay-lines').trim()), '3');
-  await control.locator('#overlay-early').check();
-  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3&pace=off&early=on`);
   await control.locator('#overlay-early').uncheck();
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3&pace=off&early=off`);
+  await control.locator('#overlay-early').check();
   await control.locator('#overlay-lines').selectOption('4'); await control.locator('#overlay-pace').check();
   assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay`);
   await control.locator('#overlay-panel > summary').click();
@@ -333,18 +333,18 @@ try {
     const frame = document.getElementById('captions')!.getBoundingClientRect();
     return Math.abs(document.querySelector('article[data-id="roll-3"]')!.getBoundingClientRect().bottom - frame.bottom) <= 1;
   }));
-  // A partial row: the overlay shows its locked text only, unless its URL asks for agreed text early.
+  // A partial row: the overlay shows its agreed text early, unless its URL asks for locked text only.
   const partialRow = { id: 'roll-9', sequence: 9, original: 'one two three four', final: false, translation: null, source: 'unknown', target: 'unknown',
     state: 'partial', finalizedAt: null, translationMs: null, stable: 3, agreed: 13 };
   send(3, [partialRow]);
   await rollup.waitForSelector('article[data-id="roll-9"]');
-  assert.equal(await rollup.locator('article[data-id="roll-9"] .original').textContent(), 'one');
-  feed = undefined; await rollup.goto(app.origin + '/overlay?early=on');
+  assert.equal(await rollup.locator('article[data-id="roll-9"] .original').textContent(), 'one two three');
+  feed = undefined; await rollup.goto(app.origin + '/overlay?early=off');
   for (let i = 0; i < 100 && !feed; i++) await rollup.waitForTimeout(20);
   assert(feed);
   send(3, [partialRow]);
   await rollup.waitForSelector('article[data-id="roll-9"]');
-  assert.equal(await rollup.locator('article[data-id="roll-9"] .original').textContent(), 'one two three');
+  assert.equal(await rollup.locator('article[data-id="roll-9"] .original').textContent(), 'one');
   await rollup.close();
   assert.deepEqual(errors, []);
   await control.close();

@@ -99,6 +99,8 @@ Material so far: the public set, `benchmarks/gate-fleurs-es.json` from `pnpm gat
 
 The Japanese held-out differences are accepted as failing on one talk, 0KTVqevvEjo, by the maintainer's decision of 2026-11-11: its speaker pauses often at low level, the detector cuts it into short stretches, and no rule tested recovers what the short windows lose. The targets and the talk stay as they are; a run reports the failure, and it does not block the gate while that talk accounts for it. See [decisions](decisions.md).
 
+Part 5, the field session, is accepted as met by the maintainer's decision of 2026-11-12 on a microphone session of 24.5 minutes in rolling with offline translation and diagnostics on: no capture failure, no recognizer restart, and its download summarized in [the entry](../log/2026-11-12-en-es-microphone-session.md). It is shorter than the 30 minutes the part asks for, and its speech was English and Spanish, not Japanese. The part's wording stays as it is for a later language.
+
 ## Running a gate
 
 | Step | Command |
