@@ -1,0 +1,28 @@
+{
+  "qwen3.5-4b-q4": {
+    "repo": "mlx-community/Qwen3.5-4B-MLX-4bit",
+    "revision": "32f3e8ecf65426fc3306969496342d504bfa13f3",
+    "files": {
+      "config.json": { "bytes": 3366, "gitSha1": "cb3e1a878a5c4a0505e0c9967da45820b2ca6bd3" },
+      "chat_template.jinja": { "bytes": 7756, "gitSha1": "a585dec894e63da457d9440ec6aa7caa16d20860" },
+      "model.safetensors.index.json": { "bytes": 101944, "gitSha1": "40196ba58595ef9b3fad25a8a6daf3288b953c19" },
+      "tokenizer_config.json": { "bytes": 1139, "gitSha1": "a068e2468cff426a9b105006e74e044030a6faf4" },
+      "vocab.json": { "bytes": 6722759, "gitSha1": "0aa0ce0658d60ac4a5d609f4eadb0e8e43514176" },
+      "tokenizer.json": { "bytes": 19989343, "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4" },
+      "model.safetensors": { "bytes": 3034300695, "sha256": "5fb9acd0246866381cf8c5c354c6db1019f6498eec4ccb4f5edcc71ffeacb2db" }
+    }
+  },
+  "qwen3.5-2b-q4": {
+    "repo": "mlx-community/Qwen3.5-2B-MLX-4bit",
+    "revision": "93760be4f1f69842a46bc13dbdc0f19e291392a3",
+    "files": {
+      "config.json": { "bytes": 3113, "gitSha1": "6d901903a287e72c3677c1f8242a9f30c39dd117" },
+      "chat_template.jinja": { "bytes": 7755, "gitSha1": "0ef09f214eaa6d9bca297988afc1454b5827b2c7" },
+      "model.safetensors.index.json": { "bytes": 81722, "gitSha1": "2d9ef9d4c10685ab801a5d2011821d700b688d5f" },
+      "tokenizer_config.json": { "bytes": 1139, "gitSha1": "a068e2468cff426a9b105006e74e044030a6faf4" },
+      "vocab.json": { "bytes": 6722759, "gitSha1": "0aa0ce0658d60ac4a5d609f4eadb0e8e43514176" },
+      "tokenizer.json": { "bytes": 19989343, "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4" },
+      "model.safetensors": { "bytes": 1722271785, "sha256": "713fe7e5d3c3965f7106b0d0ee17615f7869c23c8d327996df8c1196fbcf07d5" }
+    }
+  }
+}

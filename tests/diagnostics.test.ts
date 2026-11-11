@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DiagnosticLog, DIAGNOSTIC_LIMIT } from '../apps/web/diagnostics.ts';
+import { DiagnosticLog, DIAGNOSTIC_LIMIT, captureSettings, describeCapture } from '../apps/web/diagnostics.ts';
 import { Snapshot } from '../packages/protocol/index.ts';
 
 function snapshot(patch: Partial<Snapshot> = {}): Snapshot {
-  return Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0,
+  return Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0, pair: ['en', 'ja'],
     revision: 1, capture: 'active', mode: 'auto', processing: 'local-audio-cloud-text', backend: 'PRIVATE_CONFIG_SENTINEL',
     error: null, queue: 0, running: 0, sentAt: 123, rejected: 2, gate: { state: 'quiet', level: 0.01, threshold: 0.025, remainingMs: 0 },
     segments: [{ id: 'PRIVATE_ID_SENTINEL', sequence: 0, original: 'PRIVATE_ORIGINAL_SENTINEL 日本語です',
@@ -72,4 +72,36 @@ test('retains only the latest bounded metadata events and reports truncation', (
   for (let i = 0; i < DIAGNOSTIC_LIMIT + 5; i++) log.mark();
   assert.equal(log.status.count, DIAGNOSTIC_LIMIT); assert.equal(log.status.dropped, 6);
   assert.equal(exported(log).events.length, DIAGNOSTIC_LIMIT);
+});
+
+test('applied capture settings are logged from an allowlist, without the device label or IDs', () => {
+  const log = new DiagnosticLog(() => 1000); log.start();
+  const settings = captureSettings({ echoCancellation: true, noiseSuppression: false, autoGainControl: 'PRIVATE_VALUE_SENTINEL', sampleRate: 48_000,
+    channelCount: 1, deviceId: 'PRIVATE_DEVICE_SENTINEL', groupId: 'PRIVATE_GROUP_SENTINEL', label: 'PRIVATE_LABEL_SENTINEL' });
+  log.capture(settings);
+  log.capture({ ...settings, deviceId: 'PRIVATE_DEVICE_SENTINEL' }); // not the allowlisted shape: dropped
+  const json = log.exportJson();
+  assert(!json.includes('PRIVATE_'));
+  assert.deepEqual(JSON.parse(json).events.filter((event: any) => event.type === 'capture').map((event: any) => event.settings),
+    [{ echoCancellation: true, noiseSuppression: false, autoGainControl: null, sampleRate: 48_000, channelCount: 1 }]);
+  assert.equal(describeCapture(settings), 'echo cancellation on · noise suppression off · automatic gain not reported · 48000 Hz');
+  assert.deepEqual(captureSettings(undefined), { echoCancellation: null, noiseSuppression: null, autoGainControl: null, sampleRate: null, channelCount: null });
+});
+
+test('display events record when the audience preview released a row, once per stage, without text', () => {
+  let now = 1000;
+  const log = new DiagnosticLog(() => now); log.start(); log.observe(snapshot());
+  const shown = (patch: object) => [{ sequence: 7, final: false, state: 'partial' as const, original: '', originalRest: '',
+    translation: null as string | null, translationRest: '', ...patch }];
+  log.display([{ sequence: 0, final: true, state: 'ready', original: 'PRIVATE_ORIGINAL_SENTINEL', originalRest: '', translation: 'PRIVATE_TRANSLATION_SENTINEL', translationRest: '' }], true);
+  now = 2000; log.display(shown({ original: 'PRIVATE_A', originalRest: 'PRIVATE_B' }), true);
+  now = 3000; log.display(shown({ original: 'PRIVATE_A', final: true, state: 'pending', translation: 'PRIVATE_C', translationRest: 'PRIVATE_D' }), true);
+  now = 4000; log.display(shown({ original: 'PRIVATE_A', final: true, state: 'ready', translation: 'PRIVATE_C', translationRest: 'PRIVATE_D' }), true);
+  now = 5000; log.display(shown({ original: 'PRIVATE_A', final: true, state: 'ready', translation: 'PRIVATE_C' }), true);
+  now = 6000; log.display(shown({ original: 'PRIVATE_A', final: true, state: 'ready', translation: 'PRIVATE_C' }), true);
+  const json = log.exportJson();
+  assert(!json.includes('PRIVATE_'));
+  // The row on screen when collection started has no release time and is not reported.
+  assert.deepEqual(JSON.parse(json).events.filter((event: any) => event.type === 'display').map((event: any) => [event.atMs, event.sequence, event.stage, event.paced]),
+    [[2000, 7, 'original-first', true], [3000, 7, 'original-all', true], [3000, 7, 'translation-first', true], [5000, 7, 'translation-all', true]]);
 });

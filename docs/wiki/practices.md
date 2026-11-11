@@ -1,6 +1,6 @@
 # Documentation practices
 
-Verified: 2026-10-26 · Sources: scripts/docs-check.ts
+Verified: 2026-10-28 · Sources: scripts/docs-check.ts
 
 Two kinds of documents, one rule each.
 
@@ -18,7 +18,8 @@ Verified: YYYY-MM-DD · Sources: path/one.ts, path/two.py
 
 Sources are the files or directories the page describes, or `none` for pages about process. `pnpm docs:check`, which runs inside `pnpm check`, fails when:
 
-- a source changed after the Verified date, by commit date or by file modification date for uncommitted changes;
+- a source changed after the Verified date, by commit date or by file modification date for uncommitted changes, both as local calendar days;
+- the Verified date is later than today in every time zone;
 - a source path does not exist;
 - a relative link in any Markdown file under `docs/`, the root `README.md`, `AGENTS.md`, `benchmarks/README.md` or `profiles/README.md` does not resolve;
 - a wiki page is missing from the wiki index;

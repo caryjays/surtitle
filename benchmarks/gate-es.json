@@ -1,0 +1,20 @@
+{
+  "gate": "es",
+  "page": "docs/wiki/gates.md",
+  "languages": ["es", "en"],
+  "pair": "en-es",
+  "public": "gate-fleurs-es.json",
+  "other": "gate-other-es.json",
+  "targets": [
+    { "key": "heldoutOverOffline", "label": "Held-out live error minus one-pass decode of the same excerpts", "unit": "points", "max": { "es": 0.015, "en": 0.015 } },
+    { "key": "heldoutDeletionsOverOffline", "label": "Held-out live deletions minus one-pass decode of the same excerpts", "unit": "points", "max": { "es": 0.01, "en": 0.01 } },
+    { "key": "publicErrorRate", "label": "Public error rate, live path", "unit": "percent", "max": { "es": 0.08, "en": 0.08 } },
+    { "key": "publicOverFullClip", "label": "Public live error minus full-clip decode of the same clips", "unit": "points", "max": { "es": 0.015, "en": 0.015 } },
+    { "key": "heldoutMajorShare", "label": "Held-out rows rated major or hallucinated, by a read-through against references", "unit": "percent", "max": { "es": 0.05, "en": 0.05 } },
+    { "key": "wrongLanguageShare", "label": "Rows given the wrong language in Auto, on single-language material", "unit": "percent", "max": { "es": 0.02, "en": 0.02 } },
+    { "key": "lockLagP90Ms", "label": "Lock lag p90, segment end to locked text, rolling only", "unit": "seconds", "rolling": true, "max": { "es": 3000, "en": 3000 } },
+    { "key": "firstTextP90Ms", "label": "Row start to first locked text p90, rolling only", "unit": "seconds", "rolling": true, "max": { "es": 8000, "en": 8000 } },
+    { "key": "nonspeechRows", "label": null, "unit": "count", "max": { "all": 0 } },
+    { "key": "stockOrRepetitiveRows", "label": null, "unit": "count", "max": { "es": 0, "en": 0 } }
+  ]
+}

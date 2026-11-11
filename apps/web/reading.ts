@@ -6,10 +6,11 @@ const Preferences = z.object({
   spacing: z.enum(['compact', 'comfortable', 'roomy']),
   width: z.enum(['narrow', 'wide', 'full']).default('wide'),
   details: z.boolean(),
+  pace: z.boolean().default(true),
 }).strict();
 export type ReadingPreferences = z.infer<typeof Preferences>;
 export const DEFAULT_READING: ReadingPreferences = {
-  translationSize: 28, originalSize: 18, spacing: 'comfortable', width: 'wide', details: false,
+  translationSize: 28, originalSize: 18, spacing: 'comfortable', width: 'wide', details: false, pace: true,
 };
 export const READING_KEY = 'captions.reading.v1';
 
@@ -36,6 +37,7 @@ export function setupReadingControls(preservePosition: (update: () => void) => v
   const spacing = document.getElementById('reading-spacing') as HTMLSelectElement;
   const details = document.getElementById('caption-details') as HTMLInputElement;
   const width = document.getElementById('reading-width') as HTMLSelectElement;
+  const pace = document.getElementById('reading-pace') as HTMLInputElement;
   const focus = document.getElementById('reading-focus') as HTMLButtonElement;
   const panel = document.getElementById('reading-settings') as HTMLDetailsElement;
   function apply() {
@@ -44,19 +46,22 @@ export function setupReadingControls(preservePosition: (update: () => void) => v
     document.body.dataset.spacing = preferences.spacing;
     document.body.dataset.readingWidth = preferences.width;
     document.body.dataset.captionDetails = String(preferences.details);
+    document.body.dataset.pace = String(preferences.pace);
     original.max = String(Math.min(32, preferences.translationSize - 4));
     original.value = String(preferences.originalSize); translation.value = String(preferences.translationSize);
     spacing.value = preferences.spacing; details.checked = preferences.details; width.value = preferences.width;
+    pace.checked = preferences.pace;
     document.getElementById('original-size-value')!.textContent = `${preferences.originalSize} px`;
     document.getElementById('translation-size-value')!.textContent = `${preferences.translationSize} px`;
   }
   function change() {
     preferences = readingPreferences({ originalSize: Number(original.value), translationSize: Number(translation.value),
-      spacing: spacing.value, details: details.checked, width: width.value });
+      spacing: spacing.value, details: details.checked, width: width.value, pace: pace.checked });
     preservePosition(apply); saveReading(preferences, storage);
   }
   original.addEventListener('input', change); translation.addEventListener('input', change);
   spacing.addEventListener('change', change); details.addEventListener('change', change); width.addEventListener('change', change);
+  pace.addEventListener('change', change);
   document.getElementById('reading-reset')!.addEventListener('click', () => {
     preferences = { ...DEFAULT_READING }; preservePosition(apply); saveReading(preferences, storage);
   });

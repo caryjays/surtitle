@@ -1,22 +1,35 @@
 import { z } from 'zod';
+import { Mode, Source } from './languages.ts';
 
 const ms = z.number().finite().min(0).max(120_000);
 const count = z.number().int().min(0).max(10_000);
-export const Boundary = z.enum(['silence', 'max-duration', 'flush', 'mode-change', 'pause', 'recalibration']);
+// length: rolling segmentation closed a row at sentence punctuation or its length limit while speech continued.
+export const Boundary = z.enum(['silence', 'max-duration', 'length', 'flush', 'mode-change', 'pause', 'recalibration']);
 export type Boundary = z.infer<typeof Boundary>;
 export const RecognitionQuality = z.object({
   speechGateRejected: z.boolean(), decodedSegments: count, droppedSegments: count,
-  noSpeechDrops: count, lowConfidenceDrops: count, repetitionDrops: count, invalidScoreDrops: count,
+  noSpeechDrops: count, lowConfidenceDrops: count, repetitionDrops: count, stockPhraseDrops: count, invalidScoreDrops: count,
   noSpeechMax: z.number().finite().min(0).max(1).nullable(),
   logprobMin: z.number().finite().min(-100).max(10).nullable(),
+  // Rolling Auto, before a row has a language: decodes outside the pair that the worker's retry placed in the pair, and
+  // decodes outside the pair that locked nothing.
+  pairRetries: count.optional(), otherLanguageDrops: count.optional(),
 }).strict();
 export const TurnMeasurement = z.object({
   boundary: Boundary.optional(), audioMs: ms.optional(), trailingQuietMs: ms.optional(),
+  // Input level of the turn's captured audio as a share of full scale, before any worker processing. In rolling mode,
+  // of the audio heard while the row was the open one.
+  inputRms: z.number().finite().min(0).max(1).optional(), inputPeak: z.number().finite().min(0).max(1).optional(),
   recognitionQueueMs: ms.optional(), recognitionInferenceMs: ms.optional(), commitToFinalMs: ms.optional(),
   recognitionLanguage: z.string().regex(/^(?:[a-z]{2,3}|unknown)$/).optional(),
   recognitionClipped: z.boolean().optional(), adapterRepetitionRejected: z.boolean().optional(),
   recognitionFailure: z.enum(['runtime', 'protocol', 'startup-timeout', 'inference-timeout', 'queue-expired']).optional(),
   quality: RecognitionQuality.optional(),
+  // Rolling segmentation only: decodes that fed the row, locks forced without agreement, row start to its
+  // first locked text, and the median time from a locked segment's end to its lock.
+  decodes: count.optional(), forcedLocks: count.optional(), firstTextMs: ms.optional(), lockLagMs: ms.optional(),
+  // Rolling only: from the end of the row's last speech to its final, the recognition part of speech-to-translation delay.
+  speechEndToFinalMs: ms.optional(),
 }).strict();
 export type TurnMeasurement = z.infer<typeof TurnMeasurement>;
 export const TranslationDiagnostic = z.object({
@@ -25,9 +38,9 @@ export const TranslationDiagnostic = z.object({
 }).strict();
 export type TranslationDiagnostic = z.infer<typeof TranslationDiagnostic>;
 export const TurnTrace = TurnMeasurement.extend({
-  sequence: z.number().int().nonnegative(), mode: z.enum(['auto', 'en-ja', 'ja-en']),
+  sequence: z.number().int().nonnegative(), mode: Mode,
   outcome: z.enum(['capturing', 'committed', 'rejected', 'empty', 'original', 'translating', 'ready', 'unresolved', 'failed', 'skipped', 'capture-failed']),
-  recognitionSource: z.enum(['en', 'ja', 'unknown']).optional(), controllerRepetitionRejected: z.boolean().optional(),
+  recognitionSource: Source.optional(), controllerRepetitionRejected: z.boolean().optional(),
   originalEndsInEllipsis: z.boolean().optional(), translationEndsInEllipsis: z.boolean().optional(),
   translationQueueMs: ms.optional(), translationMs: ms.optional(),
   translationResponse: TranslationDiagnostic.shape.response.optional(), outputTokenLimitReached: z.boolean().optional(),
@@ -35,6 +48,11 @@ export const TurnTrace = TurnMeasurement.extend({
   contextSequences: z.array(z.number().int().nonnegative()).max(4).optional(),
   contextMissingTranslations: z.number().int().min(0).max(4).optional(),
   contextClippedRows: z.number().int().min(0).max(4).optional(),
+  // Piece translation: each request for a locked piece of the row, in order. endMs: the row's locked audio at the cut;
+  // lagMs: from that audio's end to the request being ready; queueMs: ready to sent; firstTranslationMs: sent to the
+  // first translated text shown. The last piece's end is the row's audioMs.
+  pieces: z.array(z.object({ endMs: ms, lagMs: ms, queueMs: ms, firstTranslationMs: ms.optional(), translationMs: ms.optional(),
+    outcome: z.enum(['ready', 'unresolved', 'failed']).optional() }).strict()).max(32).optional(),
 }).strict();
 export type TurnTrace = z.infer<typeof TurnTrace>;
 

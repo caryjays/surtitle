@@ -12,7 +12,8 @@ import mlx_whisper
 from mlx_whisper.transcribe import ModelHolder
 import numpy as np
 from scipy.signal import resample_poly
-from quality import accepted_result, quality_metadata
+from languages import PROFILES
+from quality import PAIR_RETRY_LOGPROB, accepted_segments, pair_retry_language, quality_metadata, script_matches, segment_ends
 from speech_gate import SpeechGate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,20 +45,44 @@ class Engine:
             word_timestamps=False, fp16=True, initial_prompt=prompt,
         )
 
-    def transcribe(self, pcm24, language=None, prompt=None, *, speech_threshold=0.5, min_logprob=-1.0):
-        if language not in (None, 'en', 'ja') or not 4800 <= len(pcm24) <= 24_000 * 2 * 30 or len(pcm24) % 2:
+    def detect(self, audio):
+        """Whisper's language probabilities for 16 kHz audio."""
+        from mlx_whisper.audio import N_FRAMES, N_SAMPLES, log_mel_spectrogram, pad_or_trim
+        from mlx_whisper.decoding import detect_language
+        model = ModelHolder.get_model(str(self.path), mx.float16)
+        mel = pad_or_trim(log_mel_spectrogram(audio, n_mels=model.dims.n_mels, padding=N_SAMPLES), N_FRAMES, axis=-2)
+        _, probs = detect_language(model, mel.astype(mx.float16))
+        return probs[0] if isinstance(probs, list) else probs
+
+    def transcribe(self, pcm24, language=None, prompt=None, *, pair=None, speech_threshold=0.5, min_logprob=-1.0):
+        if (language is not None and language not in PROFILES) or not 4800 <= len(pcm24) <= 24_000 * 2 * 30 or len(pcm24) % 2:
             raise ValueError('Invalid local audio')
+        if pair is not None and (not isinstance(pair, (list, tuple)) or len(pair) != 2 or any(p not in PROFILES for p in pair)):
+            raise ValueError('Invalid language pair')
         if prompt is not None and (not isinstance(prompt, str) or len(prompt) > 1000):
             raise ValueError('Invalid vocabulary prompt')
         start = time.perf_counter()
         audio = np.frombuffer(pcm24, dtype='<i2').astype(np.float32) / 32768
         audio = resample_poly(audio, 2, 3).astype(np.float32)
         if not self.speech_gate.has_speech(audio, threshold=speech_threshold):
-            return {'text': '', 'rejected': True, 'language': language or 'unknown',
+            return {'text': '', 'rejected': True, 'language': language or 'unknown', 'segments': [],
                     'seconds': time.perf_counter() - start, 'quality': quality_metadata(True), 'clipped': False}
         result = self._decode(audio, language, prompt)
         mx.synchronize()
-        text, rejected, quality = accepted_result(result, min_logprob=min_logprob)
-        return {'text': text[:4000], 'rejected': rejected,
+        kept, rejected, quality = accepted_segments(result, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
+        if language is None and pair and kept and result.get('language') not in pair:
+            # Detected outside the session pair: misheard pair speech decodes again in the pair, third-language speech
+            # does not, and the adapter locks nothing from a decode outside the pair.
+            retry = pair_retry_language(self.detect(audio), pair)
+            if retry:
+                again = self._decode(audio, retry, prompt)
+                mx.synchronize()
+                kept2, rejected2, quality2 = accepted_segments(again, min_logprob=min_logprob, audio_seconds=len(audio) / 16_000)
+                confident = (quality2.get('logprobMin') if quality2.get('logprobMin') is not None else float('-inf')) >= PAIR_RETRY_LOGPROB
+                if kept2 and confident and script_matches(''.join(s['text'] for s in kept2), retry):
+                    result, kept, rejected, quality = {**again, 'language': retry}, kept2, rejected2, {**quality2, 'pairRetries': 1}
+        text = ''.join(s['text'] for s in kept).strip()
+        return {'text': text[:4000], 'rejected': rejected, 'segments': segment_ends(kept, len(audio) / 16),
                 'language': result.get('language', 'unknown'),
                 'seconds': time.perf_counter() - start, 'quality': quality, 'clipped': len(text) > 4000}
+

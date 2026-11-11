@@ -1,11 +1,13 @@
-import { connect, renderSegments } from './client.ts';
-import { visibleSegments } from './visibility.ts';
+import { connect } from './client.ts';
+import { audienceView, parseOverlayQuery } from './audience.ts';
 import type { Snapshot } from '../../packages/protocol/index.ts';
-const captions = document.querySelector<HTMLElement>('#captions')!;
+const view = audienceView(document.querySelector<HTMLElement>('#captions')!, document.querySelector<HTMLElement>('#roll')!);
+// Per-surface settings in the Browser Source URL: ?pace=off releases text as it locks, ?lines=1..8 sizes the window.
+view.configure(parseOverlayQuery(location.search));
 let state: Snapshot | undefined;
 let receivedAt = 0;
-function render() { renderSegments(captions, visibleSegments(state, receivedAt, Date.now())); }
+const render = () => view.render(state, receivedAt, Date.now());
 connect('overlay', snapshot => { state = snapshot; receivedAt = Date.now(); render(); }, connected => {
   if (!connected) { state = undefined; render(); }
 });
-setInterval(render, 500);
+setInterval(render, 100);

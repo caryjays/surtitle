@@ -8,12 +8,29 @@ import { z } from 'zod';
 import { Controller } from '../apps/service/controller.ts';
 import { createCaptionServer } from '../apps/service/server.ts';
 import { localTranscriberFactory } from '../packages/providers/local.ts';
-import type { TranslationInput } from '../packages/protocol/index.ts';
+import { LocalTranslator } from '../packages/providers/local-translator.ts';
+import { parsePair, type TranslationInput } from '../packages/protocol/index.ts';
 import { loadGlossary, resolveGlossaryPath } from '../apps/service/glossary.ts';
 
 async function main() {
-  const listening = process.argv.includes('--listen');
+  // --offline: the listen run with the real local translation model in place of the fake translator.
+  const offline = process.argv.includes('--offline');
+  const listening = process.argv.includes('--listen') || offline;
+  const rolling = process.argv.includes('--rolling');
+  // --pair en-es: the same run in another pair, with that language's first public gate clip in place of the Japanese one.
+  const at = process.argv.indexOf('--pair');
+  const pair = parsePair(at < 0 ? 'en-ja' : process.argv[at + 1] ?? '');
+  const other = pair.find(language => language !== 'en') ?? pair[1];
   const manifest = z.array(z.object({ id: z.string(), sha256: z.string() })).parse(JSON.parse(await readFile('benchmarks/fleurs.json', 'utf8')));
+  const clips = [{ path: '.local/fixtures/en_us-1675.wav', sha256: manifest.find(f => f.id === 'en_us-1675')?.sha256 }];
+  if (other === 'ja') clips.push({ path: '.local/fixtures/ja_jp-1828.wav', sha256: manifest.find(f => f.id === 'ja_jp-1828')?.sha256 });
+  else {
+    // The first clip of two sentences: a one-sentence clip can come back as one segment, which locks only when it closes.
+    const gate = z.object({ fixtures: z.array(z.object({ id: z.string(), sha256: z.string(), language: z.string(), reference: z.string() })) })
+      .parse(JSON.parse(await readFile(`benchmarks/gate-fleurs-${other}.json`, 'utf8'))).fixtures
+      .find(f => f.language === other && /[.!?] \S/.test(f.reference))!;
+    clips.push({ path: `.local/fixtures/gate/${gate.id}.wav`, sha256: gate.sha256 });
+  }
   const parts: Buffer[] = [Buffer.alloc(48_000 * 2 * 10)]; // Initialization silence, not a live latency measurement.
   if (listening) {
     // Non-speech above the old RMS threshold, then a clean pause. No recording.
@@ -24,9 +41,8 @@ async function main() {
     }
     parts.push(noise, Buffer.alloc(48_000 * 2 * 2));
   }
-  for (const id of ['en_us-1675', 'ja_jp-1828']) {
-    const path = `.local/fixtures/${id}.wav`;
-    assert.equal(createHash('sha256').update(await readFile(path)).digest('hex'), manifest.find(f => f.id === id)?.sha256);
+  for (const { path, sha256 } of clips) {
+    assert.equal(createHash('sha256').update(await readFile(path)).digest('hex'), sha256);
     const conversion = spawnSync('ffmpeg', ['-v', 'error', '-i', path, '-f', 's16le', '-ar', '48000', '-ac', '1', 'pipe:1'], { maxBuffer: 2_000_000 });
     assert.equal(conversion.status, 0); parts.push(conversion.stdout, Buffer.alloc(48_000 * 2 * 2));
   }
@@ -37,17 +53,27 @@ async function main() {
   const replayPath = resolve('.local/fixtures/browser-replay.wav'); await writeFile(replayPath, Buffer.concat([header, pcm]));
   const glossary = listening ? await loadGlossary((await resolveGlossaryPath()).path) : [];
   const requests: TranslationInput[] = [];
-  let partialSeen = false;
-  const controller = new Controller({ backend: listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
-    processing: listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null,
-    translator: listening ? { async translate(input) {
+  let partialSeen = false; let tailSeen = false;
+  const local = offline ? new LocalTranslator({ model: 'qwen3.5-4b-q4', pair }) : undefined;
+  if (local) await local.start();
+  const requestMs: number[] = [];
+  const controller = new Controller({ backend: offline ? 'Local transcription · translation local' : listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
+    processing: offline ? 'local-audio-local-text' : listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null, pair,
+    translator: local ? { async translate(input, signal, diagnostic) {
+      requests.push(input); const start = performance.now();
+      try { return await local.translate(input, signal, diagnostic); } finally { requestMs.push(Math.round(performance.now() - start)); }
+    } } : listening ? { async translate(input) {
       requests.push(input);
-      return input.sourceLanguage === 'ja' ? { source: 'ja', target: 'en', text: 'Japanese fixture translation (fake).' }
-        : { source: 'en', target: 'ja', text: '英語のテスト翻訳（フェイク）。' };
+      return input.sourceLanguage === other ? { source: other, target: 'en', text: 'Fixture translation into English (fake).' }
+        : { source: 'en', target: other, text: '英語のテスト翻訳（フェイク）。' };
     } } : null,
     transcriber: localTranscriberFactory({ model: 'turbo-q4', previewIntervalMs: listening ? 3000 : undefined,
-      calibrationMs: listening ? 1500 : undefined }) });
-  controller.subscribe(() => { if (controller.snapshot().segments.some(row => row.state === 'partial' && row.original)) partialSeen = true; });
+      calibrationMs: listening ? 1500 : undefined, ...(rolling ? { segmentation: 'rolling' as const } : {}) }) });
+  controller.subscribe(() => {
+    const rows = controller.snapshot().segments;
+    if (rows.some(row => row.state === 'partial' && row.original)) partialSeen = true;
+    if (rows.some(row => row.stable !== undefined && row.stable < row.original.length)) tailSeen = true;
+  });
   const app = await createCaptionServer({ controller, port: 0, webDir: 'dist/web', configured: true });
   let browser;
   try {
@@ -58,6 +84,8 @@ async function main() {
     const control = await context.newPage(); const overlay = await context.newPage();
     control.on('pageerror', () => errors.push('control')); overlay.on('pageerror', () => errors.push('overlay'));
     await overlay.addInitScript("Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: () => { throw new Error('Overlay capture prohibited'); } });");
+    // The audience overlay never shows unreleased text or an unlocked tail.
+    await overlay.addInitScript("window.restShown = false; setInterval(() => { if ([...document.querySelectorAll('.rest')].some(n => n.textContent)) window.restShown = true; }, 50);");
     await control.goto(app.origin + '/control'); await overlay.goto(app.origin + '/overlay');
     await control.getByRole('button', { name: 'Start microphone' }).click();
     await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('ACTIVE'), undefined, { timeout: 60_000 });
@@ -67,24 +95,40 @@ async function main() {
       assert.equal(requests[0]!.sourceLanguage, 'en');
     }
     await overlay.reload(); await overlay.waitForSelector('.original[lang="en"]');
-    await overlay.waitForSelector('.original[lang="ja"]', { timeout: 60_000 });
+    await overlay.waitForSelector(`.original[lang="${other}"]`, { timeout: 60_000 });
     if (listening) {
       await overlay.waitForSelector('.translation[lang="en"]', { timeout: 60_000 });
       assert(requests.some(request => request.sourceLanguage === 'en'));
-      assert(requests.some(request => request.sourceLanguage === 'ja'));
+      assert(requests.some(request => request.sourceLanguage === other));
       assert(requests.every(request => request.mode === 'auto'));
       assert(requests.some(request => request.context?.length));
-      assert.match(await control.locator('#processing').textContent() ?? '', /recent context/);
+      assert.match(await control.locator('#processing').textContent() ?? '', offline ? /no network requests/ : /recent context/);
+      if (offline) {
+        await overlay.waitForSelector(`.translation[lang="${other}"]`, { timeout: 60_000 });
+        const rows = controller.snapshot().segments.filter(row => row.state === 'ready');
+        assert(rows.some(row => row.target === other && (other === 'ja' ? /[\u3040-\u30ff\u4e00-\u9fff]/ : /[A-Za-z]{3}/).test(row.translation ?? '')), 'a translation out of English');
+        assert(rows.some(row => row.target === 'en' && /[A-Za-z]{3}/.test(row.translation ?? '')), 'an English translation');
+      }
     } else {
       assert.equal(await overlay.locator('.translation').count(), 0);
       assert.equal(await control.locator('#processing').textContent(), 'Audio stays on this Mac. Translation is OFF; original-language captions only.');
     }
     await control.getByRole('button', { name: 'Pause', exact: true }).click();
     await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('PAUSED'));
+    assert.equal(await overlay.evaluate(() => (window as unknown as { restShown: boolean }).restShown), false);
+    // English and Spanish clips of a sentence or two lock a whole sentence at a time, which closes the row, so an open row
+    // with a tail is not certain there; it is with the Japanese clip.
+    if (rolling && other === 'ja') assert(tailSeen, 'rolling rows carry an unlocked tail');
     assert.deepEqual(errors, []);
-    console.log(listening
+    if (rolling) console.log(`Rolling segmentation: unlocked tail observed: ${tailSeen}; none shown on the overlay.`);
+    if (offline) console.log(`Local translation requests (ms): ${requestMs.join(', ')}`);
+    if (other !== 'ja') console.log(`Pair ${pair.join('-')}: operator page title "${await control.locator('h1').textContent()}", lecture preset "${await control.locator('#lecture').textContent()}".`);
+    console.log(offline
+      ? other !== 'ja' ? `PASS: public clips in ${pair.join(' and ')} → real speech gate + MLX recognition → real local translation model in both directions; reload/pause. No network calls or real microphone.`
+      : 'PASS: public EN/JA → real speech gate + MLX recognition → real local translation model in both directions; reload/pause. No network calls or real microphone.'
+      : listening
       ? `PASS: non-speech prelude produces no translation; public EN/JA → real speech gate + MLX with previews → FAKE bidirectional translation/context; reload/pause. Provisional source observed: ${partialSeen}. No cloud calls or real microphone.`
       : 'PASS: public EN→JA prerecorded speech → Chrome AudioWorklet → local MLX → original-only overlay; reload/pause; no cloud calls or real microphone.');
-  } finally { await browser?.close(); await app.close(); await unlink(replayPath); }
+  } finally { await browser?.close(); await app.close(); local?.close(); await unlink(replayPath); }
 }
 void main().catch(() => { console.error('Local browser smoke failed. Check local setup and Chrome availability. Details suppressed.'); process.exitCode = 1; });

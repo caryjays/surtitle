@@ -40,7 +40,8 @@ def safe_turn(turn):
                 raise ValueError('Failure category')
         elif key == 'quality':
             expected = {'speechGateRejected', 'decodedSegments', 'droppedSegments', 'noSpeechDrops', 'lowConfidenceDrops',
-                        'repetitionDrops', 'invalidScoreDrops', 'noSpeechMax', 'logprobMin'}
+                        'repetitionDrops', 'stockPhraseDrops', 'invalidScoreDrops', 'noSpeechMax', 'logprobMin',
+                        'pairRetries', 'otherLanguageDrops'}
             if set(value) != expected or type(value['speechGateRejected']) is not bool:
                 raise ValueError('Quality schema')
             for field in expected - {'speechGateRejected', 'noSpeechMax', 'logprobMin'}:

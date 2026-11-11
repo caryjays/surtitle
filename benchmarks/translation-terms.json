@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "note": "Per public fixture: groups of acceptable spellings, at least one of which must appear in a correct translation. Matching is case-insensitive after NFKC normalization. Several groups test recovery from known recognition errors in the frozen cases.",
+  "terms": {
+    "en_us-1904": [["25"], ["30"]],
+    "en_us-1675": [["Sie", "ジー", "ズィー"]],
+    "en_us-1950": [["シントラ", "Sintra"], ["バイロン", "Byron"]],
+    "en_us-1728": [["キャベツ"], ["アルカリ"]],
+    "ja_jp-1828": [["hostile environment"]],
+    "ja_jp-1731": [["yacht", "sailboat", "sailing boat"]],
+    "ja_jp-1910": [["Parisian"], ["arrogant", "haughty", "overbearing", "insolent"]],
+    "ja_jp-1764": [["St. Peter", "Saint Peter", "St Peter"]],
+    "ja_lab-1834": [["Fatima", "Fátima"]],
+    "ja_lab-1813": [["Barcelona"], ["Catalan"]],
+    "ja_lab-1869": [["70", "seventy"], ["palate", "roof of"], ["escape"]],
+    "ja_lab-1744": [["Rossby"], ["magnetic"]],
+    "ja_lab-1771": [["festival"]],
+    "ja_lab-2003": [["Hong Kong"], ["Kowloon"]],
+    "ja_lab-1980": [["100%", "100 percent", "100 per cent"]],
+    "ja_lab-1822": [["Casablanca"], ["Morocc"], ["sultan"]]
+  }
+}

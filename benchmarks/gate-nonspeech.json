@@ -1,0 +1,315 @@
+{
+  "dataset": "MUSAN",
+  "license": "per file, see benchmarks/README.md",
+  "mirrorRevision": "3edcfdf89b56dbe6a395ff29f9c29489e03d1321",
+  "scope": "Language-gate non-speech set: every MUSAN free-sound file annotated as a background noise that the pinned mirror holds, the one applause recording, and the first three instrumental tracks of the original archive.",
+  "fixtures": [
+    {
+      "id": "noise-free-sound-0232",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0232.wav",
+      "sha256": "be147d201bc97d3456ada4b08806ca6aa6b133fedb80d1b96f7e3aca2083a764",
+      "seconds": 44.29,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0840",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0840.wav",
+      "sha256": "5f816c46d79351046e00cc04f8319dd6a7471e82df61cc592f31d7c424b4599a",
+      "seconds": 70.19,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0841",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0841.wav",
+      "sha256": "9e5e4724a7f88eeab4f3c7ef27732a4a191a63af6eea98a028976d68a2a4665f",
+      "seconds": 90.0,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0671",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0671.wav",
+      "sha256": "64fb9e181108a931758c73f72751f29c7b949024e430226c7dd84a9cc314be3e",
+      "seconds": 70.19,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0234",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0234.wav",
+      "sha256": "17d3b415c3bdcbb99841a2e5e7fcaee4779b7c889ac3639cdc6f7da211d3cccf",
+      "seconds": 75.02,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0248",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0248.wav",
+      "sha256": "5a3fa748d29bd80ddf2aa032b982ae36152e50fa328cda9dbeec395e8e022dd8",
+      "seconds": 60.3,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0030",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0030.wav",
+      "sha256": "ead234fde2621c274d6643d3b7db046609bf7ccaf22505e258cb2959601e4c8e",
+      "seconds": 73.01,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0031",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0031.wav",
+      "sha256": "c1ef7e24f73d15c31d49129d5d1c318b209908f2894941437ad8e8538b253bad",
+      "seconds": 35.47,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0050",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0050.wav",
+      "sha256": "8e84ad0d7a5a49a5f4b388100607175c68b73547e0ed76981c9297ef0a63864e",
+      "seconds": 4.13,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0263",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0263.wav",
+      "sha256": "0b33714f961401a1c8206020e43776f093e1daede48f40d3d9c73ba16eb4c449",
+      "seconds": 0.9,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0275",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0275.wav",
+      "sha256": "fcd58e02920e3510221b7944c66a411cb5cabd6d79ec5614e9a7b0b2a9100656",
+      "seconds": 12.1,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0370",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0370.wav",
+      "sha256": "7f4891d0e5e8ed20128eedab440dc41fd9c4af3f7b6b7b204abe04c36bcee379",
+      "seconds": 72.25,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0371",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0371.wav",
+      "sha256": "14c014907e0071c989729ac09c9d1362be4e33cb0491163e76aaee560884bf73",
+      "seconds": 21.28,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0430",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0430.wav",
+      "sha256": "eb6c911d0b668b70f3118d7d45e925dbc571c6b3acefa100a187c769e13ab621",
+      "seconds": 67.2,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0431",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0431.wav",
+      "sha256": "f44ad5ce289e5e610b15bf896b59495522c6a3eb87b9f11e13d08e5942996f41",
+      "seconds": 22.94,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0441",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0441.wav",
+      "sha256": "21cc1f2d18d0636e945b226a5a2141cfe1beb3ca40f8f5f5a54ac058a1a973d0",
+      "seconds": 45.57,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0667",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0667.wav",
+      "sha256": "1a0d931ccdd4391cfff8e5708bcd9f4032c65d97500f4e35976c2ec3cc7356a6",
+      "seconds": 13.76,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0758",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0758.wav",
+      "sha256": "1870a55f0b8e6061444e2d5962ccfdcf0bef166ad43bab307879d61c312a8bc0",
+      "seconds": 12.64,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0824",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0824.wav",
+      "sha256": "bf359661c220287d69021924cd4190e9cb939130999eb8a457abf1233144c49a",
+      "seconds": 33.12,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0110",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0110.wav",
+      "sha256": "281342aded8784e3fba2353ff9a74f0c59824aae51d155c5268697360dbcb485",
+      "seconds": 40.89,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0333",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0333.wav",
+      "sha256": "8a21d51509d730fb9a034a625e5e1a581899581621c34208399b91cf00143c72",
+      "seconds": 15.67,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0055",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0055.wav",
+      "sha256": "6723384a044f6a393bb3b82dba038f92ec16c378359ecfd984ca652de7934217",
+      "seconds": 40.1,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0059",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0059.wav",
+      "sha256": "959d2fd42d643ff0ebef61ac45a4e1b674512c87a3676e3014b416fb9226a264",
+      "seconds": 30.44,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0064",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0064.wav",
+      "sha256": "a1189d0c56eba46059cc18041e6bbeed67b05a144bd229f7f099dd068decf1d6",
+      "seconds": 100.13,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0086",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0086.wav",
+      "sha256": "cad689668dd4ec9cf626ac4e7d2f71c1193b80d9cfe7265b36750ad9caee743f",
+      "seconds": 51.69,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0145",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0145.wav",
+      "sha256": "26ef34e718c0f87bdec56b8d1cc9cf8624c8c87ad07eddfc86753f6b4162dba9",
+      "seconds": 2.91,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0184",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0184.wav",
+      "sha256": "0dbf22f9fe47112820bf783dc031a72f46772bb4fe7f170de4f493e6fc417295",
+      "seconds": 32.41,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0230",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0230.wav",
+      "sha256": "aece1ed77a64e5e3a60b86689b4e5f82a09c2dc90c8f86cfe02f83688572c5e6",
+      "seconds": 41.59,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0231",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0231.wav",
+      "sha256": "ab7dd2cd92ed230bb670a9b5a230d9ca8ba09eb00b49fbce17c4184a27e9e719",
+      "seconds": 22.33,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0280",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0280.wav",
+      "sha256": "cc29178095c4fefe768490821d707d195182c54a5e310d62d97deb1dc136e09b",
+      "seconds": 62.1,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0489",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0489.wav",
+      "sha256": "d69e85d07f9415a49d6c7c41e26aa250ecbb1208eebf3a31eafad1ac65c71079",
+      "seconds": 62.86,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0492",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0492.wav",
+      "sha256": "dddaa96920820dec1dd8ae1643750e00ed54c403c8124f0ddb1daa746c280c9e",
+      "seconds": 20.0,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0781",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0781.wav",
+      "sha256": "375bfbc03d0a30687aca3a3dd3f4a705ee26269b5d3c3627fd0924fa41caf0b9",
+      "seconds": 60.72,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-free-sound-0780",
+      "category": "background-noise",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/free-sound/noise-free-sound-0780.wav",
+      "sha256": "fd508435c4da5848bacfb303472ef96d628eff8a24df8d13105cd1848ff33347",
+      "seconds": 30.28,
+      "license": "public domain"
+    },
+    {
+      "id": "noise-sound-bible-0003",
+      "category": "applause",
+      "source": "https://huggingface.co/datasets/FluidInference/musan/resolve/3edcfdf89b56dbe6a395ff29f9c29489e03d1321/noise/sound-bible/noise-sound-bible-0003.wav",
+      "sha256": "fceb65fa2ad9de1c4282ad064679736bb395db9b02d325cd50b4125f083023a8",
+      "seconds": 6.56,
+      "license": "CC-BY-3.0"
+    },
+    {
+      "id": "music-fma-0001",
+      "category": "music",
+      "archive": "https://www.openslr.org/resources/17/musan.tar.gz",
+      "member": "musan/music/fma/music-fma-0001.wav",
+      "sha256": "ff51c346d1b8663ce83991dcfafd3b91ed5611ba4b7f33d5dfd01ee2c26e557b",
+      "seconds": 218.04,
+      "license": "CC-BY"
+    },
+    {
+      "id": "music-fma-0002",
+      "category": "music",
+      "archive": "https://www.openslr.org/resources/17/musan.tar.gz",
+      "member": "musan/music/fma/music-fma-0002.wav",
+      "sha256": "86e0ea8e63a2a2a07747cfe711e15a8d86c990a2a0035acdb426dc163bbbd320",
+      "seconds": 249.55,
+      "license": "CC-BY"
+    },
+    {
+      "id": "music-fma-0003",
+      "category": "music",
+      "archive": "https://www.openslr.org/resources/17/musan.tar.gz",
+      "member": "musan/music/fma/music-fma-0003.wav",
+      "sha256": "ebb2ef7dbdf7b42c602531529b328474c284557d7c755ef2ec57c7712b670d20",
+      "seconds": 324.78,
+      "license": "CC-BY"
+    }
+  ]
+}

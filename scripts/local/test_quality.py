@@ -1,6 +1,7 @@
 import math
 import unittest
-from quality import accepted_text, accepted_result, quality_metadata, repetitive
+from quality import (accepted_segments, accepted_text, accepted_result, pair_retry_language, quality_metadata, repetitive,
+                     script_matches, segment_ends)
 
 
 def segment(text, no_speech=0.01, logprob=-0.2):
@@ -76,5 +77,43 @@ class QualityTests(unittest.TestCase):
                     mixed = [segment('A valid fixture.'), *entries]
                     self.assertEqual(accepted_text({'segments': mixed}), previous(mixed))
 
+    def test_stock_sign_off_from_a_long_turn_is_rejected(self):
+        for text in ['ご視聴ありがとうございました', 'お疲れ様でした。', 'Thank you for watching!', ' Thank you. Thank you.']:
+            text_out, rejected, metrics = accepted_result({'segments': [segment(text)]}, audio_seconds=12)
+            self.assertEqual((text_out, rejected), ('', True))
+            self.assertEqual(metrics['stockPhraseDrops'], 1)
+            self.assertEqual(metrics['droppedSegments'], 1)
+
+    def test_stock_sign_off_said_for_real_survives(self):
+        # Short audio, unknown duration, or a sign-off inside real speech is kept.
+        for text, seconds in [('ご視聴ありがとうございました', 3), ('Thank you.', 5.9), ('Thank you.', None),
+                              ('今日はお疲れ様でした、また来週。', 12), ('Thank you for the question.', 12)]:
+            text_out, rejected, metrics = accepted_result({'segments': [segment(text)]}, audio_seconds=seconds)
+            self.assertEqual((text_out, rejected), (text, False))
+            self.assertEqual(metrics['stockPhraseDrops'], 0)
+
     def test_empty_decoder_output_is_not_invented(self):
         self.assertEqual(accepted_text({'text': 'ignored', 'segments': []}), ('', False))
+
+    def test_accepted_segments_keep_end_times_of_good_segments_only(self):
+        result = {'segments': [dict(segment('First part.'), end=2.4), dict(segment('noise', 0.95, -0.1), end=3.0),
+                               dict(segment(' Second part.'), end=5.1)]}
+        kept, rejected, _ = accepted_segments(result)
+        self.assertFalse(rejected)
+        self.assertEqual(kept, [{'text': 'First part.', 'end': 2.4}, {'text': ' Second part.', 'end': 5.1}])
+        self.assertEqual(accepted_result(result)[0], 'First part. Second part.')
+        self.assertEqual(accepted_segments({'segments': [dict(segment('Class, ' * 90), end=9.0)]})[:2], ([], True))
+        self.assertEqual(accepted_segments({'segments': [dict(segment('ご視聴ありがとうございました'), end=11.0)]},
+                                           audio_seconds=12)[:2], ([], True))
+
+    def test_segment_ends_are_clamped_ordered_and_bounded(self):
+        self.assertEqual(segment_ends([{'text': 'a', 'end': 1.234}, {'text': 'b', 'end': 10.4}], 10_000),
+                         [{'endMs': 1234, 'text': 'a'}, {'endMs': 10_000, 'text': 'b'}])
+        for bad in (None, float('nan'), float('inf'), -0.5, True):
+            self.assertEqual(segment_ends([{'text': 'a', 'end': 1.0}, {'text': 'b', 'end': bad}, {'text': 'c', 'end': 3.0}], 5000),
+                             [{'endMs': 1000, 'text': 'a'}])
+        self.assertEqual(segment_ends([{'text': 'a', 'end': 2.0}, {'text': 'b', 'end': 1.0}], 5000), [{'endMs': 2000, 'text': 'a'}])
+        self.assertEqual(len(segment_ends([{'text': 'a', 'end': i / 10} for i in range(100)], 30_000)), 64)
+        self.assertEqual(segment_ends([{'text': 'x' * 3000, 'end': 1.0}, {'text': 'y' * 1001, 'end': 2.0}], 5000),
+                         [{'endMs': 1000, 'text': 'x' * 3000}])
+

@@ -1,0 +1,193 @@
+{
+  "datasets": {
+    "Earnings-21": {
+      "revision": "c05ab6fd8b4b627d123c922a22a39e993dd37635",
+      "license": "CC-BY-SA-4.0",
+      "source": "https://github.com/revdotcom/speech-datasets"
+    },
+    "TEDxJP-10K": {
+      "revision": "6147e131b165219947861da957789097a713407c",
+      "license": "Apache-2.0 (repository); talks CC BY-NC-ND 4.0 per TED usage policy",
+      "source": "https://github.com/laboroai/TEDxJP-10K"
+    }
+  },
+  "scope": "Held-out gate set. English: Earnings-21 Eval-10 calls in metadata order; from each, whole speaker turns from the first turn starting at or after half the call, until at least 300 s; Rev references without fillers ['ah', 'er', 'hmm', 'mm', 'uh', 'um'], cut-off words or tags. Japanese: TEDxJP-10K talks in URL-list order of at least 480 s with manual Japanese subtitles; whole cues from the first starting at or after 60 s, until at least 360 s; subtitles cleaned as the TEDxJP-10K authors do, first and last cue excluded from scoring. At least 1800 s per language. Chosen before recognition.",
+  "fixtures": [
+    {
+      "id": "held-en-4320211",
+      "language": "en",
+      "source": "https://raw.githubusercontent.com/revdotcom/speech-datasets/c05ab6fd8b4b627d123c922a22a39e993dd37635/earnings21/media/4320211.mp3",
+      "sourceSha256": "b943ebeefc16ef41ab7744d3cc46e9aa5b95245d85fb00dddd6e34e408dd7191",
+      "company": "Monro Inc",
+      "startSeconds": 1669.908,
+      "endSeconds": 2041.776,
+      "turns": [
+        9,
+        19
+      ],
+      "seconds": 371.87,
+      "audioSha256": "399033cf7852859d3c757d22ab7822436818aa340be9b558421c631712154faa",
+      "referenceSha256": "a9cb54aed700d5c9fa575e9a8e4b05836a2907ac80b45fcf2e8f0f3ae1c07e3a"
+    },
+    {
+      "id": "held-en-4346818",
+      "language": "en",
+      "source": "https://raw.githubusercontent.com/revdotcom/speech-datasets/c05ab6fd8b4b627d123c922a22a39e993dd37635/earnings21/media/4346818.mp3",
+      "sourceSha256": "dab8405e23d24f6107bcb441bbb8636bc4d58d400aebfbb07bddee3453339347",
+      "company": "Ingersoll Rand",
+      "startSeconds": 2015.818,
+      "endSeconds": 2321.597,
+      "turns": [
+        11,
+        21
+      ],
+      "seconds": 305.78,
+      "audioSha256": "7e64cb86c32bce96f80b0c9f8f67e1a0feea5a186bd1da36b1b5aaf238de655c",
+      "referenceSha256": "ee36f9c5423d044f6101d75a3fb4820f34228c726bbb374b49eda59832893e8f"
+    },
+    {
+      "id": "held-en-4366522",
+      "language": "en",
+      "source": "https://raw.githubusercontent.com/revdotcom/speech-datasets/c05ab6fd8b4b627d123c922a22a39e993dd37635/earnings21/media/4366522.mp3",
+      "sourceSha256": "143073661592bc19ab931de1f5cf564adbfd2777c65837cacfa98572c6b1e09e",
+      "company": "Aldeyra Therapeutics Inc",
+      "startSeconds": 945.318,
+      "endSeconds": 1276.073,
+      "turns": [
+        5,
+        7
+      ],
+      "seconds": 330.76,
+      "audioSha256": "cfc8e8b9dea23111a0d3016d7b2fd83433739828c6305e7fd45330b85cf2057d",
+      "referenceSha256": "7629f25fcdba294568ad2d1536dd1a080115037e018f65b882b29e5c775123c4"
+    },
+    {
+      "id": "held-en-4366893",
+      "language": "en",
+      "source": "https://raw.githubusercontent.com/revdotcom/speech-datasets/c05ab6fd8b4b627d123c922a22a39e993dd37635/earnings21/media/4366893.mp3",
+      "sourceSha256": "9702e74c5f19b0ca2aa15125b82f5f6389bef991af768a05fe7cee9e9443a742",
+      "company": "Earthstone Energy Inc",
+      "startSeconds": 1188.504,
+      "endSeconds": 1505.987,
+      "turns": [
+        9,
+        18
+      ],
+      "seconds": 317.48,
+      "audioSha256": "aeeec7075bc6e3290e4bf7df04ecef48115afa1e91db446503a23d11bf90bbcc",
+      "referenceSha256": "8f3af9ad3fc5b8ea18c9f7da1364cb9b7ce705b2d8a7523949cbc20fbfaee456"
+    },
+    {
+      "id": "held-en-4367535",
+      "language": "en",
+      "source": "https://raw.githubusercontent.com/revdotcom/speech-datasets/c05ab6fd8b4b627d123c922a22a39e993dd37635/earnings21/media/4367535.mp3",
+      "sourceSha256": "6b1f150d30d443ad497bb6de72905b2ee781184ca4172eae086902c93e7831d3",
+      "company": "Affimed",
+      "startSeconds": 1589.859,
+      "endSeconds": 1932.59,
+      "turns": [
+        6,
+        10
+      ],
+      "seconds": 342.73,
+      "audioSha256": "55b91c344ffd7f5a51ba3d393231f5e8e8437fc86c24a0789cded3e0893794ac",
+      "referenceSha256": "6e4e21eb31d38859ce5d0ed4fc87a0f6ad50324588c7a132a3142aabbcecf5cf"
+    },
+    {
+      "id": "held-en-4383161",
+      "language": "en",
+      "source": "https://raw.githubusercontent.com/revdotcom/speech-datasets/c05ab6fd8b4b627d123c922a22a39e993dd37635/earnings21/media/4383161.mp3",
+      "sourceSha256": "53fe86fb1c3bfe7dd005c92036bb2b67597f4d8ae908ebe4648409c0f9fad8df",
+      "company": "Pilgrims Pride Corp",
+      "startSeconds": 1771.113,
+      "endSeconds": 2072.151,
+      "turns": [
+        6,
+        13
+      ],
+      "seconds": 301.04,
+      "audioSha256": "9f13dbb1f95390a87299d9536ddc9fa659c891a29f6c05dba65e8d210d17a5dd",
+      "referenceSha256": "6a6852de6248edeb53a0970572d892ad933067a6392ab1cb62e79c5f70d8dd0f"
+    },
+    {
+      "id": "held-ja--6K2nN9aWsg",
+      "language": "ja",
+      "source": "https://www.youtube.com/watch?v=-6K2nN9aWsg",
+      "subtitlesSha256": "e3cdd7782a9b9ca4d33aeb126c1cf40c72d279283d8918ace2240f0f601e969f",
+      "startSeconds": 59.634,
+      "endSeconds": 422.762,
+      "cues": [
+        15,
+        118
+      ],
+      "checkedSegments": 16,
+      "seconds": 363.13,
+      "audioSha256": "23a18557f7a2f4275c8923c8c9c6aff72dfdf6b6fe2bbc3932c13611d4dab8ce",
+      "referenceSha256": "eb624dcc12bdb7a01ad975294bc15d7f40f4deb7bc84be82061a7b4fba58f310"
+    },
+    {
+      "id": "held-ja-0KTVqevvEjo",
+      "language": "ja",
+      "source": "https://www.youtube.com/watch?v=0KTVqevvEjo",
+      "subtitlesSha256": "d7b86fb36d5bb59c4e5888fd8ef0a92ca497df4aeb51b5bdbf5294b7a3d085ea",
+      "startSeconds": 66.0,
+      "endSeconds": 427.829,
+      "cues": [
+        10,
+        96
+      ],
+      "checkedSegments": 13,
+      "seconds": 361.83,
+      "audioSha256": "397bb14994c4292c894a35e16a399049ab52a9c5a4c68fa080241703890fa288",
+      "referenceSha256": "cec13ece19ee251916f225259dae2f5b2095c5dfa12b9f79a411155dfb05d92b"
+    },
+    {
+      "id": "held-ja-0L8zz6v-3lw",
+      "language": "ja",
+      "source": "https://www.youtube.com/watch?v=0L8zz6v-3lw",
+      "subtitlesSha256": "ac134af2f4b7fbe9cd9400183ae6dd7925e0035dc8cf4028a3f21763540c41f4",
+      "startSeconds": 62.12,
+      "endSeconds": 425.299,
+      "cues": [
+        9,
+        87
+      ],
+      "checkedSegments": 15,
+      "seconds": 363.18,
+      "audioSha256": "ba80acfd0641ff611d4b236ed653bafa3934d40fb8c4058209ab65bdf52cc363",
+      "referenceSha256": "5b9251963f66badcda260c4386f464a06d5654864628ff13b954a801934d45a1"
+    },
+    {
+      "id": "held-ja-0SI8rms050Q",
+      "language": "ja",
+      "source": "https://www.youtube.com/watch?v=0SI8rms050Q",
+      "subtitlesSha256": "4e65b72b8046b6915a97fad5f188b4beb517ec2ea1174c59a0ccd96438f18869",
+      "startSeconds": 62.386,
+      "endSeconds": 425.024,
+      "cues": [
+        11,
+        95
+      ],
+      "checkedSegments": 14,
+      "seconds": 362.64,
+      "audioSha256": "6aca9bd579fd3d36ca4c8fdeaceae4d1950b75980cdc80aa3fd74ea2dc85174c",
+      "referenceSha256": "1485a28e33c67a52d9becefd59feded84eaa0e7e4f048e23ba4c8604ac754d79"
+    },
+    {
+      "id": "held-ja-0jJLyvNn_to",
+      "language": "ja",
+      "source": "https://www.youtube.com/watch?v=0jJLyvNn_to",
+      "subtitlesSha256": "c40de3d3a8a7934244ef31b3e241bbda5ef277444d1da3865398dd355238e3d4",
+      "startSeconds": 60.562,
+      "endSeconds": 421.638,
+      "cues": [
+        14,
+        156
+      ],
+      "checkedSegments": 23,
+      "seconds": 361.08,
+      "audioSha256": "0e6e9f213d99d23fe03590ee94ad09d6e2dff8af08174e095fed0a9fe4cebffa",
+      "referenceSha256": "79d3c3147468c4b8a5bfb9790f7ec3956f407c95fe2aa044c1b50e85124b1816"
+    }
+  ]
+}

@@ -16,7 +16,9 @@ export async function createCaptionServer(options: { controller: Controller; por
     && (websocket ? req.headers.origin === origin : (!req.headers.origin || req.headers.origin === origin))
     && req.headers['sec-fetch-site'] !== 'cross-site';
   const server = createServer((req, res) => {
-    const route = req.url ?? '/';
+    // Only the overlay takes a query: its display settings, such as ?lines=3&pace=off. Everything else matches exactly.
+    const [path = '/', query] = (req.url ?? '/').split('?', 2);
+    const route = path === '/overlay' && query !== undefined && /^[a-z0-9=&]{0,100}$/.test(query) ? path : req.url ?? '/';
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -66,6 +68,7 @@ export async function createCaptionServer(options: { controller: Controller; por
         if (++commands > 10) { ws.close(1008, 'Command limit'); return; }
         try {
           const command = Command.parse(JSON.parse(data.toString()));
+          if ('mode' in command && !options.controller.accepts(command.mode)) throw new Error('mode');
           switch (command.type) {
             case 'start':
               if (!options.configured) options.controller.fail('credentials');
@@ -78,6 +81,12 @@ export async function createCaptionServer(options: { controller: Controller; por
             case 'clear': void options.controller.clear(); break;
             case 'new-session': options.controller.newSession(); break;
             case 'capture-failed': options.controller.fail('capture'); break;
+            case 'set-segmentation': options.controller.setSegmentation(command.segmentation); break;
+            case 'set-translation': options.controller.setTranslation(command.enabled); break;
+            case 'set-pair':
+              if (!options.controller.offers(command.pair)) throw new Error('pair');
+              options.controller.setPair(command.pair);
+              break;
           }
         } catch { options.controller.fail('protocol'); ws.close(1008, 'Invalid command'); }
       });

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "note": "Eval-only edits to the live translator instructions in packages/providers/translation.ts. Each variant applies its replacements, then appends its text. truncation: true also sends the turn's truncated flags. Select with ~name on a candidate, for example anthropic:claude-haiku-5-5~repair.",
+  "variants": {
+    "repair": {
+      "replace": [["No tools, explanations, or invented speech.", "No tools, explanations, or invented speech; correcting a clearly misheard word is not invention."]],
+      "append": "The transcript is live speech recognition output and may contain misheard words, most often names, technical terms, file names, commands and loanwords. When the sentence, the preceding context or the glossary make the intended word clear, translate the intended word, not the misheard one. When they do not, keep the recognized word as spoken, transliterated if needed. Never replace an unclear word with a different tool, product, command or name that nothing in the input supports; an unclear word kept as spoken is better than a confident guess."
+    },
+    "cut": {
+      "append": "truncated.start true means the first word may be the tail of a word cut off at the turn boundary; truncated.end true means the last word may be cut off. Translate a cut-off word only as far as it is certain and mark the cut with an ellipsis (…); do not complete it by guessing.",
+      "truncation": true
+    },
+    "repair-cut": {
+      "replace": [["No tools, explanations, or invented speech.", "No tools, explanations, or invented speech; correcting a clearly misheard word is not invention."]],
+      "append": "The transcript is live speech recognition output and may contain misheard words, most often names, technical terms, file names, commands and loanwords. When the sentence, the preceding context or the glossary make the intended word clear, translate the intended word, not the misheard one. When they do not, keep the recognized word as spoken, transliterated if needed. Never replace an unclear word with a different tool, product, command or name that nothing in the input supports; an unclear word kept as spoken is better than a confident guess. truncated.start true means the first word may be the tail of a word cut off at the turn boundary; truncated.end true means the last word may be cut off. Translate a cut-off word only as far as it is certain and mark the cut with an ellipsis (…); do not complete it by guessing.",
+      "truncation": true
+    }
+  }
+}

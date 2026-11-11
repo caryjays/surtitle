@@ -20,7 +20,7 @@ test('turn traces preserve rejected/empty outcomes without retaining speech and 
   cb.onTurnDiagnostic?.('private-id', { boundary: 'max-duration', audioMs: 12000, trailingQuietMs: 0 });
   cb.onTurnDiagnostic?.('private-id', { recognitionLanguage: 'ru', recognitionInferenceMs: 301, recognitionQueueMs: 4,
     quality: { speechGateRejected: true, decodedSegments: 0, droppedSegments: 0, noSpeechDrops: 0,
-      lowConfidenceDrops: 0, repetitionDrops: 0, invalidScoreDrops: 0, noSpeechMax: null, logprobMin: null } });
+      lowConfidenceDrops: 0, repetitionDrops: 0, stockPhraseDrops: 0, invalidScoreDrops: 0, noSpeechMax: null, logprobMin: null } });
   cb.onEvent({ type: 'final', id: 'private-id', text: '', rejected: true, language: 'unknown' });
   assert.equal(f.controller.snapshot().segments.length, 0);
   const trace = f.controller.snapshot().turns[0]!;
@@ -84,7 +84,7 @@ test('old in-flight diagnostic callbacks cannot repopulate after clear or timeou
 });
 test('segment removal is explicit and attributed to a retained rejection trace', () => {
   const log = new DiagnosticLog(); log.start();
-  const snapshot = Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0,
+  const snapshot = Snapshot.parse({ type: 'snapshot', sessionId: '00000000-0000-4000-8000-000000000001', generation: 0, pair: ['en', 'ja'],
     revision: 1, capture: 'active', mode: 'auto', processing: 'local-only', backend: 'fake', error: null,
     queue: 0, running: 0, sentAt: 1, segments: [{ id: 'test', sequence: 3, original: '', translation: null,
       state: 'partial', source: 'unknown', target: 'unknown', final: false, finalizedAt: null, translationMs: null }],

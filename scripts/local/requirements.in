@@ -2,3 +2,5 @@
 mlx-whisper==0.4.3
 # Also used directly by the pinned CPU Silero speech detector (already in lock).
 torch==2.14.1
+# Local translation worker.
+mlx-lm==0.32.2

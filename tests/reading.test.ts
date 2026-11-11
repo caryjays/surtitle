@@ -34,5 +34,5 @@ test('only a bounded whitelist of display preferences is written to browser stor
   let saved = '';
   saveReading({ ...DEFAULT_READING, translationSize: 32 }, { setItem(key, value) { assert.equal(key, READING_KEY); saved = value; } });
   assert.deepEqual(JSON.parse(saved), { ...DEFAULT_READING, translationSize: 32 });
-  assert.deepEqual(Object.keys(JSON.parse(saved)).sort(), ['details', 'originalSize', 'spacing', 'translationSize', 'width']);
+  assert.deepEqual(Object.keys(JSON.parse(saved)).sort(), ['details', 'originalSize', 'pace', 'spacing', 'translationSize', 'width']);
 });

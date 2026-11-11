@@ -1,8 +1,9 @@
 import { connect } from './client.ts';
 import { setupHistory } from './history.ts';
-import { setupDiagnostics } from './diagnostics.ts';
+import { captureSettings, describeCapture, setupDiagnostics, type CaptureSettings } from './diagnostics.ts';
 import { setupReadingControls } from './reading.ts';
-import { HEARTBEAT_TIMEOUT_MS, Mode, type Snapshot } from '../../packages/protocol/index.ts';
+import { renderHealth, setupAudience, setupSession, setupShortcuts } from './console.ts';
+import { HEARTBEAT_TIMEOUT_MS, Mode, PROFILES, direction, type Pair, type Snapshot } from '../../packages/protocol/index.ts';
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const device = element<HTMLSelectElement>('device');
 const mode = element<HTMLSelectElement>('mode');
@@ -15,6 +16,7 @@ const newSession = element<HTMLButtonElement>('new');
 const refresh = element<HTMLButtonElement>('refresh');
 const calibrate = element<HTMLButtonElement>('calibrate');
 const autoGain = element<HTMLInputElement>('auto-gain');
+const pairSelect = element<HTMLSelectElement>('pair');
 const conversation = element<HTMLButtonElement>('conversation');
 const lecture = element<HTMLButtonElement>('lecture');
 const follow = element<HTMLInputElement>('follow');
@@ -31,11 +33,47 @@ let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let source: MediaStreamAudioSourceNode | undefined;
 let captureToken = 0;
+// What the browser applied to the open microphone track.
+let applied: CaptureSettings | undefined;
 let selectedMode = Mode.parse(mode.value);
+// The page ships labelled for en-ja; the first snapshot relabels it for the service's pair.
+// The pair lists English first, so Lecture reads the other language into English.
+let pair: Pair = ['en', 'ja'];
+const name = (code: string) => PROFILES[code]?.name ?? code.toUpperCase();
+const lectureMode = () => `${pair[1]}-${pair[0]}`;
+function labelPair(next: Pair) {
+  if (next[0] === pair[0] && next[1] === pair[1]) return;
+  pair = next;
+  const [a, b] = pair.map(code => code.toUpperCase()) as [string, string];
+  conversation.textContent = `Conversation · ${a} ↔ ${b}`;
+  lecture.textContent = `Lecture · ${name(pair[1])} → ${name(pair[0])}`;
+  const heading = `${name(pair[0])} ↔ ${name(pair[1])}`;
+  document.title = `${heading} companion`;
+  const title = document.querySelector('.brand h1'); if (title) title.textContent = heading;
+  mode.replaceChildren(...[['auto', `Auto · ${a} ↔ ${b}`], [`${pair[0]}-${pair[1]}`, `${a} → ${b}`], [`${pair[1]}-${pair[0]}`, `${b} → ${a}`]]
+    .map(([value, text]) => new Option(text, value)));
+  if (![...mode.options].some(option => option.value === selectedMode)) selectedMode = 'auto';
+  mode.value = selectedMode;
+}
+// The pairs the service offers; hidden when it offers only the one in use.
+function offerPairs(snapshot: Snapshot) {
+  const offered = snapshot.pairs.map(p => p.join('-')), current = snapshot.pair.join('-');
+  if ([...pairSelect.options].map(option => option.value).join() !== offered.join()) {
+    pairSelect.replaceChildren(...snapshot.pairs.map(p => new Option(`${name(p[0])} ↔ ${name(p[1])}`, p.join('-'))));
+  }
+  pairSelect.value = current;
+  element('pair-row').hidden = element('pair-note').hidden = offered.length < 2;
+}
+function describe(value: Mode, listening: boolean) {
+  const forced = direction(value);
+  if (!forced) return listening ? `Listening · automatic ${pair[0].toUpperCase()} ↔ ${pair[1].toUpperCase()}.` : `Automatic ${pair[0].toUpperCase()} ↔ ${pair[1].toUpperCase()}`;
+  const route = `${name(forced.source)} → ${name(forced.target)}`;
+  return listening ? `Listening · ${route}.` : `${route} · ${name(forced.source)} recognition forced`;
+}
 const errors = {
   credentials: 'Provider credential missing. Run pnpm preflight:listen; configure the key locally, then restart the service.',
   transcription: 'Local recognition unavailable. Check local setup and processing load, then Start again. Original text is retained.',
-  translation: 'Translation failed or timed out. Original text is preserved; later turns continue. Check model access and network.',
+  translation: 'Translation failed or timed out. Original text is preserved; later turns continue. Check model access and network, or the local translation model.',
   'translation-auth': 'Translation authorization failed. Check the API project/key and model access locally, then restart. Original text is preserved.',
   'translation-rate-limit': 'Translation quota or rate limit reached. Check billing/limits. No automatic retries; Pause to stop new requests.',
   'translation-network': 'Translation network unavailable. Original captions continue locally. Later turns try normally; old failures are not replayed.',
@@ -53,17 +91,18 @@ function buttons() {
   clear.disabled = !connected;
   newSession.disabled = !connected;
   mode.disabled = !connected || transitioning;
+  pairSelect.disabled = !connected || active;
   conversation.disabled = lecture.disabled = !connected || transitioning;
   device.disabled = active; refresh.disabled = active; autoGain.disabled = active;
   calibrate.disabled = !connected || state?.capture !== 'active' || !state.gate || state.gate.state === 'calibrating';
   conversation.setAttribute('aria-pressed', String(selectedMode === 'auto'));
-  lecture.setAttribute('aria-pressed', String(selectedMode === 'ja-en'));
+  lecture.setAttribute('aria-pressed', String(selectedMode === lectureMode()));
 }
 function stopLocal() {
   captureToken++; busy = false;
   node?.disconnect(); source?.disconnect(); node = undefined; source = undefined;
   stream?.getTracks().forEach(track => { track.onended = null; track.stop(); }); stream = undefined;
-  void context?.close().catch(() => {}); context = undefined; meter.value = 0;
+  void context?.close().catch(() => {}); context = undefined; meter.value = 0; applied = undefined;
   element('capture-input').textContent = 'Input: microphone off. Reload resets selection to System default; verify the named input.';
   buttons();
 }
@@ -79,22 +118,37 @@ function preserveReadingPosition(update: () => void) {
 }
 setupReadingControls(preserveReadingPosition);
 const renderHistory = setupHistory(preserveReadingPosition);
-const diagnostics = setupDiagnostics(() => ({ snapshot: state, online: connected }));
+const diagnostics = setupDiagnostics(() => ({ snapshot: state, online: connected, ...(applied ? { capture: applied } : {}) }));
+const audience = setupAudience();
+// The audience preview paces text as an overlay does; diagnostics record when it released each row, never the text.
+function renderAudience(snapshot: Snapshot | undefined, receivedAt: number) {
+  const { rows, paced } = audience(snapshot, receivedAt);
+  if (snapshot) diagnostics.display(rows, paced);
+}
+const pill = element('state-pill');
+const renderSession = setupSession(command => send(command));
+function renderConsole(snapshot: Snapshot | undefined) {
+  const capture = !connected ? 'disconnected' : snapshot?.capture ?? 'connecting';
+  if (pill.dataset.capture !== capture) { pill.dataset.capture = capture; pill.textContent = capture.toUpperCase(); }
+  renderSession(snapshot, connected); renderHealth(snapshot, connected);
+}
 const connection = connect('control', snapshot => {
-  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot);
-  element('active-direction').textContent = `Direction: ${snapshot.mode === 'auto' ? 'Automatic EN ↔ JA' : snapshot.mode === 'ja-en' ? 'Japanese → English · Japanese recognition forced' : 'English → Japanese · English recognition forced'}`;
+  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair); offerPairs(snapshot);
+  element('active-direction').textContent = `Direction: ${describe(snapshot.mode, false)}`;
   // Paused selection remains local until Start; active changes are acknowledged by snapshots.
   if (['active', 'connecting', 'stopping'].includes(snapshot.capture)) {
     selectedMode = snapshot.mode; mode.value = snapshot.mode;
   }
   element('processing').textContent = {
     'local-only': 'Audio stays on this Mac. Translation is OFF; original-language captions only.',
+    'local-audio-local-text': 'Audio and text stay on this Mac · local translation, no network requests.',
     'local-audio-cloud-text': 'Audio stays on this Mac · text and recent context sent to paid cloud translation.',
     'cloud-audio-and-text': 'Audio and text are processed in the cloud; provider retention policies apply.',
     'cloud-audio-only': 'Audio is processed in the cloud. Translation is OFF; provider retention policies apply.',
   }[snapshot.processing];
-  status.textContent = `${snapshot.capture.toUpperCase()} · ${snapshot.backend} · queued ${snapshot.queue} · translating ${snapshot.running}${snapshot.rejected ? ` · filtered ${snapshot.rejected} suspect turns` : ''}`;
+  status.textContent = `${snapshot.capture.toUpperCase()} · ${snapshot.backend} · queued ${snapshot.queue} · translating ${snapshot.running}${snapshot.rejected ? ` · filtered ${snapshot.rejected} suspect turns` : ''}${snapshot.restarts ? ` · recognition restarted ${snapshot.restarts}×` : ''}`;
   element('gate-advice').hidden = !snapshot.gate || snapshot.gate.state === 'calibrating' || snapshot.gate.threshold < 0.03;
+  element('gate-masked').hidden = !snapshot.gate?.masked;
   element('gate-status').textContent = snapshot.gate
     ? `Noise gate: ${snapshot.gate.state} · level ${snapshot.gate.level.toFixed(4)} · threshold ${snapshot.gate.threshold.toFixed(4)}${snapshot.gate.threshold > 0.1 ? ' · High ambient level: move closer to the speaker or adjust input gain and recalibrate.' : ''}`
     : 'Noise gate diagnostics appear while listening.';
@@ -104,15 +158,17 @@ const connection = connect('control', snapshot => {
   element('activity').textContent = snapshot.capture === 'active'
     ? snapshot.gate?.state === 'calibrating' ? `Stay quiet · room must also be quiet · calibrating room noise (${(snapshot.gate.remainingMs / 1000).toFixed(1)} s). Speak when Listening appears.`
       : pending ? 'Speech detected · building original text; translation follows finalization.'
-      : snapshot.running ? 'Translating · microphone still listening.' : snapshot.mode === 'auto' ? 'Listening · automatic EN ↔ JA.' : snapshot.mode === 'ja-en' ? 'Listening · Japanese → English.' : 'Listening · English → Japanese.'
-    : snapshot.capture === 'connecting' ? 'Warming recognition · stay quiet through the room-noise calibration before speaking.'
+      : snapshot.running ? 'Translating · microphone still listening.' : describe(snapshot.mode, true)
+    : snapshot.capture === 'connecting' ? snapshot.restarting ? 'Recognition stopped and is restarting on its own · speech is not captioned until Listening returns. Finished text is kept.'
+      : 'Warming recognition · stay quiet through the room-noise calibration before speaking.'
       : snapshot.capture === 'stopping' ? 'Finishing the last turn…' : 'Microphone is off. Recent text remains until Clear or a new Start.';
-  renderHistory(snapshot); buttons();
+  renderHistory(snapshot); renderAudience(snapshot, lastState); renderConsole(snapshot); buttons();
 }, online => {
   connected = online; diagnostics.connection(online);
   if (!online) { stopLocal(); state = undefined; status.textContent = 'Disconnected — microphone stopped. Close any other control tab, or check the service.'; }
-  buttons();
+  renderAudience(state, lastState); renderConsole(state); buttons();
 });
+setInterval(() => renderAudience(state, lastState), 100);
 function send(command: Parameters<typeof diagnostics.command>[0]) {
   diagnostics.command(command); connection.send(command);
 }
@@ -121,13 +177,17 @@ void fetch('/health').then(response => response.json()).then((health: unknown) =
     configured = false; error.textContent = errors.credentials; buttons();
   }
 }).catch(() => { /* WebSocket status remains authoritative for connection health. */ });
+pairSelect.onchange = () => {
+  const next = pairSelect.value.split('-');
+  if (next.length === 2 && !pairSelect.disabled) send({ type: 'set-pair', pair: [next[0]!, next[1]!] });
+};
 function changeMode(value: string) {
   selectedMode = Mode.parse(value); mode.value = selectedMode;
   if (state?.capture === 'active') send({ type: 'set-mode', mode: selectedMode });
   buttons();
 }
 conversation.onclick = () => changeMode('auto');
-lecture.onclick = () => changeMode('ja-en');
+lecture.onclick = () => changeMode(lectureMode());
 mode.onchange = () => changeMode(mode.value);
 function latest() { follow.checked = true; captions.scrollTop = captions.scrollHeight; }
 element('latest').onclick = latest;
@@ -159,8 +219,10 @@ start.onclick = async () => {
     }, video: false });
     if (token !== captureToken || !connected) { media.getTracks().forEach(t => t.stop()); return; }
     stream = media;
-    const inputName = media.getAudioTracks()[0]?.label;
-    element('capture-input').textContent = `Actual input: ${inputName || 'Unnamed browser input — verify microphone settings'}${device.value ? '' : ' · selected via System default'}`;
+    const track = media.getAudioTracks()[0];
+    const inputName = track?.label;
+    applied = captureSettings(track?.getSettings()); diagnostics.capture(applied);
+    element('capture-input').textContent = `Actual input: ${inputName || 'Unnamed browser input — verify microphone settings'}${device.value ? '' : ' · selected via System default'} · applied: ${describeCapture(applied)}`;
     await audioContext.audioWorklet.addModule('/worklet.js');
     if (token !== captureToken) return;
     source = audioContext.createMediaStreamSource(media);
@@ -198,3 +260,13 @@ setInterval(() => {
     stopLocal(); send({ type: 'capture-failed' }); error.textContent = 'Service heartbeat lost. Microphone stopped.';
   }
 }, 1000);
+setupShortcuts({
+  s: () => { if (!start.disabled) start.click(); else if (!pause.disabled) pause.click(); },
+  t: () => { if (!flush.disabled) flush.click(); },
+  1: () => { if (!mode.disabled) changeMode('auto'); },
+  2: () => { if (!mode.disabled) changeMode(lectureMode()); },
+  3: () => { if (!mode.disabled) changeMode(`${pair[0]}-${pair[1]}`); },
+  r: () => element('reading-focus').click(),
+  l: latest,
+  '/': () => element('history-search').focus(),
+});

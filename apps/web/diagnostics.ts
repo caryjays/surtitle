@@ -1,10 +1,36 @@
+import { z } from 'zod';
 import { Command, Snapshot, TurnTrace, type Segment } from '../../packages/protocol/index.ts';
 
 export const DIAGNOSTIC_LIMIT = 5000;
 const SAMPLE_MS = 2000;
 type ControlCommand = ReturnType<typeof Command.parse>;
+const DISPLAY_STAGES = ['original-first', 'original-all', 'translation-first', 'translation-all'] as const;
+type DisplayStage = typeof DISPLAY_STAGES[number];
+// A row as a pacer shows it; only whether each part is empty is read.
+type DisplayedRow = Pick<Segment, 'sequence' | 'final' | 'state' | 'original' | 'translation'> & { originalRest: string; translationRest: string };
+// What the browser applied to the microphone track, which can differ from what was requested. null: not reported.
+// Deliberately no device label, device ID or group ID.
+const CaptureSettings = z.object({
+  echoCancellation: z.boolean().nullable(), noiseSuppression: z.boolean().nullable(), autoGainControl: z.boolean().nullable(),
+  sampleRate: z.number().int().min(1).max(768_000).nullable(), channelCount: z.number().int().min(1).max(64).nullable(),
+}).strict();
+export type CaptureSettings = z.infer<typeof CaptureSettings>;
+export function captureSettings(settings: unknown): CaptureSettings {
+  const value = (typeof settings === 'object' && settings !== null ? settings : {}) as Record<string, unknown>;
+  const pick = <T>(schema: z.ZodType<T>, key: string) => { const parsed = schema.safeParse(value[key]); return parsed.success ? parsed.data : null; };
+  return { echoCancellation: pick(CaptureSettings.shape.echoCancellation.unwrap(), 'echoCancellation'),
+    noiseSuppression: pick(CaptureSettings.shape.noiseSuppression.unwrap(), 'noiseSuppression'),
+    autoGainControl: pick(CaptureSettings.shape.autoGainControl.unwrap(), 'autoGainControl'),
+    sampleRate: pick(CaptureSettings.shape.sampleRate.unwrap(), 'sampleRate'),
+    channelCount: pick(CaptureSettings.shape.channelCount.unwrap(), 'channelCount') };
+}
+export function describeCapture(settings: CaptureSettings) {
+  const flag = (name: string, value: boolean | null) => `${name} ${value === null ? 'not reported' : value ? 'on' : 'off'}`;
+  return [flag('echo cancellation', settings.echoCancellation), flag('noise suppression', settings.noiseSuppression),
+    flag('automatic gain', settings.autoGainControl), ...(settings.sampleRate ? [`${settings.sampleRate} Hz`] : [])].join(' · ');
+}
 
-type Health = Pick<Snapshot, 'capture' | 'processing' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate'>;
+type Health = Pick<Snapshot, 'capture' | 'processing' | 'pair' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate' | 'restarts'>;
 type Row = Pick<Segment, 'sequence' | 'final' | 'state' | 'source' | 'target' | 'translationMs'> & {
   originalChars: number; translationChars: number; scriptLetters: { latin: number; kana: number; han: number; other: number };
 };
@@ -12,6 +38,9 @@ type Event = { atMs: number } & (
   { type: 'started' | 'stopped' }
   | { type: 'mark'; visibleSequences: number[] }
   | { type: 'connection'; online: boolean }
+  | { type: 'capture'; settings: CaptureSettings }
+  // When the console's audience preview, paced as an overlay is, first released a row's text and finished releasing it.
+  | { type: 'display'; session: number; generation: number; sequence: number; stage: DisplayStage; paced: boolean }
   | { type: 'command'; command: ControlCommand }
   | { type: 'health'; session: number; generation: number; health: Health }
   | { type: 'segment'; session: number; generation: number; baseline: boolean; sinceFirstObservedMs: number; row: Row }
@@ -46,6 +75,9 @@ export class DiagnosticLog {
   private rows = new Map<string, { signature: string; metadata: string; firstSeen: number; scannedAt: number; sequence: number }>();
   private turns = new Map<number, string>();
   private serviceTelemetry = false;
+  private displayed = new Map<number, Set<DisplayStage>>();
+  private displayGeneration = -1;
+  private displayBaseline = true;
   constructor(private readonly now = Date.now) {}
   get hasTurnTelemetry() { return this.serviceTelemetry; }
   get status() { return { collecting: this.collecting, count: this.events.length, dropped: this.dropped }; }
@@ -58,6 +90,7 @@ export class DiagnosticLog {
     if (this.collecting) return;
     this.collecting = true; this.startedAt ??= this.now(); this.baseline = true;
     this.rows.clear(); this.turns.clear(); this.lastHealth = ''; this.lastSample = -Infinity;
+    this.displayed.clear(); this.displayBaseline = true;
     this.add({ type: 'started', atMs: this.now() });
   }
   stop() { if (this.collecting) this.add({ type: 'stopped', atMs: this.now() }); this.collecting = false; }
@@ -67,6 +100,10 @@ export class DiagnosticLog {
     this.identity = ''; this.sessionId = ''; this.session = 0;
   }
   connection(online: boolean) { this.add({ type: 'connection', atMs: this.now(), online }); }
+  capture(input: unknown) {
+    const parsed = CaptureSettings.safeParse(input);
+    if (parsed.success) this.add({ type: 'capture', atMs: this.now(), settings: parsed.data });
+  }
   command(input: unknown) {
     if (!this.collecting) return;
     const parsed = Command.safeParse(input);
@@ -75,6 +112,28 @@ export class DiagnosticLog {
   mark(sequences: unknown = []) {
     const parsed = TurnTrace.shape.sequence.array().max(60).safeParse(sequences);
     if (parsed.success) this.add({ type: 'mark', atMs: this.now(), visibleSequences: parsed.data });
+  }
+  // Called with the audience preview's rows after each render. Text is inspected for emptiness only and never kept.
+  // A final row's original is all released once none of it waits; a translation, once the row is ready and none waits.
+  display(rows: DisplayedRow[], paced: boolean) {
+    if (!this.collecting || !this.sessionId) return;
+    const generation = this.displayGeneration;
+    const live = new Set<number>();
+    for (const row of rows) {
+      live.add(row.sequence);
+      let stages = this.displayed.get(row.sequence);
+      if (!stages) { stages = new Set(); this.displayed.set(row.sequence, stages); }
+      const reached: Record<DisplayStage, boolean> = {
+        'original-first': Boolean(row.original), 'original-all': row.final && Boolean(row.original) && !row.originalRest,
+        'translation-first': Boolean(row.translation), 'translation-all': row.state === 'ready' && Boolean(row.translation) && !row.translationRest };
+      for (const stage of DISPLAY_STAGES) if (reached[stage] && !stages.has(stage)) {
+        stages.add(stage);
+        // Text already on screen when collection starts has no release time.
+        if (!this.displayBaseline) this.add({ type: 'display', atMs: this.now(), session: this.session, generation, sequence: row.sequence, stage, paced });
+      }
+    }
+    for (const sequence of this.displayed.keys()) if (!live.has(sequence)) this.displayed.delete(sequence);
+    this.displayBaseline = false;
   }
   observe(input: unknown) {
     if (!this.collecting) return;
@@ -91,13 +150,14 @@ export class DiagnosticLog {
     const identity = `${snapshot.sessionId}:${snapshot.generation}`;
     if (identity !== this.identity) {
       this.rows.clear(); this.turns.clear(); this.lastHealth = ''; this.identity = identity;
+      this.displayed.clear(); this.displayGeneration = snapshot.generation;
     }
     // Deliberate allowlist: no backend strings, model names, IDs, text, provider bodies, device labels or URLs.
-    const health: Health = { capture: snapshot.capture, processing: snapshot.processing, mode: snapshot.mode,
-      error: snapshot.error, queue: snapshot.queue, running: snapshot.running, rejected: snapshot.rejected,
+    const health: Health = { capture: snapshot.capture, processing: snapshot.processing, pair: [...snapshot.pair], mode: snapshot.mode,
+      error: snapshot.error, queue: snapshot.queue, running: snapshot.running, rejected: snapshot.rejected, restarts: snapshot.restarts,
       gate: snapshot.gate ? { state: snapshot.gate.state, level: snapshot.gate.level,
-        threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs } : null };
-    const signature = JSON.stringify({ ...health, gate: health.gate?.state ?? null });
+        threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs, ...(snapshot.gate.masked ? { masked: true as const } : {}) } : null };
+    const signature = JSON.stringify({ ...health, gate: health.gate ? [health.gate.state, health.gate.masked ?? false] : null });
     if (signature !== this.lastHealth || atMs - this.lastSample >= SAMPLE_MS) {
       this.add({ type: 'health', atMs, session: this.session, generation: snapshot.generation, health });
       this.lastHealth = signature; this.lastSample = atMs;
@@ -146,7 +206,7 @@ export class DiagnosticLog {
   }
 }
 
-export function setupDiagnostics(current: () => { snapshot?: Snapshot; online: boolean }) {
+export function setupDiagnostics(current: () => { snapshot?: Snapshot; online: boolean; capture?: CaptureSettings }) {
   const log = new DiagnosticLog();
   const toggle = document.getElementById('diagnostic-toggle') as HTMLButtonElement;
   const download = document.getElementById('diagnostic-download') as HTMLButtonElement;
@@ -163,8 +223,8 @@ export function setupDiagnostics(current: () => { snapshot?: Snapshot; online: b
   toggle.onclick = () => {
     if (log.status.collecting) log.stop();
     else {
-      log.start(); const { snapshot, online } = current();
-      log.connection(online); if (snapshot) log.observeSnapshot(snapshot);
+      log.start(); const { snapshot, online, capture } = current();
+      log.connection(online); if (capture) log.capture(capture); if (snapshot) log.observeSnapshot(snapshot);
     }
     update();
   };
@@ -186,6 +246,9 @@ export function setupDiagnostics(current: () => { snapshot?: Snapshot; online: b
   return {
     observe(snapshot: Snapshot) { log.observeSnapshot(snapshot); update(); },
     connection(online: boolean) { log.connection(online); update(); },
+    capture(settings: CaptureSettings) { log.capture(settings); update(); },
+    // Runs on every render; the status line changes only when an event is added.
+    display(rows: DisplayedRow[], paced: boolean) { const before = log.status.count; log.display(rows, paced); if (log.status.count !== before) update(); },
     command(command: ControlCommand) { log.command(command); update(); },
   };
 }

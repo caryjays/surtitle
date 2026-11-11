@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { Controller } from '../apps/service/controller.ts';
 import { createCaptionServer } from '../apps/service/server.ts';
-import type { Mode, TranslationInput } from '../packages/protocol/index.ts';
+import { offeredPairs, type Mode, type TranslationInput } from '../packages/protocol/index.ts';
 
 // Synthetic microphone + fake providers only. No .env, keys, retention, or paid calls.
 let totalFrames = 0; let opened = 0; let closed = 0; let flushes = 0; let calibrations = 0;
 const requests: TranslationInput[] = []; const modes: Mode[] = [];
-const controller = new Controller({ backend: 'Synthetic smoke test', processing: 'local-audio-cloud-text', glossary: [], sessionLimitMs: null,
+const controller = new Controller({ pairs: offeredPairs(), backend: 'Synthetic smoke test', processing: 'local-audio-cloud-text', glossary: [], sessionLimitMs: null, segmentation: 'turns',
   transcriber: options => {
     const stream = ++opened; let frames = 0; let turn = 0; let mode = options.mode; let quietFrames = 30;
     const gate = () => options.onGate?.({ state: quietFrames ? 'calibrating' : 'quiet', level: 0.01, threshold: quietFrames ? 0.025 : 0.04, remainingMs: quietFrames * 50 });
@@ -52,7 +52,7 @@ try {
   const overlay = await context.newPage(); overlay.on('pageerror', () => errors.push('overlay'));
   await overlay.addInitScript("Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: () => { throw new Error('Overlay attempted microphone capture'); } });");
   await control.goto(app.origin + '/control'); await overlay.goto(app.origin + '/overlay');
-  assert.equal(await control.locator('#auto-gain').isChecked(), false);
+  assert.equal(await control.locator('#auto-gain').isChecked(), true);
   await control.locator('#diagnostic-log > summary').click();
   assert.equal(await control.locator('#diagnostic-indicator').textContent(), 'OFF');
   assert.equal(await control.locator('#diagnostic-download').isDisabled(), true);
@@ -81,9 +81,12 @@ try {
   await control.locator('#reading-width').selectOption('narrow');
   assert.equal(await control.locator('.translation').first().evaluate(node => getComputedStyle(node).fontSize), '18px');
   assert.equal(await control.locator('.original').first().evaluate(node => getComputedStyle(node).fontSize), '14px');
-  assert.equal(await control.locator('main').evaluate(node => node.clientWidth), 860);
+  assert(await control.locator('main').evaluate(node => node.clientWidth) <= 860);
   await control.getByRole('button', { name: 'Reading focus', exact: true }).click();
   assert.equal(await control.locator('#reading-settings').isVisible(), true);
+  // Reading focus folds the operator sidebar away and the narrow column takes its full width.
+  assert.equal(await control.locator('.sidebar').isVisible(), false);
+  assert.equal(await control.locator('main').evaluate(node => node.clientWidth), 860);
   await control.getByRole('button', { name: 'Exit reading focus', exact: true }).click();
   await control.locator('#reading-settings > summary').click();
   await control.getByRole('button', { name: 'Reset display', exact: true }).click();
@@ -119,7 +122,7 @@ try {
   assert.equal(await control.locator('#layout-preview').isDisabled(), true);
   assert.equal(await control.locator('[data-id^="layout-preview-"]').count(), 0);
   await overlay.waitForSelector('.translation[lang="ja"]');
-  assert.match(await control.locator('#capture-input').textContent() ?? '', /^Actual input:/);
+  assert.match(await control.locator('#capture-input').textContent() ?? '', /^Actual input:.* · applied: echo cancellation .* · noise suppression .* · automatic gain /);
   assert.equal(await control.locator('#gate-advice').isVisible(), true);
   assert(totalFrames >= 10);
   assert.equal(await overlay.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
@@ -176,12 +179,58 @@ try {
   await control.getByRole('button', { name: 'Conversation · EN ↔ JA', exact: true }).click();
   await control.waitForFunction(() => document.querySelector('#conversation')?.getAttribute('aria-pressed') === 'true');
   assert.equal(controller.snapshot().mode, 'auto'); assert.equal(opened, 1);
+  // Console: the audience view mirrors the overlay, and the overlay settings build the Browser Source URL.
+  await control.waitForSelector('#audience-roll .translation');
+  assert.equal(await control.locator('#audience-roll .rest').evaluateAll(nodes => nodes.filter(n => n.textContent).length), 0);
+  await control.locator('#overlay-panel > summary').click();
+  await control.locator('#overlay-lines').selectOption('3');
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3`);
+  await control.locator('#overlay-pace').uncheck();
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3&pace=off`);
+  assert.equal(await control.locator('#audience .stage-captions').evaluate(node => getComputedStyle(node).getPropertyValue('--overlay-lines').trim()), '3');
+  await control.locator('#overlay-early').uncheck();
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay?lines=3&pace=off&early=off`);
+  await control.locator('#overlay-early').check();
+  await control.locator('#overlay-lines').selectOption('4'); await control.locator('#overlay-pace').check();
+  assert.equal(await control.locator('#overlay-url').inputValue(), `${app.origin}/overlay`);
+  await control.locator('#overlay-panel > summary').click();
+  // Segmentation is shown but locked while capturing; translation switches off and on without a restart.
+  assert.equal(await control.locator('#segmentation').isVisible(), true);
+  assert.equal(await control.locator('input[name="segmentation"][value="turns"]').isChecked(), true);
+  assert.equal(await control.locator('input[name="segmentation"][value="rolling"]').isDisabled(), true);
+  await control.locator('#translation-toggle').uncheck();
+  await control.waitForFunction(() => document.getElementById('processing')!.textContent!.includes('Translation is OFF'));
+  assert.equal(controller.snapshot().translation.enabled, false);
+  await control.locator('#translation-toggle').check();
+  await control.waitForFunction(() => document.getElementById('processing')!.textContent!.includes('paid cloud translation'));
+  // Shortcuts act only outside text fields; destructive commands have none.
+  await control.locator('#captions').focus();
+  const flushed = flushes;
+  await control.keyboard.press('t'); await control.waitForTimeout(100);
+  assert.equal(flushes, flushed + 1);
+  await control.locator('#history-search').focus(); await control.keyboard.press('t'); await control.waitForTimeout(100);
+  assert.equal(flushes, flushed + 1); assert.equal(await control.locator('#history-search').inputValue(), 't');
+  await control.locator('#history-search').fill(''); await control.locator('#captions').focus();
+  await control.keyboard.press('2');
+  await control.waitForFunction(() => document.querySelector('#lecture')?.getAttribute('aria-pressed') === 'true');
+  await control.keyboard.press('1');
+  await control.waitForFunction(() => document.querySelector('#conversation')?.getAttribute('aria-pressed') === 'true');
+  assert.equal(controller.snapshot().mode, 'auto'); assert.equal(opened, 1);
+  await control.keyboard.press('?');
+  assert.equal(await control.locator('#shortcuts').isVisible(), true);
+  await control.getByRole('button', { name: 'Close', exact: true }).click();
+  assert.equal(await control.locator('#shortcuts').isVisible(), false);
+  await control.locator('#health-panel > summary').click();
+  assert.match(await control.locator('#health').textContent() ?? '', /Captureactive/);
+  await control.locator('#health-panel > summary').click();
+  assert.equal(await control.locator('#state-pill').textContent(), 'ACTIVE');
   await control.locator('#diagnostics > summary').click();
-  const beforeCalibration = controller.snapshot().generation;
+  const beforeCalibration = controller.snapshot();
   await control.getByRole('button', { name: 'Recalibrate room noise', exact: true }).click();
   await control.waitForFunction(() => document.getElementById('activity')!.textContent!.startsWith('Stay quiet'));
   assert.equal(calibrations, 1); assert.equal(opened, 1);
-  assert(controller.snapshot().generation > beforeCalibration); assert.equal(controller.snapshot().segments.length, 0);
+  assert.equal(controller.snapshot().generation, beforeCalibration.generation);
+  assert.deepEqual(controller.snapshot().segments.map(row => row.id), beforeCalibration.segments.filter(row => row.final).map(row => row.id));
   await control.locator('#diagnostics > summary').click();
   await overlay.waitForSelector('.translation');
   const beforeReload = totalFrames;
@@ -195,7 +244,14 @@ try {
   await control.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('PAUSED'));
   const stopped = totalFrames; await control.waitForTimeout(200); assert.equal(totalFrames, stopped);
   assert.match(await control.locator('#capture-input').textContent() ?? '', /microphone off/);
-  // Heartbeats/health samples must not rewrite caption DOM or force reading-position layout work.
+  // Paused, segmentation can change; it applies at the next Start.
+  await control.locator('input[name="segmentation"][value="rolling"]').check();
+  for (let i = 0; i < 50 && controller.snapshot().segmentation !== 'rolling'; i++) await control.waitForTimeout(20);
+  assert.equal(controller.snapshot().segmentation, 'rolling');
+  assert.equal(await control.locator('#state-pill').textContent(), 'PAUSED');
+  await control.locator('input[name="segmentation"][value="turns"]').check();
+  // Paced text finishes releasing; after that, heartbeats/health samples must not rewrite caption DOM or force reading-position layout work.
+  await control.waitForFunction(() => [...document.querySelectorAll('#captions .rest')].every(node => !node.textContent));
   await control.evaluate(() => {
     const state = window as unknown as { captionMutations: number; captionObserver: MutationObserver };
     state.captionMutations = 0;
@@ -225,6 +281,9 @@ try {
   assert(report.events.some((event: any) => event.type === 'health' && event.health.mode === 'ja-en'));
   assert(report.events.some((event: any) => event.type === 'segment' && event.row.state === 'ready'));
   assert(report.events.some((event: any) => event.type === 'command' && event.command.type === 'pause'));
+  const captured = report.events.find((event: any) => event.type === 'capture');
+  assert(captured && Object.keys(captured.settings).sort().join() === 'autoGainControl,channelCount,echoCancellation,noiseSuppression,sampleRate');
+  for (const stage of ['original-all', 'translation-first', 'translation-all']) assert(report.events.some((event: any) => event.type === 'display' && event.stage === stage), stage);
   assert(!json.includes('Hello from the synthetic microphone.'));
   assert(!json.includes('合成マイクからこんにちは。'));
   assert(!json.includes('layout-preview-')); assert(!json.includes('Synthetic smoke test'));
@@ -237,6 +296,56 @@ try {
   await control.locator('#diagnostics > summary').click();
   await control.getByRole('button', { name: 'New session' }).click();
   await overlay.waitForFunction(() => document.querySelectorAll('#captions article').length === 0);
+  // The overlay window follows the translation being read: short rows that arrive while a long translation is still being
+  // released wait below the window instead of pushing it out. Snapshots here come from a mocked socket, not the service.
+  const rollup = await context.newPage(); rollup.on('pageerror', () => errors.push('rollup'));
+  let feed: { send(message: string): void } | undefined;
+  await rollup.routeWebSocket(/\/ws\/overlay$/, socket => { feed = socket; });
+  await rollup.setViewportSize({ width: 1920, height: 1080 });
+  await rollup.goto(app.origin + '/overlay');
+  for (let i = 0; i < 100 && !feed; i++) await rollup.waitForTimeout(20);
+  assert(feed);
+  const words = (count: number) => Array.from({ length: count }, (_, i) => `word${i}`).join(' ');
+  const base = controller.snapshot();
+  const rollRow = (sequence: number, original: string, translation: string | null) => ({ id: `roll-${sequence}`, sequence, original, final: true,
+    translation, source: 'ja', target: 'en', state: translation ? 'ready' : 'pending', finalizedAt: Date.now(), translationMs: translation ? 5 : null });
+  const send = (generation: number, segments: unknown[]) => feed!.send(JSON.stringify({ ...base, generation, capture: 'active',
+    translation: { available: true, enabled: true }, segments, turns: [], sentAt: Date.now() }));
+  send(1, [rollRow(0, words(30), null)]);
+  await rollup.waitForSelector('article[data-id="roll-0"]');
+  send(1, [rollRow(0, words(30), words(60)), rollRow(1, 'Left.', null), rollRow(2, 'Or right.', null), rollRow(3, 'Left or right.', null)]);
+  await rollup.waitForFunction(() => document.querySelector('article[data-id="roll-3"][data-waiting]'));
+  await rollup.waitForTimeout(400);
+  const reading = await rollup.evaluate(() => {
+    const frame = document.getElementById('captions')!.getBoundingClientRect();
+    const text = document.querySelector('article[data-id="roll-0"] .translation')!.getBoundingClientRect();
+    return { inside: text.bottom <= frame.bottom + 1 && text.bottom - 40 >= frame.top, released: document.querySelector('article[data-id="roll-0"] .translation')!.textContent!.length,
+      waiting: [...document.querySelectorAll<HTMLElement>('article[data-waiting]')].map(node => node.dataset.id) };
+  });
+  assert(reading.inside, 'the translation being released stays in the window');
+  assert(reading.released > 0 && reading.released < words(60).length, 'the translation is still being released');
+  assert(reading.waiting.includes('roll-3'));
+  // Once nothing is left to release, the window returns to its bottom anchor and every row shows.
+  send(2, [rollRow(0, words(30), words(60)), rollRow(1, 'Left.', 'L'), rollRow(2, 'Or right.', 'R'), rollRow(3, 'Left or right.', 'LR')]);
+  await rollup.waitForFunction(() => document.querySelectorAll('article').length === 4 && !document.querySelector('article[data-waiting]'));
+  await rollup.waitForTimeout(400);
+  assert(await rollup.evaluate(() => {
+    const frame = document.getElementById('captions')!.getBoundingClientRect();
+    return Math.abs(document.querySelector('article[data-id="roll-3"]')!.getBoundingClientRect().bottom - frame.bottom) <= 1;
+  }));
+  // A partial row: the overlay shows its agreed text early, unless its URL asks for locked text only.
+  const partialRow = { id: 'roll-9', sequence: 9, original: 'one two three four', final: false, translation: null, source: 'unknown', target: 'unknown',
+    state: 'partial', finalizedAt: null, translationMs: null, stable: 3, agreed: 13 };
+  send(3, [partialRow]);
+  await rollup.waitForSelector('article[data-id="roll-9"]');
+  assert.equal(await rollup.locator('article[data-id="roll-9"] .original').textContent(), 'one two three');
+  feed = undefined; await rollup.goto(app.origin + '/overlay?early=off');
+  for (let i = 0; i < 100 && !feed; i++) await rollup.waitForTimeout(20);
+  assert(feed);
+  send(3, [partialRow]);
+  await rollup.waitForSelector('article[data-id="roll-9"]');
+  assert.equal(await rollup.locator('article[data-id="roll-9"] .original').textContent(), 'one');
+  await rollup.close();
   assert.deepEqual(errors, []);
   await control.close();
   // A denied microphone must fail visibly, not leave capture looking active.
@@ -246,5 +355,18 @@ try {
   await denied.getByRole('button', { name: 'Start microphone' }).click();
   await denied.waitForFunction(() => document.getElementById('status')!.textContent!.startsWith('FAILED'));
   assert.equal(controller.snapshot().error, 'capture');
+  // With capture off, the pair selector switches the session's pair and the page relabels itself; and back.
+  // The page that owns control now; a second control tab would be disconnected.
+  const pairs = denied; const pairErrors: string[] = []; pairs.on('pageerror', () => pairErrors.push('control'));
+  await pairs.waitForFunction(() => !(document.getElementById('pair') as HTMLSelectElement).disabled && !document.getElementById('pair-row')!.hidden);
+  await pairs.locator('#pair').selectOption('en-es');
+  await pairs.waitForFunction(() => document.querySelector('.brand h1')!.textContent === 'English ↔ Spanish');
+  assert.equal(await pairs.locator('#lecture').textContent(), 'Lecture · Spanish → English');
+  assert.deepEqual(await pairs.locator('#mode option').evaluateAll(options => options.map(option => (option as HTMLOptionElement).value)), ['auto', 'en-es', 'es-en']);
+  assert.deepEqual(controller.snapshot().pair, ['en', 'es']);
+  await pairs.locator('#pair').selectOption('en-ja');
+  await pairs.waitForFunction(() => document.querySelector('.brand h1')!.textContent === 'English ↔ Japanese');
+  assert.deepEqual(controller.snapshot().pair, ['en', 'ja']);
+  assert.deepEqual(pairErrors, []);
   console.log('PASS: continuous EN/JA/JA conversation, lecture switch without capture restart, long fictional preview/search/order, reader sizing/width/scroll anchors, reading history, quiet calibration/recalibration, opt-in content-free diagnostic download, overlay reload, clear/pause and denied mic. Fake providers only; no paid calls or recordings.');
 } finally { await browser?.close(); await app.close(); }

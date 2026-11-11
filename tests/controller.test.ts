@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { harness, tick, ja, en } from './helpers.ts';
+import { Controller } from '../apps/service/controller.ts';
 import { Command, MAX_SEGMENTS, Snapshot, Translation, TranslationInput } from '../packages/protocol/index.ts';
 import { TranslationFailure } from '../packages/providers/types.ts';
 
@@ -53,6 +54,25 @@ test('clear aborts translations and upstream, old callbacks cannot repaint; new 
   assert(h.controller.snapshot().generation > before.generation);
   h.final('new'); h.requests[1]!.result.resolve(ja); await tick();
   assert.equal(h.controller.snapshot().segments[0]!.id, 'new');
+});
+test('the pair changes only while capture is off, among the offered pairs, and starts a new session in Auto', async t => {
+  const h = harness({ pairs: [['en', 'ja'], ['en', 'es']] }); t.after(() => h.controller.dispose());
+  assert.deepEqual(h.controller.snapshot().pairs, [['en', 'es'], ['en', 'ja']]);
+  await h.controller.start('ja-en'); h.final('a');
+  const before = h.controller.snapshot();
+  h.controller.setPair(['en', 'es']);
+  assert.deepEqual(h.controller.snapshot().pair, ['en', 'ja'], 'ignored while capturing');
+  await h.controller.pause();
+  h.controller.setPair(['en', 'zh' as never]);
+  assert.deepEqual(h.controller.snapshot().pair, ['en', 'ja'], 'a pair that is not offered is ignored');
+  h.controller.setPair(['en', 'es']);
+  const after = h.controller.snapshot(); Snapshot.parse(after);
+  assert.deepEqual([after.pair, after.mode, after.capture, after.segments.length], [['en', 'es'], 'auto', 'paused', 0]);
+  assert.notEqual(after.sessionId, before.sessionId);
+  assert.deepEqual(h.translatorPairs, [['en', 'es']]);
+  assert(h.controller.accepts('es-en') && !h.controller.accepts('ja-en'));
+  await h.controller.start('auto'); h.final('b', 'Hola');
+  assert.deepEqual(h.streams.at(-1)!.pair, ['en', 'es']);
 });
 test('new session rejects prior work; pause flushes and leaves finalized originals', async t => {
   const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto'); h.final('a');
@@ -134,6 +154,38 @@ test('translation context is bounded, immutable, preceding-only and reset by cle
   assert.equal(h.requests.at(-1)!.input.context!.length, 4);
   await h.controller.clear(); h.final('fresh'); assert.deepEqual(h.requests.at(-1)!.input.context, []);
 });
+test('streamed translation text shows while pending, never as context, and a failure or wrong direction clears it', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('a');
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こん' });
+  assert.deepEqual([h.controller.snapshot().segments[0]!.state, h.controller.snapshot().segments[0]!.translation], ['pending', 'こん']);
+  h.final('b');
+  // The next request's context does not carry the unfinished translation.
+  assert.equal(h.requests[1]!.input.context![0]!.translation, null);
+  assert.equal(h.controller.snapshot().turns[1]!.contextMissingTranslations, 1);
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こん'.repeat(40) });
+  assert.equal(h.controller.snapshot().segments[0]!.translation, 'こん');
+  h.requests[0]!.result.resolve(ja); await tick();
+  assert.equal(h.controller.snapshot().segments[0]!.translation, ja.text);
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'late' });
+  assert.equal(h.controller.snapshot().segments[0]!.translation, ja.text);
+  // A failure after streamed text keeps only the original.
+  h.requests[1]!.partial({ source: 'en', target: 'ja', text: 'こん' });
+  h.requests[1]!.result.reject(new Error('cut off')); await tick();
+  assert.deepEqual([h.controller.snapshot().segments[1]!.state, h.controller.snapshot().segments[1]!.translation], ['failed', null]);
+  Snapshot.parse(h.controller.snapshot());
+  // A forced direction shows nothing streamed the wrong way, nor an unresolved reply.
+  const forced = harness(); t.after(() => forced.controller.dispose()); await forced.controller.start('en-ja'); forced.final('c');
+  forced.requests[0]!.partial({ source: 'ja', target: 'en', text: 'Hel' });
+  forced.requests[0]!.partial({ source: 'unknown', target: 'unknown', text: 'x' });
+  assert.equal(forced.controller.snapshot().segments[0]!.translation, null);
+  // Clear invalidates a request that keeps streaming.
+  forced.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こ' });
+  assert.equal(forced.controller.snapshot().segments[0]!.translation, 'こ');
+  await forced.controller.clear();
+  forced.requests[0]!.partial({ source: 'en', target: 'ja', text: 'こん' });
+  assert.equal(forced.controller.snapshot().segments.length, 0);
+});
 test('out-of-order finals never use later speech as translation context', async t => {
   const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
   h.begin('first'); h.begin('second');
@@ -185,12 +237,125 @@ test('model-rejected non-speech does not translate even when text is not repetit
   assert.equal(h.requests.length, 0); assert.equal(h.controller.snapshot().segments.length, 0);
   assert.equal(h.controller.snapshot().rejected, 1);
 });
-test('recalibration cancels old translations/context without restarting capture', async t => {
-  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto'); h.final('old');
+test('a rejected row of uncaptioned speech stays as a marker, never translated or context', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.begin('spanish'); h.streams[0]!.emit({ type: 'final', id: 'spanish', text: '', rejected: true, uncaptioned: 'language' });
+  const [marker] = h.controller.snapshot().segments;
+  assert.deepEqual([marker!.original, marker!.final, marker!.state, marker!.uncaptioned, marker!.translation], ['', true, 'original', 'language', null]);
+  assert.equal(h.requests.length, 0); assert.equal(h.controller.snapshot().rejected, 1);
+  h.final('real'); assert.deepEqual(h.requests[0]!.input.context, []);
+});
+test('recalibration keeps finalized rows, cancels pending translations and context, and drops open rows without restarting capture', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('done'); h.requests[0]!.result.resolve(ja); await tick();
+  h.final('pending'); h.requests[1]!.partial({ source: 'en', target: 'ja', text: 'こん' }); h.begin('open');
+  assert.equal(h.controller.snapshot().segments[1]!.translation, 'こん');
   const before = h.controller.snapshot(); h.controller.calibrate();
   assert.equal(h.streams.length, 1); assert.equal(h.streams[0]!.closed, false); assert.equal(h.streams[0]!.calibrations, 1);
-  assert(h.requests[0]!.signal.aborted); assert.equal(h.controller.snapshot().sessionId, before.sessionId);
-  assert(h.controller.snapshot().generation > before.generation); assert.equal(h.controller.snapshot().gate?.state, 'calibrating');
-  h.requests[0]!.result.resolve(ja); await tick(); assert.deepEqual(h.controller.snapshot().segments, []);
-  h.final('fresh'); assert.deepEqual(h.requests[1]!.input.context, []);
+  assert(h.requests[1]!.signal.aborted); assert.equal(h.controller.snapshot().sessionId, before.sessionId);
+  assert.equal(h.controller.snapshot().generation, before.generation); assert.equal(h.controller.snapshot().gate?.state, 'calibrating');
+  h.requests[1]!.result.resolve(ja); h.streams[0]!.emit({ type: 'final', id: 'open', text: 'late' }); await tick();
+  const after = h.controller.snapshot();
+  assert.deepEqual(after.segments.map(row => [row.id, row.state, row.translation]), [['done', 'ready', ja.text], ['pending', 'skipped', null]]);
+  assert.deepEqual(after.turns.map(turn => turn.outcome), ['ready', 'skipped']);
+  assert.equal(after.queue, 0); assert.equal(after.running, 0);
+  h.final('fresh'); assert.deepEqual(h.requests[2]!.input.context, []);
+  h.requests[2]!.result.resolve(ja); await tick();
+  h.final('next'); assert.deepEqual(h.requests[3]!.input.context!.map(row => row.translation), [ja.text]);
+});
+test('segmentation switches only while capture is off and applies from the next Start', async t => {
+  const h = harness({ segmentation: 'turns' }); t.after(() => h.controller.dispose());
+  assert.equal(h.controller.snapshot().segmentation, 'turns');
+  h.controller.setSegmentation('rolling');
+  await h.controller.start('auto');
+  assert.equal(h.streams[0]!.segmentation, 'rolling');
+  h.controller.setSegmentation('turns');
+  assert.equal(h.controller.snapshot().segmentation, 'rolling', 'refused while capturing');
+  await h.controller.pause(); h.controller.setSegmentation('turns'); await h.controller.start('auto');
+  assert.equal(h.streams[1]!.segmentation, 'turns');
+  // A recognizer without the choice reports none and ignores the command.
+  const fixed = harness(); t.after(() => fixed.controller.dispose());
+  fixed.controller.setSegmentation('rolling');
+  assert.equal(fixed.controller.snapshot().segmentation, null);
+  await fixed.controller.start('auto'); assert.equal(fixed.streams[0]!.segmentation, undefined);
+  Snapshot.parse(h.controller.snapshot());
+});
+test('translation can be switched off and on per session; off drops queued requests and keeps originals', async t => {
+  const h = harness({ processing: 'local-audio-cloud-text' }); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  assert.deepEqual(h.controller.snapshot().translation, { available: true, enabled: true });
+  h.final('a'); h.final('b'); h.final('c'); // two run, one waits in the queue
+  assert.equal(h.requests.length, 2); assert.equal(h.controller.snapshot().queue, 1);
+  h.controller.setTranslation(false);
+  const off = h.controller.snapshot();
+  assert.equal(off.processing, 'local-only'); assert.equal(off.queue, 0);
+  assert.equal(off.segments.find(r => r.id === 'c')!.state, 'original');
+  h.requests[0]!.result.resolve(ja); await tick();
+  assert.equal(h.controller.snapshot().segments.find(r => r.id === 'a')!.state, 'ready', 'a request already sent finishes');
+  h.final('d'); assert.equal(h.requests.length, 2);
+  assert.equal(h.controller.snapshot().segments.find(r => r.id === 'd')!.state, 'original');
+  h.controller.setTranslation(true); h.final('e');
+  assert.equal(h.requests.length, 3); assert.equal(h.controller.snapshot().processing, 'local-audio-cloud-text');
+});
+test('translation cannot be switched on without a configured translator', async t => {
+  const none = new Controller({
+    transcriber: () => ({ async connect() {}, audio() {}, async finish() {}, close() {} }), translator: null, glossary: [], backend: 'none', processing: 'local-only' });
+  t.after(() => none.dispose());
+  none.setTranslation(true);
+  assert.deepEqual(none.snapshot().translation, { available: false, enabled: false });
+  assert.equal(none.snapshot().processing, 'local-only');
+});
+test('the two settings commands parse and nothing else rides on them', () => {
+  assert.doesNotThrow(() => Command.parse({ type: 'set-segmentation', segmentation: 'rolling' }));
+  assert.doesNotThrow(() => Command.parse({ type: 'set-translation', enabled: false }));
+  for (const bad of [{ type: 'set-segmentation', segmentation: 'words' }, { type: 'set-translation', enabled: 'yes' },
+    { type: 'set-translation', enabled: true, provider: 'other' }]) assert.throws(() => Command.parse(bad));
+});
+
+test('a recognizer failure while capturing restarts it visibly, keeps finished rows and the noise gate, and stops after two', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('kept'); h.begin('open');
+  h.streams[0]!.gate({ state: 'quiet', level: 0.001, threshold: 0.02, remainingMs: 0 });
+  h.streams[0]!.fail();
+  // Restarting shows as connecting with the flag; the open row is gone and the finished one stays.
+  let snapshot = h.controller.snapshot();
+  assert.deepEqual([snapshot.capture, snapshot.restarting, snapshot.restarts, snapshot.error], ['connecting', true, 1, null]);
+  assert.deepEqual(snapshot.segments.map(row => row.id), ['kept']); assert.equal(h.streams[0]!.closed, true);
+  await tick();
+  snapshot = h.controller.snapshot(); Snapshot.parse(snapshot);
+  assert.deepEqual([snapshot.capture, snapshot.restarting, snapshot.restarts], ['active', undefined, 1]);
+  assert.equal(h.streams.length, 2); assert.equal(h.streams[1]!.gateThreshold, 0.02);
+  // A late failure report from the replaced stream changes nothing.
+  h.streams[0]!.fail(); assert.equal(h.controller.snapshot().capture, 'active');
+  h.final('after'); assert.deepEqual(h.controller.snapshot().segments.map(row => row.id), ['kept', 'after']);
+  // A second failure restarts again, without a gate to carry while the new stream has reported none.
+  h.streams[1]!.fail(); await tick();
+  assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().restarts, h.streams[2]!.gateThreshold], ['active', 2, undefined]);
+  // The third within the window fails capture and waits for the operator.
+  h.streams[2]!.fail(); await tick();
+  snapshot = h.controller.snapshot();
+  assert.deepEqual([snapshot.capture, snapshot.error, snapshot.restarts, h.streams.length], ['failed', 'transcription', 2, 3]);
+  // Start resets the count.
+  await h.controller.start('auto'); assert.equal(h.controller.snapshot().restarts, 0);
+});
+test('a recognizer that fails while restarting fails capture, and Pause during a restart ends it', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.streams[0]!.fail(); h.streams[1]!.fail(); await tick();
+  assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().error], ['failed', 'transcription']);
+  await h.controller.start('auto'); h.streams.at(-1)!.fail();
+  await h.controller.pause(); await tick();
+  assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().restarting], ['paused', undefined]);
+});
+
+test('a partial row carries its agreed length only while it exceeds the locked one, and a final drops both', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.begin('a');
+  const row = () => h.controller.snapshot().segments.at(-1)!;
+  h.streams[0]!.emit({ type: 'partial', id: 'a', text: 'one two three four', stable: 3, agreed: 13 });
+  assert.deepEqual([row().stable, row().agreed], [3, 13]);
+  h.streams[0]!.emit({ type: 'partial', id: 'a', text: 'one two', stable: 7, agreed: 40 });
+  assert.deepEqual([row().stable, row().agreed], [7, undefined]);
+  h.streams[0]!.emit({ type: 'partial', id: 'a', text: 'one two three', stable: 7, agreed: 40 });
+  assert.deepEqual([row().stable, row().agreed], [7, 13]);
+  h.streams[0]!.emit({ type: 'final', id: 'a', text: 'one two three four.', language: 'en' });
+  assert.deepEqual([row().stable, row().agreed], [undefined, undefined]);
 });

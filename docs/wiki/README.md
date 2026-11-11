@@ -28,5 +28,7 @@ Then the page for the area you touch. [AGENTS.md](../../AGENTS.md) holds the man
 | [operations](operations.md) | Commands, listening session procedure, OBS, failure ladder |
 | [testing](testing.md) | Every check command, fixtures, where results go |
 | [decisions](decisions.md) | Dated decisions with reasons |
+| [lanes](lanes.md) | The five usage lanes, source profiles, sources and direction |
 | [roadmap](roadmap.md) | Milestones and standing |
+| [gates](gates.md) | Written targets a language must pass before it ships |
 | [practices](practices.md) | How the wiki and log stay true |

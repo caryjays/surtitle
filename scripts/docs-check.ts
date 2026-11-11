@@ -22,7 +22,11 @@ const LEAK_PATTERNS: [string, RegExp][] = [
   ['non-loopback IPv4 address', /\b(?!127\.0\.0\.1\b|0\.0\.0\.0\b)(?:\d{1,3}\.){3}\d{1,3}\b/],
   ['link into private/', /\]\((?:\.\.\/)*private\//],
 ];
-const today = new Date().toISOString().slice(0, 10);
+// All days are local calendar days, matching the dates written on wiki pages.
+const day = (date: Date) => date.toLocaleDateString('sv-SE');
+const today = day(new Date());
+// The latest calendar day anywhere (UTC+14), so a page dated by an author ahead of this clock is not "in the future".
+const latestDay = new Date(Date.now() + 14 * 3_600_000).toISOString().slice(0, 10);
 const errors: string[] = [];
 const warnings: string[] = [];
 
@@ -38,12 +42,12 @@ async function lastChanged(source: string): Promise<string> {
   if (git(['status', '--porcelain', '--', source])) {
     let latest = '';
     for (const file of await files(source)) {
-      const day = (await stat(file)).mtime.toISOString().slice(0, 10);
-      if (day > latest) latest = day;
+      const changed = day((await stat(file)).mtime);
+      if (changed > latest) latest = changed;
     }
     return latest;
   }
-  return git(['log', '-1', '--format=%cs', '--', source]) || today;
+  return git(['log', '-1', '--date=format-local:%Y-%m-%d', '--format=%cd', '--', source]) || today;
 }
 
 async function checkWiki() {
@@ -55,7 +59,7 @@ async function checkWiki() {
     const match = HEADER.exec(await readFile(path, 'utf8'));
     if (!match || !match[1] || !match[2]) { errors.push(`${path}: missing "Verified: YYYY-MM-DD · Sources: …" line`); continue; }
     const verified = match[1];
-    if (verified > today) errors.push(`${path}: verified date ${verified} is in the future`);
+    if (verified > latestDay) errors.push(`${path}: verified date ${verified} is in the future`);
     if (name === 'status.md') {
       const age = Math.floor((Date.parse(today) - Date.parse(verified)) / 86_400_000);
       if (age > STATUS_MAX_AGE_DAYS) warnings.push(`${path}: status is ${age} days old; rewrite it at the next handoff`);
