@@ -62,3 +62,28 @@ The first five minutes of four held-out talks through the rolling provider with 
 - The gate's lock lag and first text targets still measure locked text and still fail. Measuring shown text instead is a change to the gate for the maintainer to make; `pnpm diag:latency` and the display events of a diagnostics download already time what a surface showed.
 - The non-speech and third-language gate streams with the setting, for text that shows and is then withdrawn.
 - Agreed text in piece translation, and the operator transcript marking it.
+
+## A quieter rule, after a session
+
+The maintainer tried the setting in a short Japanese session: it works, text is erased and rewritten, and with translation timing unchanged the rewrites are most of what one notices. Two changes followed, by the maintainer's choice among keeping, quieting and removing it.
+
+Agreed text now needs three consecutive decodes of the same window, one more than a lock. Simulated on the same talks, with the rule that keeps shown text:
+
+| Measure | English: two agree, three agree | Japanese: two agree, three agree |
+| --- | --- | --- |
+| Word changes per minute | 1.2, 0.25 | 0.5, 0.07 |
+| Changes of any kind per minute | 3.4, 0.7 | 0.8, 0.07 |
+| First text of a row, p90 | 4.5 s, 5.1 s | 4.7 s, 5.7 s |
+| Spoken to visible, median | 2.9 s, 3.7 s | 2.8 s, 3.5 s |
+
+And a display that shows text early swaps a changed original in place: its released length stays, where before the text from the change on was erased and released again at reading pace.
+
+Real time, as above, with three decodes:
+
+| Talk | Rows with text before a lock | Sooner, median and p90 | Word changes per minute | Share of final characters changed |
+| --- | --- | --- | --- | --- |
+| English, held-en-4320211 | 28 of 45 | 1.8 s, 5.1 s | 0.8 | 7.1% |
+| Japanese, held-ja-0jJLyvNn_to | 23 of 36 | 1.0 s, 3.0 s | 0.2 | 0.3% |
+
+Changes fall to less than half on the English talk and a quarter on the Japanese one, and text shows about a second later than with two decodes. In Japanese the median gain over locked text is now about a second; the larger gain is in the slow rows. Not seen in a session yet.
+

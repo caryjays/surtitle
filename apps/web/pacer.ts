@@ -71,7 +71,8 @@ export class Pacer {
         if (fresh || !this.settings.enabled) this.released.set(item.key, { text: item.text, count: item.text.length });
         else if (!entry) this.released.set(item.key, { text: item.text, count: 0 });
         // Turns mode can rewrite a preview at its final; released text that no longer matches is re-released.
-        else this.released.set(item.key, { text: item.text, count: Math.min(entry.count, commonPrefix(entry.text, item.text)) });
+        // Early text that changes is swapped in place: erasing and releasing it again would draw the eye twice.
+        else this.released.set(item.key, { text: item.text, count: Math.min(entry.count, this.settings.early && name === 'original' ? item.text.length : commonPrefix(entry.text, item.text)) });
       }
       this.release(this.lanes[name], list, step);
     }

@@ -228,15 +228,15 @@ test('an agreed tail survives a lock and a wavering decode, and gives way to a l
   assert.equal(tailAfterAgreed('have two', 'half a'), 'have two');
   assert.equal(tailAfterAgreed('', 'anything'), 'anything');
 });
-test('text two decodes agree on is reported before its segment locks, and a row can begin with it', async t => {
+test('text three decodes agree on is reported before its segment locks, and a row can begin with it', async t => {
   const f = fixture('rolling-long'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(6);
   const partials = f.events.filter(e => e.type === 'partial') as Extract<TranscriptEvent, { type: 'partial' }>[];
   assert.equal(f.events[0]!.type, 'begin');
-  assert(partials.length >= 3 && partials.every(p => p.stable === 0), 'nothing has locked');
+  assert(partials.length >= 2 && partials.every(p => p.stable === 0), 'nothing has locked');
   const agreed = partials.map(p => p.text.slice(0, p.agreed ?? 0));
   for (let i = 1; i < agreed.length; i++) assert(agreed[i]!.startsWith(agreed[i - 1]!), 'agreed text shrank');
-  assert.equal(agreed.at(-1), words(0, 4));
+  assert.equal(agreed.at(-1), words(0, 3)); // two decodes agree on four words, three on three
   assert(partials.at(-1)!.text.length > agreed.at(-1)!.length, 'the newest word is in the tail, not agreed');
   f.quiet(); await f.stream.finish();
   assert(finals(f.events)[0]!.text.startsWith(words(0, 4)));

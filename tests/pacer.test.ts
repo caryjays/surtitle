@@ -150,3 +150,19 @@ test('a display set to show text early releases agreed text beyond the locked pr
   assert.equal(early.update(partial('one two tree for', 3, 12), 200)[1]!.original, 'one two tree');
   assert.equal(early.update(partial('one two tree for', 7), 300)[1]!.original, 'one two');
 });
+
+test('early text that changes is swapped in place when shown early, and released again from the change otherwise', () => {
+  const partial = (original: string, agreed: number) => snapshot([row('r1', 'history'), row('r2', original, { final: false, state: 'partial', stable: 0, finalizedAt: null, agreed })]);
+  const pacer = new Pacer({ ...DEFAULT_PACE, early: true });
+  pacer.update(snapshot([row('r1', 'history')]), 0);
+  const frames = run(pacer, () => partial('one two three four five six', 27), 100, 8000);
+  assert.equal(frames.at(-1)!.rows[1]!.original, 'one two three four five six');
+  // The second word changes: everything released stays released.
+  assert.equal(pacer.update(partial('one too three four five six', 27), 8200)[1]!.original, 'one too three four five six');
+  // A shorter rewrite shows whole, and a turns-mode preview without the setting still releases again from the change.
+  assert.equal(pacer.update(partial('one too three', 13), 8300)[1]!.original, 'one too three');
+  const plain = new Pacer(); plain.update(snapshot([row('r1', 'history')]), 0);
+  const preview = (original: string) => snapshot([row('r1', 'history'), row('r2', original, { final: false, state: 'partial', finalizedAt: null })]);
+  run(plain, () => preview('one two three four five six'), 100, 8000);
+  assert.equal(plain.update(preview('one too three four five six'), 8200)[1]!.original.startsWith('one too three'), false);
+});

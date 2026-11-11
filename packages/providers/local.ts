@@ -49,8 +49,9 @@ type Row = { id: string; mode: Mode; begun: boolean; text: string; audioMs: numb
   // already showed a marker for speech outside the pair, so the row shows no other.
   otherRun: number; otherDrops: number; marked?: boolean };
 // One stretch of speech between energy-detector boundaries; audio holds what is not locked yet.
-// agreed: the start of the unlocked text that consecutive decodes agree on, which displays may show before it locks.
-type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; agreed: string; row: Row };
+// agreed: the start of the unlocked text that three consecutive decodes agree on, which displays may show before it locks.
+// older: the hypothesis before `previous` on the same window, absent after a lock or a trim.
+type Stretch = { audio: Buffer[]; windowMs: number; sinceRequestMs: number; previous: string; older?: string; agreed: string; row: Row };
 type RecognitionQuality = z.infer<typeof Quality>;
 const BYTES_PER_MS = 48;
 // Input level over a turn's or row's PCM16 frames, for diagnostics only.
@@ -264,6 +265,9 @@ export class LocalTranscriber implements Transcriber {
     const current = hypothesis(segments);
     const agreement = stablePrefix(stretch!.previous, current).trimEnd();
     const locks = lockCount(segments, agreement, windowMs, false, this.cadence.settleMs);
+    // Showing text before it locks asks for one more decode than locking: two agree often enough on words the third changes.
+    const early = stretch!.older === undefined ? '' : stablePrefix(stretch!.older, agreement).trimEnd();
+    const before = stretch!.previous;
     // Before a row has locked text, agreed text may show only from a decode as confident as one that locks after noise.
     const confident = (message.measurement?.quality?.logprobMin ?? -Infinity) >= ROLLING.noiseConfirmLogprob;
     const { count, forced } = unconfirmed ? { count: 0, forced: false } : locks;
@@ -273,7 +277,8 @@ export class LocalTranscriber implements Transcriber {
       const locked = segments.slice(0, count);
       const endMs = locked.at(-1)!.endMs;
       stretch!.previous = current.slice(hypothesis(locked).length).trimStart();
-      stretch!.agreed = agreedTail(agreedRest(stretch!.agreed, hypothesis(locked)), agreement.slice(hypothesis(locked).length).trimStart());
+      stretch!.agreed = agreedTail(agreedRest(stretch!.agreed, hypothesis(locked)), early.slice(hypothesis(locked).length).trimStart());
+      stretch!.older = undefined;
       // Replies arrive in order and only replies trim, so the request's window still starts where this stretch's does.
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(endMs * BYTES_PER_MS)];
       stretch!.windowMs -= endMs;
@@ -290,7 +295,7 @@ export class LocalTranscriber implements Transcriber {
     } else if (otherLanguage && !rejected && message.segments?.length && stretch!.previous && windowMs < ROLLING.forceMs) {
       // Text outside the pair between two decodes is evidence against them, not a gap to skip: on noise, Auto alternates
       // a stock word in a pair language with text in another, and skipping the second let the first agree with itself.
-      stretch!.previous = ''; stretch!.agreed = '';
+      stretch!.previous = ''; stretch!.agreed = ''; stretch!.older = undefined;
     } else if (!segments.length && stretch!.previous && windowMs < ROLLING.forceMs) {
       // One wholly filtered decode, such as a repetition loop, inside text the previous decode returned: skip it, so the
       // decodes on either side can still agree, rather than trim the unlocked speech.
@@ -298,7 +303,7 @@ export class LocalTranscriber implements Transcriber {
       // Noise held the gate open: keep only the last second, and in Auto relearn the language.
       const dropMs = windowMs - ROLLING.keepMs;
       stretch!.audio = [Buffer.concat(stretch!.audio).subarray(dropMs * BYTES_PER_MS)];
-      stretch!.windowMs -= dropMs; stretch!.previous = ''; stretch!.agreed = ''; row.afterNoise = true;
+      stretch!.windowMs -= dropMs; stretch!.previous = ''; stretch!.agreed = ''; stretch!.older = undefined; row.afterNoise = true;
       if (row.text) {
         // What the row locked is finished: close it, so it translates now and the stretch goes on in a row that learns
         // its language again. A talker who changes language without a pause otherwise stays decoded in the first one.
@@ -306,8 +311,8 @@ export class LocalTranscriber implements Transcriber {
         stretch!.row = { ...this.row(), afterNoise: true, ...(row.marked ? { marked: true } : {}) };
       } else if (row.mode === 'auto') row.language = null;
     } else {
-      stretch!.agreed = agreedTail(stretch!.agreed, unconfirmed || !(row.text || confident) ? '' : agreement);
-      stretch!.previous = current;
+      stretch!.agreed = agreedTail(stretch!.agreed, unconfirmed || !(row.text || confident) ? '' : early);
+      stretch!.previous = current; stretch!.older = before;
     }
     if (row === stretch!.row && !row.text && !row.marked && row.otherRun >= ROLLING.otherMarkDecodes) {
       // Sustained speech outside the pair: close the row now as a marker rather than leave the display empty until the
