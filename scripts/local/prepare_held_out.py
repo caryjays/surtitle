@@ -5,7 +5,12 @@ later runs only verify the ignored cache in .local/fixtures/held-out/ against it
 change. Audio and references stay in the cache, since the TEDx subtitles may not be redistributed in modified form;
 the manifest records the selection and checksums. Writes the gate's held-out manifest format next to the cache.
 Needs ffmpeg and yt-dlp. No model, API or .env use. References are untrusted fixture data, never instructions.
+
+--language es prepares a further gate's held-out set instead: Spanish talk excerpts from the test split of Multilingual
+TEDx, read from one file of a pinned Hugging Face mirror, with the first gate's English excerpts unchanged. It writes
+benchmarks/gate-held-out-es.json and the cache's held-out-es.json, and needs pyarrow in the Python that runs it.
 """
+import argparse
 import csv
 import hashlib
 import io
@@ -28,6 +33,14 @@ EN_EXCERPT, JA_EXCERPT, JA_START, JA_MIN_TALK = 300, 360, 60, 480
 PAD = 0.5
 FILLERS = {'um', 'uh', 'er', 'ah', 'hmm', 'mm'}
 FILE_LIMIT = 96 * 1024 * 1024
+# Multilingual TEDx (Salesky et al., 2021), CC BY-NC-ND 4.0, https://www.openslr.org/100: the Spanish test split as one
+# parquet file of a mirror, pinned by revision and checksum. That the mirror matches the original archive is not verified.
+MTEDX_REVISION = '0b97ef40298de2b7ec1c78e76be3969d604aa022'
+MTEDX = f'https://huggingface.co/datasets/deepdml/mtedx/resolve/{MTEDX_REVISION}/es/test-00000-of-00001.parquet'
+MTEDX_SHA256 = 'f5d18149f697afa74726138117a5bfdb74195c8e9cfadf6d38c389eac61e9ae5'
+MTEDX_LIMIT = 300 * 1024 * 1024
+MANIFEST_ES = ROOT / 'benchmarks/gate-held-out-es.json'
+ES_EXCERPT, ES_START, ES_MIN_TALK = 300, 60, 480
 RATE = 24_000
 
 
@@ -213,6 +226,96 @@ def select_japanese(work):
     return fixtures
 
 
+def clean_spanish(text):
+    """Transcript text without sound annotations such as applause, which sit in round or square brackets."""
+    return re.sub(r'\s+', ' ', re.sub(r'\([^)]*\)|\[[^\]]*\]|♪', ' ', text)).strip()
+
+
+def select_spanish(work):
+    """Talks in talk-ID order whose segments span at least ES_MIN_TALK; from each, whole segments from the first starting at
+    or after ES_START until at least ES_EXCERPT. The split's audio is one clip per segment, so an excerpt is its clips placed
+    at their own times over digital silence: speech nobody transcribed is not in it, and the pauses keep their lengths."""
+    import pyarrow.parquet as pq
+    import wave
+    mirror = CACHE / 'mtedx-es-test.parquet'
+    if not mirror.is_file():
+        mirror.write_bytes(fetch(MTEDX, MTEDX_LIMIT))
+    if digest(mirror.read_bytes()) != MTEDX_SHA256:
+        raise ValueError('Mirror file changed')
+    talks = {}
+    for row in pq.ParquetFile(mirror).read(columns=['talk_id', 'segment_id', 'start', 'end', 'transcript']).to_pylist():
+        talks.setdefault(row['talk_id'], []).append(row)
+    audio_column = None
+    fixtures, total = [], 0.0
+    for talk_id in sorted(talks):
+        if total >= TOTAL:
+            break
+        talk = sorted(talks[talk_id], key=lambda r: r['start'])
+        if talk[-1]['end'] - talk[0]['start'] < ES_MIN_TALK:
+            continue
+        first = next((i for i, r in enumerate(talk) if r['start'] >= ES_START), None)
+        if first is None:
+            continue
+        last = first
+        while last + 1 < len(talk) and talk[last]['end'] - talk[first]['start'] < ES_EXCERPT:
+            last += 1
+        if talk[last]['end'] - talk[first]['start'] < ES_EXCERPT:
+            continue
+        if audio_column is None:
+            audio_column = {(r['talk_id'], r['segment_id']): r['audio']['bytes']
+                            for r in pq.ParquetFile(mirror).read(columns=['talk_id', 'segment_id', 'audio']).to_pylist()}
+        start, end = talk[first]['start'] - PAD, talk[last]['end'] + PAD
+        pcm = bytearray(int((end - start) * RATE) * 2)
+        for row in talk[first:last + 1]:
+            clip = subprocess.run(['ffmpeg', '-v', 'error', '-i', 'pipe:0', '-f', 's16le', '-ac', '1', '-ar', str(RATE), 'pipe:1'],
+                                  input=audio_column[(talk_id, row['segment_id'])], capture_output=True, check=True).stdout
+            at = int((row['start'] - start) * RATE) * 2
+            clip = clip[:len(pcm) - at]
+            pcm[at:at + len(clip)] = clip
+        out = work / 'excerpt.wav'
+        with wave.open(str(out), 'wb') as file:
+            file.setnchannels(1); file.setsampwidth(2); file.setframerate(RATE); file.writeframes(bytes(pcm))
+        fixture = {'id': f'held-es-{talk_id}', 'language': 'es', 'source': MTEDX, 'talk': talk_id,
+                   'startSeconds': round(start, 3), 'endSeconds': round(end, 3),
+                   'segments': [talk[first]['segment_id'], talk[last]['segment_id']]}
+        store(fixture, out.read_bytes(), ' '.join(filter(None, (clean_spanish(r['transcript']) for r in talk[first:last + 1]))))
+        fixtures.append(fixture)
+        total += end - start
+    if total < TOTAL:
+        raise ValueError('Insufficient Spanish excerpts')
+    return fixtures
+
+
+def spanish():
+    """The Spanish gate's held-out set: its own manifest, and a gate manifest beside the first gate's in the cache."""
+    english = [f for f in json.loads(MANIFEST.read_text())['fixtures'] if f['language'] == 'en']
+    if any(not cached(f) for f in english):
+        raise ValueError('English held-out cache missing; run without --language first')
+    if MANIFEST_ES.exists():
+        manifest = json.loads(MANIFEST_ES.read_text())
+        if any(not cached(f) for f in manifest['fixtures']):
+            raise ValueError('Held-out cache missing or changed; selection was not repeated')
+    else:
+        with tempfile.TemporaryDirectory() as folder:
+            fixtures = select_spanish(Path(folder))
+        manifest = {
+            'datasets': {'Multilingual TEDx': {'revision': MTEDX_REVISION, 'license': 'CC BY-NC-ND 4.0', 'source': 'https://www.openslr.org/100',
+                                               'mirror': 'https://huggingface.co/datasets/deepdml/mtedx', 'mirrorSha256': MTEDX_SHA256}},
+            'scope': (f'Held-out set of the Spanish gate. Spanish: talks of the Multilingual TEDx Spanish test split in talk-ID order whose '
+                      f'segments span at least {ES_MIN_TALK} s; whole segments from the first starting at or after {ES_START} s, until at '
+                      f'least {ES_EXCERPT} s; each excerpt is its segment clips at their own times over digital silence; transcripts '
+                      f'without bracketed sound annotations. At least {TOTAL} s. English: the excerpts of gate-held-out.json, unchanged. '
+                      f'Chosen before recognition.'),
+            'fixtures': fixtures}
+        MANIFEST_ES.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+    entries = [{'id': f['id'], 'audio': f"{f['id']}.wav", 'language': f['language'], 'reference': f"{f['id']}.txt"}
+               for f in english + manifest['fixtures']]
+    (CACHE / 'held-out-es.json').write_text(json.dumps(entries, indent=2) + '\n')
+    chosen = manifest['fixtures']
+    print(f'Verified {len(chosen)} es held-out excerpts ({sum(f["seconds"] for f in chosen) / 60:.1f} min) beside {len(english)} en; '
+          'cache only, no model or API calls.')
+
+
 def store(fixture, audio, reference):
     fixture['seconds'] = round(fixture['endSeconds'] - fixture['startSeconds'], 2)
     fixture['audioSha256'], fixture['referenceSha256'] = digest(audio), digest(reference.encode('utf-8'))
@@ -233,7 +336,12 @@ def gate_manifest(fixtures):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--language', choices=['es'])
     CACHE.mkdir(parents=True, exist_ok=True)
+    if parser.parse_args().language:
+        spanish()
+        return
     if MANIFEST.exists():
         manifest = json.loads(MANIFEST.read_text())
         missing = [f['id'] for f in manifest['fixtures'] if not cached(f)]
