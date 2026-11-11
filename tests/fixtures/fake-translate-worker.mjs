@@ -16,6 +16,8 @@ function next() {
     else {
       const input = JSON.parse(request.user);
       const text = behavior === 'garbage' ? 'Sure! Here is the translation.'
+        // echo: with context the source text comes back as its own translation; without, it is translated.
+        : behavior === 'echo' && input.context?.length ? JSON.stringify({ source: 'en', target: 'ja', text: input.text })
         : `<think>\n\n</think>\n\n${JSON.stringify({ source: 'en', target: 'ja', text: `[ja] ${input.text}` })}`;
       // Every prefix, as the real worker's throttled partials are; the adapter must tolerate any cut.
       if (behavior === 'stream') for (let k = 1; k < text.length; k++) send({ type: 'partial', id: request.id, text: text.slice(0, k) });

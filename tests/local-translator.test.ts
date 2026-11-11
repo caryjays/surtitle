@@ -67,6 +67,30 @@ test('in Auto, the recognized language sets the direction the local model is ask
   const modes = sent.map(line => JSON.parse(JSON.parse(line).user).mode);
   assert.deepEqual(modes, ['ja-en', 'auto']);
 });
+test('in a pair of one script, context rows in the other language are not sent to the local model', async t => {
+  const sent: string[] = [];
+  const make = (pair: ['en', 'es'] | ['en', 'ja']) => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, workerFactory: () => {
+    const child = spawn(process.execPath, ['tests/fixtures/fake-translate-worker.mjs', 'normal'], { stdio: ['pipe', 'pipe', 'pipe'], env: {} });
+    const write = child.stdin.write.bind(child.stdin);
+    child.stdin.write = ((chunk: string) => { sent.push(chunk); return write(chunk); }) as typeof child.stdin.write;
+    return child;
+  } });
+  const context = [{ original: 'Hello there.', translation: 'Hola.', source: 'en' as const }, { original: 'Buenas.', translation: 'Hi.', source: 'es' as const }];
+  const spanish = make(['en', 'es']), japanese = make(['en', 'ja']);
+  t.after(() => { spanish.close(); japanese.close(); });
+  await spanish.translate({ text: 'Vamos.', mode: 'auto', glossary: [], sourceLanguage: 'es', context }, new AbortController().signal).catch(() => {});
+  await japanese.translate({ text: 'Hello.', mode: 'auto', glossary: [], sourceLanguage: 'en',
+    context: [{ original: 'はい。', translation: 'Yes.', source: 'ja' }] }, new AbortController().signal).catch(() => {});
+  const contexts = sent.map(line => JSON.parse(JSON.parse(line).user).context.map((row: { source: string }) => row.source));
+  assert.deepEqual(contexts, [['es'], ['ja']]);
+});
+
+test('a reply that hands the source text back is asked for once more without context', async t => {
+  const { t: local } = translator('echo'); t.after(() => local.close());
+  const context = [{ original: 'Before.', translation: '前。', source: 'en' as const }];
+  assert.equal((await local.translate({ ...input('of him, who was...'), context }, new AbortController().signal)).text, '[ja] of him, who was...');
+});
+
 test('a streamed reply parses once source and target are known, up to its last whole character', () => {
   assert.equal(partialObject('<think>\n\n</think>\n\n{"source":"en","tar'), null);
   assert.equal(partialObject('{"source":"en","target":"ja"'), null);

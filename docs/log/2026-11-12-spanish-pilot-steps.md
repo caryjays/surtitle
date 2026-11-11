@@ -48,6 +48,30 @@ The nine misses, read against the recognized text: seven are recognition errors 
 
 Against gate part 6, which is set for the Japanese pair only, 3.0 s at the median and 4.5 s at p90: one Spanish talk meets it, the other misses by 0.2 s, and English misses as it does in the Japanese pair. Three decodes in the Spanish talks were detected outside the pair and dropped, in three rows; none was retried into the pair. The translations of the held-out talks were written to an ignored review file and not read.
 
+## The maintainer's first session, and two translator guards
+
+`LANGUAGE_PAIR=en-es pnpm dev:offline`, turns segmentation, played speech switching from English to Spanish, diagnostics on. Every turn was transcribed. Of 14 turns, the first two Spanish turns after the switch showed "Language uncertain" with no translation, and two more Spanish rows showed their own text as the translation.
+
+The diagnostics file shows recognition was right: every one of those turns has recognition language `es`. The translator was wrong. The local translator already asks the model for the direction the recognizer's language gives; the model answered `unknown` twice and handed the source back twice.
+
+Offline, with the public cases of step 3: 30 rows of one language, each sent with three rows of the other language and their translations as context, as the controller does right after a switch.
+
+| | Returned `unknown` | Source handed back | Answered in the source language | With no context |
+| --- | --- | --- | --- | --- |
+| Spanish after English rows | 4 | 5 | 2 | 0 of 30 failed |
+| English after Spanish rows | 4 | 0 | 0 | 0 of 30 failed |
+
+Separately, a five-word Spanish fragment sent with two Spanish rows as context came back unchanged three times of three, and translated three of three without context.
+
+Two changes in `local-translator.ts`:
+
+- In a pair whose languages share a script, a request directed by the recognizer's language carries only the context rows in that language. With it, the probe above fails on none of 60.
+- In any pair, a reply whose text is the source text unchanged, on a request that carried context, is asked for once more without context. The fragment now translates three of three. The cost is one more request for that row.
+
+The first is limited to pairs of one script because the Japanese pair's defaults are frozen and the failure was not looked for there. A second session by the maintainer with both changes, in rolling, switching between English and Spanish and once to French: 23 rows, all translated, none unresolved or failed, across three switches inside the pair by the diagnostics file; the French speech was rejected as outside the pair and showed no caption. The maintainer saw no lost row. The audio was played speech, not a talker at the microphone. The probe's check for "answered in the source language" is a count of common words, good enough to count failures, not a language detector.
+
+The operator page's diagnostics help named the Japanese lecture preset in every pair; it now says the Lecture preset. Also seen in that session: there is no pair selector in the operator page; the pair is set at startup by `LANGUAGE_PAIR`. And the session ran in turns, where a 12 s limit cuts continuous speech mid-sentence; the Spanish gate results are for rolling.
+
 ## Verification
 
 `pnpm check`, the Python unit tests and both real-model browser runs pass.

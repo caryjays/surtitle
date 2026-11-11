@@ -2,6 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DEFAULT_PAIR, Source, Translation, inPair, type Pair, type TranslationDiagnostic, type TranslationInput } from '../protocol/index.ts';
+import { profile } from '../protocol/languages.ts';
 import type { PartialTranslation, Translator } from './types.ts';
 import { chatMessages, extractObject, partialObject } from './chat.ts';
 
@@ -85,10 +86,22 @@ export class LocalTranslator implements Translator {
     // recognizer's language of the pair sets the direction; with no such language the model still decides.
     const pair = this.options.pair ?? DEFAULT_PAIR;
     const source = input.mode === 'auto' && input.sourceLanguage && inPair(pair, input.sourceLanguage) ? input.sourceLanguage : null;
-    const directed = source ? { ...input, mode: `${source}-${pair.find(l => l !== source)}` } : input;
-    const { system, user } = chatMessages(directed, this.options.instructions, pair);
+    // Two languages in one script: right after the speech switches language, context rows going the other way pull the
+    // model into answering in the source language or calling it unknown, so only rows of this row's language are sent.
+    const oneScript = profile(pair[0]).scoring === profile(pair[1]).scoring;
+    const context = source && oneScript && input.context ? input.context.filter(row => row.source === source) : input.context;
+    const directed = source ? { ...input, mode: `${source}-${pair.find(l => l !== source)}`, ...(context ? { context } : {}) } : input;
     try { await this.start(); } catch { diagnostic?.({ response: 'network-error' }); throw new Error('local translation unavailable'); }
     if (signal.aborted) throw new Error('cancelled');
+    const first = await this.ask(directed, pair, signal, diagnostic, partial);
+    // The source text handed back as its own translation, seen for a fragment after context in its language: ask once
+    // more without the context. A name alone comes back unchanged both times and stands.
+    const echoed = first.source !== 'unknown' && first.text.trim() === input.text.trim() && directed.context?.length;
+    return echoed && !signal.aborted ? this.ask({ ...directed, context: [] }, pair, signal, diagnostic, partial) : first;
+  }
+  private async ask(input: TranslationInput, pair: Pair, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void,
+    partial?: (value: PartialTranslation) => void) {
+    const { system, user } = chatMessages(input, this.options.instructions, pair);
     const id = randomUUID(); const worker = this.worker!;
     let shown = '';
     const progress = (reply: string) => {
