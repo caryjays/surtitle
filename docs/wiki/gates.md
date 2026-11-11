@@ -1,8 +1,8 @@
 # Language gates
 
-Verified: 2026-11-11 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
+Verified: 2026-11-11 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
 
-A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the five parts; this page sets the numbers. Japanese is the only gate so far. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
+A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the five parts; this page sets the numbers. Japanese is the first gate; a Spanish pilot gate has its file, public set and targets. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
 ## Rules for every gate run
 
@@ -76,6 +76,24 @@ Measured, not scored by `gate:score`: `pnpm replay:contention --translate local`
 | The same, p90 | ≤ 4.5 s |
 
 The delay from the middle of a row is reported, not targeted: about half a row of it is waiting for the sentence to end, which translating whole rows cannot remove. Set on 2026-11-11; see [translation latency](../log/2026-11-11-translation-latency.md).
+
+## Spanish gate, pilot
+
+`benchmarks/gate-es.json`, pair `en-es`, written on 2026-11-11 before any Spanish measurement. Its rules and parts are the Japanese gate's. Its targets are the Japanese gate's English column, since Spanish is word-scored and written with spaces as English is:
+
+| Measure | Spanish and English, each |
+| --- | --- |
+| Held-out live error minus one-pass decode of the same excerpts | ≤ 1.5 points |
+| Held-out live deletions minus one-pass decode of the same excerpts | ≤ 1.0 point |
+| Public error rate, live path | ≤ 8.0% WER |
+| Public live error minus full-clip decode of the same clips | ≤ 1.5 points |
+| Held-out rows rated major or hallucinated | ≤ 5% of rows |
+| Rows given the wrong language in Auto, on single-language material | ≤ 2% of rows |
+| Lock lag p90, rolling only | ≤ 3.0 s |
+| Row start to first locked text p90, rolling only | ≤ 8.0 s |
+| Non-speech rows; stock or repetitive rows | 0 |
+
+Material so far: the public set, `benchmarks/gate-fleurs-es.json` from `pnpm gate:fixtures --language es`, 60 Spanish FLEURS test clips in archive order that are not in the third-language set, with the first gate's 60 English clips unchanged; the shared non-speech set; and the third-language set without its Spanish clips. Not yet chosen: a held-out source with human references, translation cases and required terms for the pair, and the stock-phrase sweep behind the Spanish profile's first list. Parts 5 and 6 apply to Japanese only for now.
 
 ## Accepted limits
 

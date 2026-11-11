@@ -6,6 +6,7 @@ No model, API or .env use. References are untrusted fixture data, never instruct
 """
 import csv
 import hashlib
+import argparse
 import io
 import json
 import re
@@ -19,6 +20,8 @@ CACHE = ROOT / '.local/fixtures/gate'
 FLEURS_REVISION = '70bb2e84b976b7e960aa89f1c648e09c59f894dd'
 FLEURS = f'https://huggingface.co/datasets/google/fleurs/resolve/{FLEURS_REVISION}/data/'
 FLEURS_LOCALES = {'en': 'en_us', 'ja': 'ja_jp'}
+# Languages with a gate of their own beside English, each with its own public manifest; see select_language.
+GATE_LOCALES = {'es': 'es_419'}
 # Speech outside the pair, which Auto should reject: a kanji language and three Latin-script ones.
 OTHER_LOCALES = {'zh': 'cmn_hans_cn', 'ko': 'ko_kr', 'es': 'es_419', 'de': 'de_de'}
 PER_OTHER = 10
@@ -156,6 +159,20 @@ def select_fleurs():
             'fixtures': fixtures}
 
 
+def select_language(language):
+    """A further gate's public set: that language's first clips, with the English clips of the first gate unchanged."""
+    other = json.loads((ROOT / 'benchmarks/gate-other.json').read_text())['fixtures']
+    used = {f['id'].split('-')[-1] for f in other if f['language'] == language}
+    english = [f for f in json.loads((ROOT / 'benchmarks/gate-fleurs.json').read_text())['fixtures'] if f['language'] == 'en']
+    locale = GATE_LOCALES[language]
+    fixtures = first_clips(language, locale, fleurs_references(locale), used, PER_LANGUAGE)
+    return {'dataset': 'Google FLEURS', 'revision': FLEURS_REVISION, 'license': 'CC-BY-4.0',
+            'scope': f'Language-gate public set for {language}: its first {PER_LANGUAGE} distinct sentence IDs in test-archive order, '
+                     f'{SECONDS[0]} to {SECONDS[1]} s, excluding its IDs in gate-other.json, chosen before recognition; and the '
+                     'English fixtures of gate-fleurs.json, unchanged.',
+            'fixtures': fixtures + english}
+
+
 def select_other():
     """Speech outside the pair, which should display nothing: the first FLEURS test clips of each other language."""
     fixtures = [f for language, locale in OTHER_LOCALES.items()
@@ -225,9 +242,14 @@ def restore(manifest):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--language', choices=sorted(GATE_LOCALES), help='also prepare this language\'s public set, gate-fleurs-<language>.json')
+    args = parser.parse_args()
     CACHE.mkdir(parents=True, exist_ok=True)
-    for name, select in (('gate-fleurs.json', select_fleurs), ('gate-nonspeech.json', select_nonspeech),
-                         ('gate-other.json', select_other)):
+    sets = [('gate-fleurs.json', select_fleurs), ('gate-nonspeech.json', select_nonspeech), ('gate-other.json', select_other)]
+    if args.language:
+        sets.append((f'gate-fleurs-{args.language}.json', lambda: select_language(args.language)))
+    for name, select in sets:
         path = ROOT / 'benchmarks' / name
         if path.exists():
             manifest = json.loads(path.read_text())

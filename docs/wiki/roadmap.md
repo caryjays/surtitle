@@ -6,7 +6,7 @@ Where the project is going and in what order. What is done and open right now li
 
 ## Identity
 
-Surtitle is a local-first live caption layer for bilingual talks, controlled by the presenter. Each session pairs English with one other language. Japanese is the first pair and gets polished before any other is added. The maintainer builds it for their own lectures and publishes it as open source. Closed productization, hosting, accounts and paid tiers are a separate venture and out of scope.
+Surtitle is a local-first live caption layer for bilingual talks, controlled by the presenter. Each session pairs English with one other language. Japanese is the first pair. A Spanish pilot runs beside the open parts of the Japanese gate, by the maintainer's decision of 2026-11-11; no other language starts before Japanese passes. The maintainer builds it for their own lectures and publishes it as open source. Closed productization, hosting, accounts and paid tiers are a separate venture and out of scope.
 
 It serves presenters who speak while the room reads, and attendees who listen and read alone, through one pipeline. The five concrete setups, Remote call, Hosted stage, Direct stage, Open floor and Audience seat, are defined in [lanes](lanes.md).
 

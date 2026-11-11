@@ -18,5 +18,15 @@
     "stockPhrases": ["ご視聴ありがとうございました", "ご清聴ありがとうございました", "お疲れ様でした", "チャンネル登録よろしくお願いします"],
     "reading": { "floor": 3, "ceiling": 10 },
     "uncaptioned": "字幕なし"
+  },
+  "es": {
+    "name": "Spanish",
+    "scoring": "word",
+    "spaced": true,
+    "sentenceEnd": ".!?",
+    "clauseEnd": ",;:",
+    "stockPhrases": ["gracias por ver el video", "gracias por ver el vídeo", "gracias por ver", "subtítulos realizados por la comunidad de amara.org", "subtítulos por la comunidad de amara.org", "gracias"],
+    "reading": { "floor": 8, "ceiling": 25 },
+    "uncaptioned": "sin subtítulos"
   }
 }
