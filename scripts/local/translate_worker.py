@@ -2,7 +2,11 @@
 
 Requests are JSON lines {id, system, user, maxTokens}, or {cancel: id} to stop a queued or running request.
 While a request generates, {type: 'partial', id, text} carries its reply so far, at most every PARTIAL_S.
-Each request then gets exactly one reply, {type: 'result', ...} or {type: 'cancelled', id}."""
+Each request then gets exactly one reply, {type: 'result', ...} or {type: 'cancelled', id}.
+
+With --prompt-cache after the model name, the model state for a start that prompts share, the instructions and usually
+the glossary, is computed once and copied for each request instead of being computed again. The adapter passes it unless told not to."""
+import copy
 import json
 import pathlib
 import queue
@@ -10,8 +14,12 @@ import sys
 import threading
 import time
 
+import mlx.core as mx
 from mlx_lm import load, stream_generate
+from mlx_lm.models.cache import make_prompt_cache
 from mlx_lm.sample_utils import make_sampler
+
+from prefix_cache import Prefixes
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MODELS = json.loads((ROOT / 'scripts/local/translators.json').read_text())
@@ -33,11 +41,29 @@ def valid(request):
 
 
 def main():
-    name = sys.argv[1]
-    if name not in MODELS:
-        raise ValueError('Unknown translation model')
+    name, flags = sys.argv[1], sys.argv[2:]
+    if name not in MODELS or any(flag != '--prompt-cache' for flag in flags):
+        raise ValueError('Unknown translation model or option')
     model, tokenizer = load(str(ROOT / '.local/models' / name))
     sampler = make_sampler(temp=0.0)
+    prefixes, states = (Prefixes(), {}) if flags else (None, {})
+
+    def state_for(prompt):
+        """The prompt still to run and a copy of the stored state before it, or the whole prompt and None."""
+        if prefixes is None:
+            return prompt, None
+        key, length, learn = prefixes.plan(prompt)
+        if learn:
+            state = copy.deepcopy(states[key]) if key is not None else make_prompt_cache(model)
+            model(mx.array(prompt[length:learn])[None], cache=state)
+            mx.eval([c.state for c in state])
+            key, evicted = prefixes.add(prompt[:learn])
+            states[key], length = state, learn
+            for old in evicted:
+                del states[old]
+        if key is None:
+            return prompt, None
+        return prompt[length:], copy.deepcopy(states[key])
 
     def generate(system, user, max_tokens, stop=lambda: False, progress=lambda text: None):
         # Thinking off: a caption needs the answer, not a reasoning preamble.
@@ -45,7 +71,11 @@ def main():
             [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
             tokenize=False, add_generation_prompt=True, enable_thinking=False), add_special_tokens=False)
         text, last, sent = '', None, time.perf_counter()
-        for last in stream_generate(model, tokenizer, prompt, max_tokens=max_tokens, sampler=sampler):
+        total = len(prompt)
+        prompt, state = state_for(prompt)
+        for last in stream_generate(model, tokenizer, prompt, max_tokens=max_tokens, sampler=sampler,
+                                    **({'prompt_cache': state} if state is not None else {})):
+            last.prompt_tokens = total  # the whole prompt, whatever part of it was reused
             text += last.text
             if stop():
                 return None, last

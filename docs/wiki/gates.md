@@ -66,6 +66,17 @@ The score targets must hold under two judges from different model families. Case
 - No capture failure and no manual restart other than an intentional stop. Automatic recognizer restarts are counted and reported.
 - The diagnostics download is summarized in a dated log entry with aggregate counts only.
 
+### 6. Translation delay, offline profile
+
+Measured, not scored by `gate:score`: `pnpm replay:contention --translate local` on held-out talks of both languages on an otherwise idle Mac, read with `pnpm diag:latency`.
+
+| Measure | Target, each talk |
+| --- | --- |
+| A row's last word to its first translated text, median | ≤ 3.0 s |
+| The same, p90 | ≤ 4.5 s |
+
+The delay from the middle of a row is reported, not targeted: about half a row of it is waiting for the sentence to end, which translating whole rows cannot remove. Set on 2026-11-11; see [translation latency](../log/2026-11-11-translation-latency.md).
+
 ## Accepted limits
 
 The Japanese held-out differences are accepted as failing on one talk, 0KTVqevvEjo, by the maintainer's decision of 2026-11-11: its speaker pauses often at low level, the detector cuts it into short stretches, and no rule tested recovers what the short windows lose. The targets and the talk stay as they are; a run reports the failure, and it does not block the gate while that talk accounts for it. See [decisions](decisions.md).

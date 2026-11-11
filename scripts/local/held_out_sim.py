@@ -210,6 +210,7 @@ def stretch(decoder, audio, a, b, clock, stats, context, prompt_chars, fixed=Non
     """One stretch of speech, samples a to b, under the live rolling rules. Returns rows [(language, text)] and the clock."""
     rows, row = [], {'language': fixed, 'text': '', 'audio': 0.0}
     win, previous, after_noise = a, '', False
+    replied, loose = None, lambda text: ''.join(c for c in text.lower() if c.isalnum())
     t = a / RATE + INTERVAL
     while True:
         start = max(clock, t)
@@ -220,6 +221,8 @@ def stretch(decoder, audio, a, b, clock, stats, context, prompt_chars, fixed=Non
             prompt = (context[0] + row['text'])[-prompt_chars:] if prompt_chars else None
             lead = max(0, win - int(left * RATE), until - int(29.5 * RATE)) if left else None
             d = decoder.decode(audio, win, until, row['language'], prompt or None, lead)
+            # Speculation: the text held when the stretch closes, locked text and the last decode's unlocked rest.
+            guess = loose(join(row['text'], previous)) if final and replied is not None else None
             segments, language = d['segments'], d['language']
             if not row['language'] and language not in PAIR:
                 stats['otherDrops'] += bool(segments)
@@ -268,9 +271,18 @@ def stretch(decoder, audio, a, b, clock, stats, context, prompt_chars, fixed=Non
                     stats['lostSeconds'] += window_ms / 1000
                 previous = hypothesis(segments)
         if final:
+            if (until - win) / RATE >= MIN_WINDOW or until - win >= RATE // 10:
+                text = loose(row['text'])
+                kind = ('none' if not guess else 'match' if guess == text else 'prefix' if text.startswith(guess) else 'differs') if text else 'empty'
+                stats['speculation'][kind] = stats['speculation'].get(kind, 0) + 1
+                if kind == 'match':
+                    # Translation could start at the later of that decode's reply and 0.3 s into the closing quiet.
+                    stats['speculationSaved'].append(clock - max(replied, b / RATE - silence_ms / 1000 + 0.3))
             # From the last voiced frame to the closing reply: the stretch ends silence_ms after it.
             stats['tails'].append(clock - (b / RATE - silence_ms / 1000))
             break
+        if (until - win) / RATE >= MIN_WINDOW:
+            replied = clock
         t = max(t + INTERVAL, clock)
     if row['text']:
         rows.append((row['language'], row['text']))
@@ -328,7 +340,7 @@ def main():
             audio = agc(raw, FRAME).astype(np.float32)
         decoder = Decoder(entry['id'], args)
         stats = {key: 0 for key in ('decodes', 'repetitionDecodes', 'recovered', 'pairRetries', 'gateRejects', 'otherDrops', 'unconfirmed',
-                                    'forcedLocks', 'skips', 'trims', 'emptyCloses')} | {'lostSeconds': 0.0, 'lags': [], 'tails': []}
+                                    'forcedLocks', 'skips', 'trims', 'emptyCloses')} | {'lostSeconds': 0.0, 'lags': [], 'tails': [], 'speculation': {}, 'speculationSaved': []}
         rows, clock, context = [], 0.0, ['']
         spans = stretches(audio, args.silence)
         for a, b in spans:
@@ -342,6 +354,8 @@ def main():
         live = edits(reference, ' '.join(text for _, text in rows), language)
         base = edits(reference, offline(entry, raw, 'raw'), language)
         lags, tails = sorted(stats.pop('lags')), sorted(stats.pop('tails'))
+        saved = sorted(stats.pop('speculationSaved'))
+        stats['speculationSavedP50'] = round(saved[len(saved) // 2], 2) if saved else None
         total = totals.setdefault(language, {'errors': 0, 'deletions': 0, 'offErrors': 0, 'offDeletions': 0, 'units': 0})
         for key, value in (('errors', live['errors']), ('deletions', live['deletions']), ('offErrors', base['errors']),
                            ('offDeletions', base['deletions']), ('units', live['referenceUnits'])):

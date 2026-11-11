@@ -20,6 +20,8 @@ export type LocalTranslationModel = typeof LOCAL_TRANSLATION_MODELS[number];
 export type LocalTranslatorOptions = {
   model: LocalTranslationModel; python?: string; pair?: Pair; instructions?: string; maxTokens?: number;
   startupTimeoutMs?: number; workerFactory?: () => ChildProcessWithoutNullStreams;
+  // Reuse the model state of the start that prompts share instead of computing it for every request. On unless false.
+  promptCache?: boolean;
   // Per-request generation timing, for the eval and the service's diagnostics. Never text.
   onTiming?: (timing: { inferenceMs: number; promptTokens: number; generationTokens: number }) => void;
 };
@@ -36,7 +38,7 @@ export class LocalTranslator implements Translator {
   start() {
     this.starting ??= new Promise<void>((resolve, reject) => {
       const worker = this.options.workerFactory?.() ?? spawn(this.options.python ?? '.local/venv/bin/python',
-        ['-u', 'scripts/local/translate_worker.py', this.options.model], {
+        ['-u', 'scripts/local/translate_worker.py', this.options.model, ...(this.options.promptCache === false ? [] : ['--prompt-cache'])], {
           // No .env, API key, HF token, PYTHONPATH or arbitrary parent environment reaches the worker.
           env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8',
             HF_HUB_OFFLINE: '1', HF_HUB_DISABLE_IMPLICIT_TOKEN: '1', PYTHONUNBUFFERED: '1' },

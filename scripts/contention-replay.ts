@@ -19,6 +19,8 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   cadence: { type: 'string', default: '1000,500' },
   // row: translate each closed row, as live; piece: translate locked pieces before the row closes.
   units: { type: 'string', default: 'row' },
+  // The local translator computes the shared start of its prompts for every request, as before 2026-11-11; live reuses it.
+  'no-prompt-cache': { type: 'boolean', default: false },
 } });
 const [sentenceMs, maxMs, clause] = values.rows!.split(',');
 const rows = { sentenceMs: Number(sentenceMs), maxMs: Number(maxMs), clauseMs: clause === 'off' ? null : Number(clause) };
@@ -29,10 +31,10 @@ if (!values.out || !positionals.length || !['local', 'off'].includes(values.tran
   || ![rows.sentenceMs, rows.maxMs, rows.clauseMs ?? 1000].every(ms => Number.isInteger(ms) && ms >= 1000 && ms <= 20_000)
   || ![cadence.intervalMs, cadence.settleMs].every(ms => Number.isInteger(ms) && ms >= 300 && ms <= 3000)
   || !['row', 'piece'].includes(values.units!)) {
-  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--units row|piece] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
+  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
-const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel }) : null;
+const translator = values.translate === 'local' ? new LocalTranslator({ model: values.model as LocalTranslationModel, promptCache: !values['no-prompt-cache'] }) : null;
 await translator?.start();
 const controller = new Controller({ backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',

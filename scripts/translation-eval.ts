@@ -28,6 +28,8 @@ const { values } = parseArgs({ options: {
   'timeout-ms': { type: 'string', default: '12000' },
   limit: { type: 'string' },
   paid: { type: 'boolean', default: false },
+  // Local candidates compute the shared start of their prompts for every request; live reuses it.
+  'no-prompt-cache': { type: 'boolean', default: false },
   'out-dir': { type: 'string', default: 'benchmarks/results' },
   seed: { type: 'string' },
 } });
@@ -98,7 +100,7 @@ function translatorFor(c: Candidate, f: typeof fetch): Translator {
   const instructions = instructionsFor.get(c.label);
   if (c.provider === 'openai') return new OpenAITranslator({ key: keys.openai, model: c.model, effort: c.effort, pair, instructions, fetch: f });
   if (c.provider === 'anthropic') return new AnthropicTranslator({ key: keys.anthropic, model: c.model, effort: c.effort, pair, instructions, fetch: f });
-  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: c.model as LocalTranslationModel, pair, instructions }); workers.push(t); return t; }
+  if (c.provider === 'mlx') { const t = new LocalTranslator({ model: c.model as LocalTranslationModel, pair, instructions, promptCache: !values['no-prompt-cache'] }); workers.push(t); return t; }
   return new ChatCompletionsTranslator({ baseUrl: c.baseUrl!, model: c.model, pair, instructions, fetch: f });
 }
 const pool = candidates.map(c => { const meter = instrumented(); return { c, meter, translator: translatorFor(c, meter.fetch) }; });

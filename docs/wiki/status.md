@@ -25,7 +25,7 @@ The Japanese gate, part by part:
 
 Recognition tuning is paused again. The maintainer lifted the pause on 2026-11-11 for the failing talk under a stop rule, and nothing tested cut its loss by half: input level, loop recovery, a text prompt, forced Japanese, a longer quiet before a stretch closes, and audio left context. The loss is fragmentation into short stretches, which rolling's short windows decode badly; see [the entry](../log/2026-11-11-outlier-talk-and-settle-pair.md).
 
-Latency in rolling with offline translation, from real-time replays: about 2 to 3 s from the end of speech to final text, 3 to 5 s from a row's last word to the first translated text, and 6.5 to 8 s or more from the middle of a row. Lock lag is the largest part. The settle time is now 0.5 s, from 1.0 s, by the maintainer's call: faster in two replay pairs run in opposite orders, with error 0.1 to 1.1 points higher in the one pair that scored it and run-to-run noise unmeasured; see [the entry](../log/2026-11-11-outlier-talk-and-settle-pair.md). No gate run has used 0.5 yet.
+Latency in rolling with offline translation, from real-time replays: about 2 s from the end of speech to final text, 2 to 3.5 s from a row's last word to the first translated text, and 5.5 to 7 s from the middle of a row, about half a row of which is waiting for the sentence to end. The delay now has a target, gate part 6: last word to first translated text at most 3.0 s at the median and 4.5 s at p90; the two Japanese replay talks meet it and the two English ones miss by 0.1 to 0.3 s. Two changes of 2026-11-11 are in: the settle time is 0.5 s, from 1.0 s, by the maintainer's call, and the local translator reuses the shared start of its prompts, 0.2 to 0.5 s faster to first text. Speculative translation at the pause was tried and rejected. See [translation latency](../log/2026-11-11-translation-latency.md) and [the settle pair](../log/2026-11-11-outlier-talk-and-settle-pair.md). No gate run has used settle 0.5 yet.
 
 Observed in the field by the maintainer:
 
@@ -36,10 +36,10 @@ Not verified: automatic recognizer restart with the real worker and a real micro
 
 ## Open problems, ranked
 
-1. Group-speech false rejection. Hypotheses: Chrome's echo cancellation and noise suppression attenuate distant speech, and audio reaches Silero with no level normalization. Diagnostics carry per-turn input level and the capture settings the browser applied, and the operator page warns when speech-like sound stays under the noise gate. Next: read these from a room session.
+1. Group and breakout sessions. The maintainer's position: overlapping talkers are out of reach for the current model, and a microphone near the speaker, passed around or a beamforming speakerphone, is the supported setup; far-field group speech is not supported. A separate, smaller question stays open: the field rejections were mostly the speech gate on faint audio, which may also hit a quiet speaker on a proper microphone; the faint-level sweep checks that offline. The operator page warns when speech-like sound stays under the noise gate.
 2. The held-out Japanese talk with frequent pauses. A known limit, kept in the set. And one non-speech row in each mode of the 2026-11-11 gate run, where earlier runs had none.
 3. Recognizer failures under load. A third queued final or a missed inference deadline now restarts the recognizer on its own, visibly, at most twice in five minutes; each restart reloads the model, and speech during it is lost. Whether to drop the oldest queued final instead of restarting is open.
-4. Translation still feels late in rehearsal. Row length and lock lag dominate; pieces translated before a row closes read worse and stay off; see [piece quality](../log/2026-11-10-piece-quality.md).
+4. Translation delay. English misses the new target narrowly. Left to try: superseding the rolling decode in flight when a stretch closes, 0.3 to 0.8 s, and a length close that takes the fresh decode's text. Row length cuts the tail only; pieces read worse and stay off; see [translation latency](../log/2026-11-11-translation-latency.md).
 5. Proper names and product names are misrecognized in several spellings, which the translation glossary cannot fix. The vocabulary prompt is the candidate, with silence checks.
 6. Turns mode: first text waits up to 12 s on continuous speech, and a third-language final still shows as `unknown`.
 7. Minor: snapshots are serialized once per client per tick; a pause that exceeds its drain window reports "recognition unavailable"; torch is installed only for a 2 MB VAD model.
@@ -59,10 +59,10 @@ The project is named Surtitle throughout. Personal context lives in the ignored 
 
 In order:
 
-1. A room session of at least 30 minutes with diagnostics on, which is gate part 5 and the evidence for problem 1. Read the input levels, applied capture settings, the masked-speech warning and display pacing from the download.
+1. A session of at least 30 minutes with the supported microphone setup and diagnostics on, which is gate part 5. Read the input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
 2. Find the input behind the non-speech row in the 2026-11-11 gate runs and whether it repeats.
-3. A held-out gate run in rolling at settle 0.5, on an idle Mac, to confirm the new default against the 2026-11-11 run at 1.0. Then force a recognizer failure in a rehearsal and watch the restart.
+3. A held-out gate run in rolling at settle 0.5, on an idle Mac, to confirm the new default against the 2026-11-11 run at 1.0. Then the closing-decode queue, measured by a replay pair against gate part 6. Then force a recognizer failure in a rehearsal and watch the restart.
 4. The judged translation eval, gate part 4, is paid and the maintainer declined it for now; translation defaults stay frozen.
 5. The maintainer's reading of the row-length review files and the pacing rates; see [row length](../log/2026-11-08-row-length.md) and [pacing](../log/2026-11-06-pacing.md).
-6. Parked: source profiles per [lanes](lanes.md); the faint-level sweep; the vocabulary prompt; the −0.5 noise-confirm threshold against faint far-field speech; two defective development-corpus picks.
+6. The faint-level sweep with the noisy harness, as a check on the speech gate. Parked: source profiles per [lanes](lanes.md); the vocabulary prompt; the −0.5 noise-confirm threshold against faint far-field speech; two defective development-corpus picks; whether to retire turns mode, which loses to rolling on every held-out measure.
 7. The Spanish pilot, after the Japanese gate, in order: a `--language` path in `prepare_gate_fixtures.py` that writes a public manifest per language without touching `gate-fleurs.json`; a held-out source with human references, its licence checked first; `benchmarks/gate-es.json` and its wiki table, written before any run; the Spanish profile with a stock-phrase sweep; French and Italian clips in the third-language set; translation cases and terms for the pair.
