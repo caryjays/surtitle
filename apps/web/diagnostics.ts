@@ -30,7 +30,7 @@ export function describeCapture(settings: CaptureSettings) {
     flag('automatic gain', settings.autoGainControl), ...(settings.sampleRate ? [`${settings.sampleRate} Hz`] : [])].join(' · ');
 }
 
-type Health = Pick<Snapshot, 'capture' | 'processing' | 'pair' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate'>;
+type Health = Pick<Snapshot, 'capture' | 'processing' | 'pair' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate' | 'restarts'>;
 type Row = Pick<Segment, 'sequence' | 'final' | 'state' | 'source' | 'target' | 'translationMs'> & {
   originalChars: number; translationChars: number; scriptLetters: { latin: number; kana: number; han: number; other: number };
 };
@@ -154,10 +154,10 @@ export class DiagnosticLog {
     }
     // Deliberate allowlist: no backend strings, model names, IDs, text, provider bodies, device labels or URLs.
     const health: Health = { capture: snapshot.capture, processing: snapshot.processing, pair: [...snapshot.pair], mode: snapshot.mode,
-      error: snapshot.error, queue: snapshot.queue, running: snapshot.running, rejected: snapshot.rejected,
+      error: snapshot.error, queue: snapshot.queue, running: snapshot.running, rejected: snapshot.rejected, restarts: snapshot.restarts,
       gate: snapshot.gate ? { state: snapshot.gate.state, level: snapshot.gate.level,
-        threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs } : null };
-    const signature = JSON.stringify({ ...health, gate: health.gate?.state ?? null });
+        threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs, ...(snapshot.gate.masked ? { masked: true as const } : {}) } : null };
+    const signature = JSON.stringify({ ...health, gate: health.gate ? [health.gate.state, health.gate.masked ?? false] : null });
     if (signature !== this.lastHealth || atMs - this.lastSample >= SAMPLE_MS) {
       this.add({ type: 'health', atMs, session: this.session, generation: snapshot.generation, health });
       this.lastHealth = signature; this.lastSample = atMs;

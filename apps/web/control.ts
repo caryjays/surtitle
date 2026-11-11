@@ -132,8 +132,9 @@ const connection = connect('control', snapshot => {
     'cloud-audio-and-text': 'Audio and text are processed in the cloud; provider retention policies apply.',
     'cloud-audio-only': 'Audio is processed in the cloud. Translation is OFF; provider retention policies apply.',
   }[snapshot.processing];
-  status.textContent = `${snapshot.capture.toUpperCase()} · ${snapshot.backend} · queued ${snapshot.queue} · translating ${snapshot.running}${snapshot.rejected ? ` · filtered ${snapshot.rejected} suspect turns` : ''}`;
+  status.textContent = `${snapshot.capture.toUpperCase()} · ${snapshot.backend} · queued ${snapshot.queue} · translating ${snapshot.running}${snapshot.rejected ? ` · filtered ${snapshot.rejected} suspect turns` : ''}${snapshot.restarts ? ` · recognition restarted ${snapshot.restarts}×` : ''}`;
   element('gate-advice').hidden = !snapshot.gate || snapshot.gate.state === 'calibrating' || snapshot.gate.threshold < 0.03;
+  element('gate-masked').hidden = !snapshot.gate?.masked;
   element('gate-status').textContent = snapshot.gate
     ? `Noise gate: ${snapshot.gate.state} · level ${snapshot.gate.level.toFixed(4)} · threshold ${snapshot.gate.threshold.toFixed(4)}${snapshot.gate.threshold > 0.1 ? ' · High ambient level: move closer to the speaker or adjust input gain and recalibrate.' : ''}`
     : 'Noise gate diagnostics appear while listening.';
@@ -144,7 +145,8 @@ const connection = connect('control', snapshot => {
     ? snapshot.gate?.state === 'calibrating' ? `Stay quiet · room must also be quiet · calibrating room noise (${(snapshot.gate.remainingMs / 1000).toFixed(1)} s). Speak when Listening appears.`
       : pending ? 'Speech detected · building original text; translation follows finalization.'
       : snapshot.running ? 'Translating · microphone still listening.' : describe(snapshot.mode, true)
-    : snapshot.capture === 'connecting' ? 'Warming recognition · stay quiet through the room-noise calibration before speaking.'
+    : snapshot.capture === 'connecting' ? snapshot.restarting ? 'Recognition stopped and is restarting on its own · speech is not captioned until Listening returns. Finished text is kept.'
+      : 'Warming recognition · stay quiet through the room-noise calibration before speaking.'
       : snapshot.capture === 'stopping' ? 'Finishing the last turn…' : 'Microphone is off. Recent text remains until Clear or a new Start.';
   renderHistory(snapshot); renderAudience(snapshot, lastState); renderConsole(snapshot); buttons();
 }, online => {

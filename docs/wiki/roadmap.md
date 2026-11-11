@@ -1,6 +1,6 @@
 # Roadmap
 
-Verified: 2026-11-10 · Sources: none
+Verified: 2026-11-11 · Sources: none
 
 Where the project is going and in what order. What is done and open right now lives in [status](status.md); the reasons are in [decisions](decisions.md).
 
@@ -58,7 +58,7 @@ Milestones from the original plan with their standing.
 | Milestone | Standing |
 | --- | --- |
 | 0. Confirm implementation choices | Done. Providers, audio format and credential path are in [decisions](decisions.md) |
-| 1. Vertical slice: microphone to bilingual captions in OBS | Implemented; real EN then JA in OBS not yet rehearsed |
+| 1. Vertical slice: microphone to bilingual captions in OBS | Implemented and rehearsed by the maintainer in OBS with English and Japanese speech; see [other languages](../log/2026-11-10-other-languages.md) |
 | Personal companion, pulled forward | Implemented and used live by the owner; group-speech reliability open |
 | 2. Rehearsal-safe: reconnection, device loss, preflight, profiles, shortcuts | Bounds, failure categories and a preflight command exist; hotkeys, profiles and session export not started |
 | 3. Reusable event and video-call workflow | Not started |

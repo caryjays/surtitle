@@ -6,6 +6,9 @@ import { TranslationFailure, type PartialTranslation, type Transcriber, type Tra
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
 import { endsSentence } from '../../packages/providers/rolling.ts';
 
+// Automatic recognizer restarts: at most this many within the window, then capture fails and waits for the operator.
+const RESTART = { max: 2, windowMs: 5 * 60_000 };
+
 // piece: a request for locked text of the row, the rest of the row when last. Its text and context are taken when it is sent.
 type Job = { row: Segment; mode: Mode; context: TranslationContext; epoch: number; queued: number; piece?: { last: boolean } };
 // Piece translation, rolling only: an open row's locked text is translated in pieces, each appended to the row's
@@ -41,6 +44,9 @@ export class Controller {
   private queue: Job[] = [];
   private running = new Set<AbortController>();
   private transcriber?: Transcriber;
+  private restarts = 0;
+  private restartTimes: number[] = [];
+  private restarting = false;
   private streamToken = 0;
   private lastAudio = 0;
   private started = 0;
@@ -77,6 +83,7 @@ export class Controller {
       pair: [...this.pair], mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
       processing: this.processing(), segmentation: this.segmentation,
       translation: { available: Boolean(this.options.translator), enabled: this.translating },
+      restarts: this.restarts, ...(this.restarting ? { restarting: true as const } : {}),
       queue: this.queue.length, running: this.running.size, gate: this.gate, rejected: this.rejected, segments: this.rows.map(r => ({ ...r })), sentAt: Date.now(), turns: structuredClone(this.traces), turnTelemetryVersion: 2 };
   }
   private processing(): Snapshot['processing'] {
@@ -111,22 +118,37 @@ export class Controller {
     this.running.clear(); this.rows = []; this.traces = []; this.error = null; this.gate = null; this.rejected = 0;
     this.contextFloor = this.nextSequence;
   }
-  private closeStream() { this.streamToken++; this.transcriber?.close(); this.transcriber = undefined; this.gate = null; }
+  private closeStream() { this.streamToken++; this.transcriber?.close(); this.transcriber = undefined; this.gate = null; this.restarting = false; }
   // Modes outside the session's pair are refused; the server treats them as a protocol error.
   accepts(mode: Mode) { return modes(this.pair).includes(mode); }
   async start(mode: Mode) {
     if (!this.accepts(mode)) return;
     if (this.capture === 'active' || this.capture === 'connecting' || this.capture === 'stopping') return;
     this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.mode = mode;
+    this.restarts = 0; this.restartTimes = [];
     await this.openStream();
   }
-  private async openStream() {
+  // The recognizer failed while capturing: restart it, visibly, instead of waiting for a manual Start. Finished rows stay,
+  // open rows are dropped, and the noise gate carries over so no quiet is needed. A third failure within five minutes, or
+  // a failure while restarting, fails capture as before.
+  private interrupted() {
+    const now = Date.now();
+    this.restartTimes = this.restartTimes.filter(at => now - at < RESTART.windowMs);
+    if (this.capture !== 'active' || this.restartTimes.length >= RESTART.max) { this.fail('transcription'); return; }
+    this.restartTimes.push(now); this.restarts++;
+    const threshold = this.gate && this.gate.state !== 'calibrating' ? this.gate.threshold : undefined;
+    this.closeStream(); this.dropOpenRows(); this.restarting = true;
+    void this.openStream(threshold);
+  }
+  private async openStream(gateThreshold?: number) {
     const token = ++this.streamToken;
+    const restarting = this.restarting;
     this.capture = 'connecting'; this.changed();
     try {
       const stream = this.options.transcriber({ mode: this.mode, pair: this.pair, ...(this.segmentation ? { segmentation: this.segmentation } : {}),
         onEvent: event => { if (token === this.streamToken) this.transcript(event); },
-        onFailure: () => { if (token === this.streamToken) this.fail('transcription'); },
+        onFailure: () => { if (token === this.streamToken) this.interrupted(); },
+        ...(gateThreshold !== undefined ? { gateThreshold } : {}),
         onTurnDiagnostic: (id, value) => {
           if (token !== this.streamToken) return;
           const row = this.rows.find(row => row.id === id);
@@ -142,13 +164,15 @@ export class Controller {
       this.transcriber = stream;
       await stream.connect();
       if (token !== this.streamToken) { stream.close(); return; }
-      this.capture = 'active'; this.lastAudio = this.started = Date.now(); this.changed();
+      // The session limit counts from Start, not from an automatic restart.
+      this.capture = 'active'; this.restarting = false; this.lastAudio = Date.now(); if (!restarting) this.started = this.lastAudio;
+      this.changed();
     } catch { if (token === this.streamToken) this.fail('transcription'); }
   }
   audio(pcm: Uint8Array) {
     if (this.capture !== 'active') return;
     this.lastAudio = Date.now();
-    try { this.transcriber?.audio(pcm); } catch { this.fail('transcription'); }
+    try { this.transcriber?.audio(pcm); } catch { this.interrupted(); }
   }
   setMode(mode: Mode) {
     if (!this.accepts(mode)) return;
@@ -203,10 +227,13 @@ export class Controller {
     this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.capture = 'paused'; this.changed();
   }
   fail(error: Failure) {
-    this.closeStream(); this.capture = 'failed'; this.error = error;
-    // Preserve originals; incomplete previews must not look final.
+    this.closeStream(); this.capture = 'failed'; this.error = error; this.restarting = false;
+    this.dropOpenRows(); this.changed();
+  }
+  // Preserve originals; incomplete previews must not look final.
+  private dropOpenRows() {
     for (const trace of this.traces) if (['capturing', 'committed'].includes(trace.outcome)) trace.outcome = 'capture-failed';
-    this.rows = this.rows.filter(r => r.final); this.changed();
+    this.rows = this.rows.filter(r => r.final);
   }
   private trace(row: Segment) {
     const trace = this.rowTraces.get(row);

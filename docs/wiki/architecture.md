@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-10 · Sources: packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-11 · Sources: packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one request per finalized turn: HTTPS to a cloud provider, or stdio to a second Python child running a local model.
 
@@ -85,6 +85,7 @@ Operations: Start begins a fresh session. Pause finishes the current turn, waits
 | Minimum committed audio | 100 ms, zero padded |
 | Fixed gate, local-only and benchmarks | RMS 0.012, one onset frame |
 | Calibrated gate, listen mode | 1.5 s calibration; threshold max(0.004, p90 noise × 2.5); three onset frames; 0.65 hysteresis while open; slow drift while idle |
+| Masked-speech warning, calibrated gate | over 10 s with no turn, the 90th-percentile level is at least max(0.002, 0.3 × threshold) and at least 3 × the 10th percentile |
 | Local jobs | 1 active, 2 queued finals, 1 replaceable preview; 8 s queue expiry; 12 s inference deadline; 60 s startup |
 | Previews | every 3 s of turn audio in listen mode, two agreeing hypotheses; off in rolling mode |
 | Rolling mode | a decode per further 1 s of audio, one in flight; window under 29 s; forced lock at 25 s; rows close at 3 s with sentence punctuation or 8 s |
@@ -97,4 +98,6 @@ Operations: Start begins a fresh session. Pause finishes the current turn, waits
 
 ## Failure policy
 
-Any adapter error, malformed worker output, a third queued final, a missed inference deadline, a lost control socket or 5 s without audio puts capture in `failed` with a safe category. Finalized rows stay visible; provisional rows disappear. Capture and paid work never restart on their own; the operator clicks Start. Translation failures mark only their own row and later turns proceed. Whether this policy should soften is tracked in [status](status.md).
+A lost control socket, 5 s without audio, a failed start or the session limit puts capture in `failed` with a safe category; the operator clicks Start. Finalized rows stay visible; provisional rows disappear.
+
+A recognizer failure while capturing, which covers any adapter error, malformed worker output, a third queued final and a missed inference deadline, restarts the recognizer on its own: capture shows `connecting` with `restarting` set, the operator page says so, finalized rows stay, open rows are dropped, and the new stream starts from the old noise gate threshold instead of calibrating again. Speech during the restart is not captioned. `Snapshot.restarts` counts restarts since Start. A third such failure within five minutes, or a failure while restarting, puts capture in `failed`. The microphone is never reopened and paid work never restarts on its own. Translation failures mark only their own row and later turns proceed. Whether this policy should soften is tracked in [status](status.md).

@@ -1,6 +1,6 @@
 # Language gates
 
-Verified: 2026-11-10 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
+Verified: 2026-11-11 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json
 
 A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the five parts; this page sets the numbers. Japanese is the only gate so far. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
@@ -63,8 +63,12 @@ The score targets must hold under two judges from different model families. Case
 
 - The calibration warning is shipped: a calibration that leaves the gate above the speech that follows is visible to the operator.
 - One real session of at least 30 minutes with Japanese and English speech, diagnostics on, and the gate's chosen settings.
-- No capture failure and no manual restart other than an intentional stop.
+- No capture failure and no manual restart other than an intentional stop. Automatic recognizer restarts are counted and reported.
 - The diagnostics download is summarized in a dated log entry with aggregate counts only.
+
+## Accepted limits
+
+The Japanese held-out differences are accepted as failing on one talk, 0KTVqevvEjo, by the maintainer's decision of 2026-11-11: its speaker pauses often at low level, the detector cuts it into short stretches, and no rule tested recovers what the short windows lose. The targets and the talk stay as they are; a run reports the failure, and it does not block the gate while that talk accounts for it. See [decisions](decisions.md).
 
 ## Running a gate
 

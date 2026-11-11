@@ -128,7 +128,8 @@ export class LocalTranscriber implements Transcriber {
           audio: Buffer.concat(this.current.frames), queued: performance.now() });
         this.current = undefined; this.preview = undefined; this.pump();
       },
-    }, { maxTurnMs: rolling ? null : options.maxTurnMs ?? 12_000, calibrationMs: options.calibrationMs });
+    }, { maxTurnMs: rolling ? null : options.maxTurnMs ?? 12_000, calibrationMs: options.calibrationMs,
+      ...(options.gateThreshold !== undefined ? { threshold: options.gateThreshold } : {}) });
   }
   private row(): Row {
     const mode = this.options.mode;

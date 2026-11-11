@@ -1,6 +1,6 @@
 # Content-free diagnostics
 
-Verified: 2026-11-10 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
+Verified: 2026-11-11 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, apps/service/controller.ts, packages/providers/local.ts
 
 Diagnostics answer what the pipeline did with each turn without storing what anyone said. The service keeps up to 60 recent turn traces in memory; the browser records them only after the operator opts in.
 
@@ -17,7 +17,7 @@ The buffer holds 5,000 events and reports how many older ones were dropped. Stab
 
 | Event | Content |
 | --- | --- |
-| `health` | capture and processing mode, language pair, direction, error category, queue and running counts, rejected count, gate state, level and threshold |
+| `health` | capture and processing mode, language pair, direction, error category, queue and running counts, rejected count, gate state, level and threshold, and `masked` while the gate reports speech-like sound staying under it |
 | `segment` | sequence, final flag, state, caption source and target, character counts, script letter counts, translation request ms, time since first seen; `baseline` marks rows already present at opt-in |
 | `segment-removed` | sequence plus the retained turn outcome, or `unknown` |
 | `turn` | the service `TurnTrace`, re-emitted whenever it changes |

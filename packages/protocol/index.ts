@@ -62,6 +62,8 @@ export const AudioGate = z.object({
   state: z.enum(['calibrating', 'quiet', 'speech']),
   level: z.number().min(0).max(1), threshold: z.number().min(0).max(1),
   remainingMs: z.number().int().min(0).max(2000),
+  // Sound that rises and falls like speech has stayed under the gate for 10 s: the threshold may sit above the speech.
+  masked: z.literal(true).optional(),
 }).strict();
 export type AudioGate = z.infer<typeof AudioGate>;
 export const Snapshot = z.object({
@@ -79,6 +81,8 @@ export const Snapshot = z.object({
   // null: the recognizer has one fixed segmentation. Translation is available only when the service was started with it.
   segmentation: Segmentation.nullable().default(null),
   translation: z.object({ available: z.boolean(), enabled: z.boolean() }).strict().default({ available: false, enabled: false }),
+  // Automatic recognizer restarts since Start, and whether one is under way now.
+  restarts: z.number().int().nonnegative().max(10_000).default(0), restarting: z.literal(true).optional(),
 });
 export type Snapshot = z.infer<typeof Snapshot>;
 export const SAMPLE_RATE = 24000;

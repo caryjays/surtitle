@@ -291,3 +291,38 @@ test('the two settings commands parse and nothing else rides on them', () => {
   for (const bad of [{ type: 'set-segmentation', segmentation: 'words' }, { type: 'set-translation', enabled: 'yes' },
     { type: 'set-translation', enabled: true, provider: 'other' }]) assert.throws(() => Command.parse(bad));
 });
+
+test('a recognizer failure while capturing restarts it visibly, keeps finished rows and the noise gate, and stops after two', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('kept'); h.begin('open');
+  h.streams[0]!.gate({ state: 'quiet', level: 0.001, threshold: 0.02, remainingMs: 0 });
+  h.streams[0]!.fail();
+  // Restarting shows as connecting with the flag; the open row is gone and the finished one stays.
+  let snapshot = h.controller.snapshot();
+  assert.deepEqual([snapshot.capture, snapshot.restarting, snapshot.restarts, snapshot.error], ['connecting', true, 1, null]);
+  assert.deepEqual(snapshot.segments.map(row => row.id), ['kept']); assert.equal(h.streams[0]!.closed, true);
+  await tick();
+  snapshot = h.controller.snapshot(); Snapshot.parse(snapshot);
+  assert.deepEqual([snapshot.capture, snapshot.restarting, snapshot.restarts], ['active', undefined, 1]);
+  assert.equal(h.streams.length, 2); assert.equal(h.streams[1]!.gateThreshold, 0.02);
+  // A late failure report from the replaced stream changes nothing.
+  h.streams[0]!.fail(); assert.equal(h.controller.snapshot().capture, 'active');
+  h.final('after'); assert.deepEqual(h.controller.snapshot().segments.map(row => row.id), ['kept', 'after']);
+  // A second failure restarts again, without a gate to carry while the new stream has reported none.
+  h.streams[1]!.fail(); await tick();
+  assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().restarts, h.streams[2]!.gateThreshold], ['active', 2, undefined]);
+  // The third within the window fails capture and waits for the operator.
+  h.streams[2]!.fail(); await tick();
+  snapshot = h.controller.snapshot();
+  assert.deepEqual([snapshot.capture, snapshot.error, snapshot.restarts, h.streams.length], ['failed', 'transcription', 2, 3]);
+  // Start resets the count.
+  await h.controller.start('auto'); assert.equal(h.controller.snapshot().restarts, 0);
+});
+test('a recognizer that fails while restarting fails capture, and Pause during a restart ends it', async t => {
+  const h = harness(); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.streams[0]!.fail(); h.streams[1]!.fail(); await tick();
+  assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().error], ['failed', 'transcription']);
+  await h.controller.start('auto'); h.streams.at(-1)!.fail();
+  await h.controller.pause(); await tick();
+  assert.deepEqual([h.controller.snapshot().capture, h.controller.snapshot().restarting], ['paused', undefined]);
+});

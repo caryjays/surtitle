@@ -7,7 +7,7 @@ export type WorkerSegment = { endMs: number; text: string };
 export const ROLLING = {
   intervalMs: 1000, // new audio between decodes; one decode in flight at most
   minWindowMs: 500,
-  settleMs: 1000, // a segment must end this long before the newest audio to lock
+  settleMs: 500, // a segment must end this long before the newest audio to lock
   forceMs: 25_000, // lock without agreement rather than approach Whisper's 30 s input
   maxWindowMs: 29_000,
   noiseMs: 3000, // no segments over this long a window means noise; keep only the last second

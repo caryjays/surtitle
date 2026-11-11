@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-11-10 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-11 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
@@ -29,7 +29,7 @@ The transcript shows every row's whole text: what the pacer has released in the 
 Sidebar panels:
 
 - Audience view: what the overlay shows now, rendered by the overlay's own code on a 1920 × 1080 stage scaled to the panel, with the overlay settings below. It is computed in this page and opens no overlay socket.
-- Input and Session: the controls in the table above, and the noise gate's state, level and threshold.
+- Input and Session: the controls in the table above, and the noise gate's state, level and threshold. A notice appears when sound that rises and falls like speech has stayed under the gate for 10 s, the sign of a calibration that left the threshold above the speech.
 - Overlay for OBS: caption window lines and pacing, saved as validated settings under `captions.overlay.v1`, and the Browser Source URL that carries them, with Copy and Open.
 - Health: connection, capture, recognizer and segmentation, translation, queue, filtered rows, and medians over the last 10 rows of decode time, first text and lock lag in rolling mode or commit to final in turns mode, translation request time, and failed or skipped rows. No speech text.
 - Diagnostic log: the opt-in content-free log; see [diagnostics](diagnostics.md).
@@ -56,7 +56,7 @@ Speech that was heard but is not captioned leaves a marker row instead of empty 
 | `Command` | `start{mode}`, `set-mode{mode}`, `flush`, `calibrate`, `pause`, `clear`, `new-session`, `capture-failed`, `set-segmentation{segmentation}`, `set-translation{enabled}` |
 | `Snapshot.segmentation` | `turns`, `rolling`, or null when the recognizer has one fixed segmentation |
 | `Snapshot.translation` | `available`: a translator was configured at startup; `enabled`: it is on for this session |
-| `Snapshot.capture` | `paused`, `connecting`, `active`, `stopping`, `failed` |
+| `Snapshot.capture` | `paused`, `connecting`, `active`, `stopping`, `failed`; `restarting` is set while `connecting` after a recognizer failure, and `restarts` counts those since Start |
 | `Segment.state` | `partial`, `pending`, `ready`, `failed`, `unresolved`, `skipped`, `original` |
 | `Segment.stable` | Optional: the number of leading characters of a partial original that are locked; absent means all of it |
 | `Snapshot.processing` | `local-only`, `local-audio-local-text`, `local-audio-cloud-text`, `cloud-audio-and-text`, `cloud-audio-only` |

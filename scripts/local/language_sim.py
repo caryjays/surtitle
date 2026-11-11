@@ -26,7 +26,7 @@ outside the pair locks nothing: it is handled as a wholly filtered decode, so th
 With --pair-retry T as well, such a window is decoded again in the pair language detection prefers when the pair holds
 at least T of detection's probability, and kept if written in that language's script.
 
-With --settle S, a segment locks once it ends S seconds before the newest audio, against the live 1.0. Every run reports
+With --settle S, a segment locks once it ends S seconds before the newest audio, the live 0.5 by default. Every run reports
 lock lag, from a locked segment's end to the reply that locked it, in virtual time.
 
 With --noise-confirm T, after a noise trim the next lock in the stretch needs a decode whose lowest segment log
@@ -41,7 +41,7 @@ share windows decode them once and reruns are cheap. Decode times come from the 
 realistic. Public licensed fixtures only; no API or .env use.
 
   run [--rules auto,candidates] [--streams public-ja,...] [--keep-agreed] [--third-row] [--pair-only [--pair-retry 0.5]]
-      [--noise-confirm -0.5] [--settle 1.0]
+      [--noise-confirm -0.5] [--settle 0.5]
 """
 import argparse
 import json
@@ -53,7 +53,7 @@ from scoring import edit_counts
 
 RATE = 24_000  # gate streams and the live worker input
 PAIR = ('ja', 'en')
-INTERVAL, MIN_WINDOW, SETTLE, FORCE, NOISE, KEEP = 1.0, 0.5, 1.0, 25.0, 3.0, 1.0
+INTERVAL, MIN_WINDOW, SETTLE, FORCE, NOISE, KEEP = 1.0, 0.5, 0.5, 25.0, 3.0, 1.0
 SENTENCE_ROW, MAX_ROW = 3.0, 8.0
 THIRD = 0.5  # detection probability outside the pair that rejects a window as another language
 UNCERTAIN = 0.2  # below this, retry-uncertain also decodes the other pair language
@@ -363,7 +363,7 @@ def run(args):
                 result['texts'] = [text for _, _, text in rows]
             name = rule + ('+keep' if args.keep_agreed else '') + ('+third' if args.third_row else '') + ('+pair' if args.pair_only else '') + (
                 f'+retry{args.pair_retry}' if args.pair_retry is not None else '') + (
-                f'+settle{args.settle}' if args.settle != 1.0 else '') + (
+                f'+settle{args.settle}' if args.settle != 0.5 else '') + (
                 f'+confirm{args.noise_confirm}' if args.noise_confirm is not None else '')
             report.setdefault(stream, {})[name] = result
             print(stream, name, json.dumps({k: v for k, v in result.items() if k != 'score'} | (
@@ -384,7 +384,7 @@ def main():
     run_parser.add_argument('--third-row', action='store_true')
     run_parser.add_argument('--pair-only', action='store_true')
     run_parser.add_argument('--pair-retry', type=float)
-    run_parser.add_argument('--settle', type=float, default=1.0)
+    run_parser.add_argument('--settle', type=float, default=0.5)
     run_parser.add_argument('--noise-confirm', type=float)
     run(parser.parse_args())
 

@@ -15,8 +15,8 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   translate: { type: 'string', default: 'local' }, model: { type: 'string', default: 'qwen3.5-4b-q4' }, out: { type: 'string' },
   // sentence,max,clause in ms, clause 'off' for none; the live rules are 3000,8000,off.
   rows: { type: 'string', default: '3000,8000,off' }, review: { type: 'string' },
-  // interval,settle in ms; the live cadence is 1000,1000.
-  cadence: { type: 'string', default: '1000,1000' },
+  // interval,settle in ms; the live cadence is 1000,500.
+  cadence: { type: 'string', default: '1000,500' },
   // row: translate each closed row, as live; piece: translate locked pieces before the row closes.
   units: { type: 'string', default: 'row' },
 } });

@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-10 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-11 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -31,7 +31,7 @@ After editing source, stop the service, run the `dev:*` command again and reload
 3. Click Start microphone. Wait through model warmup and the 1.5 s calibration, during which the whole room must be quiet. Speak when the activity line says Listening.
 4. Read. Scrolling back pauses Follow latest; Jump to latest resumes it. Text & spacing adjusts sizes and width. Preview long conversation works only while paused.
 5. For Japanese-only Q&A switch to Lecture while active; the next turn uses the new direction. Translate now finalizes a long turn without stopping.
-6. If room noise changes, click Recalibrate room noise during a quiet gap. Finished captions stay; speech still being recognized at that moment is dropped, pending translations are cancelled and later translations start without earlier context.
+6. If room noise changes, or a notice says sound that rises and falls like speech is staying under the noise gate, click Recalibrate room noise during a quiet gap. Finished captions stay; speech still being recognized at that moment is dropped, pending translations are cancelled and later translations start without earlier context.
 7. Pause releases the microphone. Clear screen drops history and restarts the worker. To use the built-in microphone: Pause, select it, Start.
 
 Keep the tab open and the Mac awake and powered. Paid requests begin after Start and only for finalized speech.

@@ -73,3 +73,37 @@ test('calibration ignores DC offsets and isolated clicks; recalibration resets o
   for (let i = 0; i < 3; i++) vad.push(tone(0.05));
   assert.equal(begins, 1);
 });
+test('calibrated gate warns when sound that swings like speech stays under it, and not on steady noise', () => {
+  let begins = 0;
+  const vad = new TurnDetector({ begin() { begins++; }, append() {}, commit() {} }, { calibrationMs: 1500 });
+  // Calibrated while someone spoke: the threshold lands above the speech that follows.
+  for (let i = 0; i < 30; i++) vad.push(tone(0.08));
+  const threshold = vad.status().threshold;
+  for (let i = 0; i < 199; i++) vad.push(tone(i % 8 < 4 ? 0.07 : 0.005));
+  assert.equal(vad.status().masked, undefined); // not before 10 s of it
+  for (let i = 0; i < 40; i++) vad.push(tone(i % 8 < 4 ? 0.07 : 0.005));
+  assert.equal(begins, 0); assert.equal(vad.status().masked, true); assert(vad.status().threshold <= threshold);
+  // A turn opening clears it, and so does a recalibration.
+  for (let i = 0; i < 3; i++) vad.push(tone(0.5));
+  assert.equal(begins, 1); assert.equal(vad.status().masked, undefined);
+  const steady = new TurnDetector({ begin() { begins++; }, append() {}, commit() {} }, { calibrationMs: 1500 });
+  for (let i = 0; i < 30; i++) steady.push(tone(0.04));
+  for (let i = 0; i < 400; i++) steady.push(tone(0.04 + (i % 3) * 0.002));
+  assert.equal(steady.status().masked, undefined);
+  const quiet = new TurnDetector({ begin() {}, append() {}, commit() {} }, { calibrationMs: 1500 });
+  for (let i = 0; i < 30; i++) quiet.push(tone(0));
+  for (let i = 0; i < 400; i++) quiet.push(tone(i % 8 < 4 ? 0.0015 : 0.0001)); // far below the gate's floor: not speech worth a warning
+  assert.equal(quiet.status().masked, undefined);
+  for (let i = 0; i < 400; i++) quiet.push(tone(i % 8 < 4 ? 0.0045 : 0.0003)); // faint speech just under the 0.004 floor (RMS)
+  assert.equal(quiet.status().masked, true);
+});
+test('a gate carried over from a replaced stream needs no calibration and opens on the first speech', () => {
+  let begins = 0;
+  const vad = new TurnDetector({ begin() { begins++; }, append() {}, commit() {} }, { calibrationMs: 1500, threshold: 0.05 });
+  assert.deepEqual([vad.status().state, vad.status().remainingMs], ['quiet', 0]); assert(Math.abs(vad.status().threshold - 0.05) < 1e-9);
+  for (let i = 0; i < 3; i++) vad.push(tone(0.03));
+  assert.equal(begins, 0);
+  for (let i = 0; i < 3; i++) vad.push(tone(0.2));
+  assert.equal(begins, 1);
+  assert.throws(() => new TurnDetector({ begin() {}, append() {}, commit() {} }, { calibrationMs: 1500, threshold: 2 }));
+});

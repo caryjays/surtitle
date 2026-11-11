@@ -23,6 +23,8 @@ export interface Transcriber {
 export type TranscriberFactory = (options: {
   mode: Mode; pair?: Pair; segmentation?: Segmentation; onEvent: (event: TranscriptEvent) => void; onFailure: () => void;
   onGate?: (gate: AudioGate) => void;
+  // The noise gate of the stream this one replaces after an automatic restart; a calibrating recognizer starts from it.
+  gateThreshold?: number;
   onTurnDiagnostic?: (id: string, measurement: TurnMeasurement) => void;
 }) => Transcriber;
 export class TranslationFailure extends Error {
