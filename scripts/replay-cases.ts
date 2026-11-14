@@ -16,7 +16,7 @@ const { values } = parseArgs({ options: {
   // quietest: the quietest 1.5 s of the file; silence: as if calibrated in a quiet room beforehand.
   'room-tone': { type: 'string', default: 'quietest' },
   'max-turn-ms': { type: 'string', default: '12000' },
-  // rolling: the experimental segmentation; rows instead of capped turns, see packages/providers/rolling.ts.
+  // rolling: the live default; rows instead of capped turns, see packages/providers/rolling.ts.
   segmentation: { type: 'string', default: 'turns' },
   pair: { type: 'string', default: 'en-ja' },
 } });

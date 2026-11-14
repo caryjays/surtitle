@@ -54,6 +54,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-12-early-text.md](2026-11-12-early-text.md) | Why first text is late on continuous speech, a simulation of showing agreed text before it locks, and the overlay setting built from it |
 | [2026-11-12-early-text-default.md](2026-11-12-early-text-default.md) | Show text early as the default, the field session accepted for gate part 5, and the third-language and non-speech streams replayed for text shown early |
 | [2026-11-13-closing-decode-and-faint-sweep.md](2026-11-13-closing-decode-and-faint-sweep.md) | A decode sent in the quiet as the closing decode, the Japanese held-out talks at settle 0.5, a faint-level sweep, and the applause stream with early text |
+| [2026-11-14-rolling-default-and-docs-review.md](2026-11-14-rolling-default-and-docs-review.md) | Rolling as the default segmentation, and a review of the wiki: status rewritten, stale statements fixed |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

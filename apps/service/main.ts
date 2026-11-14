@@ -23,8 +23,8 @@ async function main() {
     LOCAL_TRANSLATION_MODEL: z.enum(LOCAL_TRANSLATION_MODELS).default('qwen3.5-4b-q4'),
     LOCAL_MAX_TURN_MS: z.coerce.number().int().min(1000).max(12_000).default(12_000),
     LOCAL_PREVIEWS: z.enum(['on', 'off']).default(listen ? 'on' : 'off'),
-    // rolling is the experimental segmentation from docs/log/2026-10-26-rolling-recognition-design.md.
-    LOCAL_SEGMENTATION: z.enum(['turns', 'rolling']).default('turns'),
+    // rolling, the default, decodes about once a second and locks agreed text; turns decodes each turn once at its end.
+    LOCAL_SEGMENTATION: z.enum(['turns', 'rolling']).default('rolling'),
     // English and one other language; each needs a profile in profiles/languages.json.
     LANGUAGE_PAIR: z.string().default('en-ja').transform((value, ctx) => {
       try { return parsePair(value); } catch { ctx.addIssue({ code: 'custom', message: 'LANGUAGE_PAIR needs two distinct languages with profiles' }); return z.NEVER; }

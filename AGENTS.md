@@ -6,7 +6,7 @@ Read [the wiki start page](docs/wiki/README.md), then [overview](docs/wiki/overv
 
 If `private/AGENTS.md` exists, read it after this file. It carries the maintainer's personal context and is never tracked.
 
-This repository is standalone. Do not depend on, import from, or modify any other repository. No GitHub remote or hosted deployment is assumed.
+This repository is standalone. Do not depend on, import from, or modify any other repository. It is public on GitHub; no hosted deployment exists. Pushing is publishing: ask first.
 
 ## Credential safety — mandatory
 
@@ -17,7 +17,7 @@ This repository is standalone. Do not depend on, import from, or modify any othe
 
 ## Privacy of tracked files — mandatory
 
-This repository is written to be publishable. Everything outside `private/` may become public, including Git history.
+This repository is public. Everything outside `private/` is published when pushed, including Git history.
 
 - Personal context lives only in `private/`, which Git ignores: the maintainer's notes, hardware and network inventory, event and travel details, field diaries, the real glossary, and `private/AGENTS.md`. Never copy any of it into a tracked file, a commit message, or a test fixture.
 - Tracked files never contain third-party names, venues, dates of personal events, device inventories, network names, home directory paths, email addresses or credentials. Field results are reported as aggregate numbers only.
@@ -42,13 +42,13 @@ Current priorities, open problems and next steps live in [status](docs/wiki/stat
 
 ## Product contract
 
-- Live text captions pairing English with one other language per session, not synthesized interpretation audio. Japanese is the only pair today; the order and gates for others are in [roadmap](docs/wiki/roadmap.md).
+- Live text captions pairing English with one other language per session, not synthesized interpretation audio. Japanese is the first pair and Spanish a pilot beside it; the order and gates are in [roadmap](docs/wiki/roadmap.md).
 - OBS composes the overlay with slides, a browser, a terminal, or a webcam.
 - Capture and inference are independent of the OBS Browser Source lifecycle.
 - Original speech appears smaller; its translation appears larger.
-- Automatic direction detection has explicit EN→JA and JA→EN overrides.
+- Automatic direction detection within the pair has an explicit override for each direction.
 - Original text survives a translation failure.
-- One local recognizer and one cloud translator are implemented; adapters leave room for local and remote inference later.
+- One local recognizer, cloud translators and a local translator are implemented; adapters leave room for remote inference later.
 - Audio recording is optional and off by default. Do not silently persist sensitive transcripts either; make logging and retention explicit.
 
 ## Implementation approach
@@ -79,4 +79,4 @@ Current priorities, open problems and next steps live in [status](docs/wiki/stat
 
 Test segmentation/finalization, direction overrides, out-of-order translation responses, failure recovery, clear-screen behavior, overlay reconnection, and queue bounds. Then rehearse with real English and Japanese speech in OBS. Record what was actually observed, the backend used, remaining gaps, and commands for the next agent in a dated log entry, and refresh [status](docs/wiki/status.md).
 
-Ask before publishing this repo, deploying anything, enabling remote exposure, buying services, or retaining audience recordings. Do not invent venue logistics, consent, or an event deadline.
+Ask before pushing to the public repository, deploying anything, enabling remote exposure, buying services, or retaining audience recordings. Do not invent venue logistics, consent, or an event deadline.

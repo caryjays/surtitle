@@ -30,8 +30,8 @@ Three profiles, all with local recognition:
 
 ## Recognition modes
 
-- Turns, the default: text appears when a speech turn ends.
-- Rolling: the worker decodes about once a second and shows text that consecutive decodes agree on, so captions follow continuous speech. Start with `LOCAL_SEGMENTATION=rolling`, or switch in the console's Session panel while capture is off.
+- Rolling, the default: the worker decodes about once a second and shows text that consecutive decodes agree on, so captions follow continuous speech.
+- Turns: text appears when a speech turn ends. Start with `LOCAL_SEGMENTATION=turns`, or switch in the console's Session panel while capture is off.
 
 ## Language pair
 

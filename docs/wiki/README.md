@@ -21,7 +21,7 @@ Then the page for the area you touch. [AGENTS.md](../../AGENTS.md) holds the man
 | [status](status.md) | Verified vs observed vs untested, ranked open problems, priorities, next session |
 | [architecture](architecture.md) | Topology, components, turn lifecycle, identity tokens, bounds, failure policy |
 | [recognition](recognition.md) | Models and pins, worker RPC, decode and filter pipeline, segmentation, baseline |
-| [translation](translation.md) | Responses request and validation, direction policy, failure mapping, cost and retention |
+| [translation](translation.md) | Cloud and local translators, request and validation, direction policy, failure mapping, cost and retention |
 | [surfaces](surfaces.md) | Operator page controls and capture settings, overlay rules, shared schema |
 | [diagnostics](diagnostics.md) | Collecting the content-free log, event and trace fields, how to read it |
 | [security-privacy](security-privacy.md) | Boundary rules, retention, credential rules |
@@ -29,6 +29,6 @@ Then the page for the area you touch. [AGENTS.md](../../AGENTS.md) holds the man
 | [testing](testing.md) | Every check command, fixtures, where results go |
 | [decisions](decisions.md) | Dated decisions with reasons |
 | [lanes](lanes.md) | The five usage lanes, source profiles, sources and direction |
-| [roadmap](roadmap.md) | Milestones and standing |
+| [roadmap](roadmap.md) | Identity, stack, language sequence, gate parts, milestones and standing |
 | [gates](gates.md) | Written targets a language must pass before it ships |
 | [practices](practices.md) | How the wiki and log stay true |

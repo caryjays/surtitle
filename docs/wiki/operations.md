@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-12 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-14 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -20,21 +20,22 @@ Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Ch
 | `pnpm build` then `pnpm start:local`, `pnpm start:offline` or `pnpm start:listen` | run the built service |
 | `LOCAL_MODEL=small-q4 pnpm dev:local` | try the smaller model |
 | `LOCAL_PREVIEWS=off pnpm dev:listen` | disable source previews |
-| `LOCAL_SEGMENTATION=rolling pnpm dev:listen` | start in rolling recognition, rehearsed once in listen mode; the console's Session panel also switches it while paused |
+| `LOCAL_SEGMENTATION=turns pnpm dev:local` | start in turns recognition instead of rolling; the console's Session panel also switches it while paused |
+| `LANGUAGE_PAIR=en-es pnpm dev:offline` | start in the Spanish pilot pair; the console's Session panel also switches the pair while paused |
 
 After editing source, stop the service, run the `dev:*` command again and reload `/control`. A build alone changes nothing that is running.
 
 ## Listening session
 
-1. `pnpm preflight:listen`, then `pnpm dev:listen`. Open `http://127.0.0.1:4317/control` in Chrome.
-2. Choose Conversation · EN ↔ JA or Lecture · Japanese → English. Under the diagnostics disclosure pick the microphone; names appear after permission. Reload resets this to System default, so check the Actual input line after Start; it also shows the echo cancellation, noise suppression and automatic gain the browser applied.
+1. `pnpm preflight:listen`, then `pnpm dev:listen`; or `pnpm preflight:offline`, then `pnpm dev:offline`, for translation on this Mac with no key and no network. Open `http://127.0.0.1:4317/control` in Chrome.
+2. In the Session panel choose the language pair, if not the one the service started in, and the direction: Auto, or one fixed direction for a lecture. Under the diagnostics disclosure pick the microphone; names appear after permission. Reload resets this to System default, so check the Actual input line after Start; it also shows the echo cancellation, noise suppression and automatic gain the browser applied.
 3. Click Start microphone. Wait through model warmup and the 1.5 s calibration, during which the whole room must be quiet. Speak when the activity line says Listening.
 4. Read. Scrolling back pauses Follow latest; Jump to latest resumes it. Text & spacing adjusts sizes and width. Preview long conversation works only while paused.
-5. For Japanese-only Q&A switch to Lecture while active; the next turn uses the new direction. Translate now finalizes a long turn without stopping.
+5. For a stretch in one language, switch to that fixed direction while active; the next turn uses it. Translate now finalizes a long turn without stopping.
 6. If room noise changes, or a notice says sound that rises and falls like speech is staying under the noise gate, click Recalibrate room noise during a quiet gap. Finished captions stay; speech still being recognized at that moment is dropped, pending translations are cancelled and later translations start without earlier context.
 7. Pause releases the microphone. Clear screen drops history and restarts the worker. To use the built-in microphone: Pause, select it, Start.
 
-Keep the tab open and the Mac awake and powered. Paid requests begin after Start and only for finalized speech.
+Keep the tab open and the Mac awake and powered. With `dev:listen`, paid requests begin after Start and only for finalized speech.
 
 ## OBS
 
@@ -44,7 +45,7 @@ Keep the tab open and the Mac awake and powered. Paid requests begin after Start
 4. Test source reload and scene switching: capture must continue, and the overlay recovers from a snapshot without new inference.
 5. Disconnect the overlay to confirm captions disappear within 6 s.
 
-For an in-person event use an extended display with the fullscreen projector and keep `/control` off the projected screen. OBS Virtual Camera carries video only; pick the microphone separately in a call. These steps are implemented URL and layout contracts; an OBS rehearsal has not been performed. See [status](status.md).
+For an in-person event use an extended display with the fullscreen projector and keep `/control` off the projected screen. OBS Virtual Camera carries video only; pick the microphone separately in a call. The maintainer has rehearsed the overlay in OBS with English, Japanese and off-pair speech; steps 4 and 5 are covered by the browser checks and were not part of that rehearsal. See [status](status.md).
 
 ## Failure ladder
 

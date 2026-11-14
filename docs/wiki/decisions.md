@@ -1,6 +1,6 @@
 # Decisions
 
-Verified: 2026-11-13 · Sources: none
+Verified: 2026-11-14 · Sources: none
 
 Append-only, newest last. To reverse a decision, add a new entry and mark the old one superseded.
 
@@ -93,3 +93,4 @@ Append-only, newest last. To reverse a decision, add a new entry and mark the ol
 | 2026-11-12 | No language detection inside a row for now | The maintainer's call: language changes were followed well in recent sessions, so the remaining case, a change without a pause whose forced decode stays confident, is not worth about 310 ms per detection call. The case stays listed in [status](status.md) |
 | 2026-11-12 | Show text early is on by default; `early=off` in the overlay URL turns it off | The maintainer's call after trying the two-decode version in a session and choosing the quieter three-decode rule. Real-time replays show originals 1.0 to 1.8 s sooner at the median with a word change under once a minute, and locked text, rows and translation are untouched. See [the default](../log/2026-11-12-early-text-default.md) |
 | 2026-11-13 | In rolling, a decode sent 300 ms into a quiet becomes the closing decode when the stretch closes | A final waited behind the rolling decode in flight for a second request. Two rounds of real-time replays on four held-out talks: close to final faster at the median on every talk, first translated text 0.1 to 1.5 s sooner in 10 of 12 comparisons, recognition error unchanged. 300 and 500 ms did not separate. See [the entry](../log/2026-11-13-closing-decode-and-faint-sweep.md) |
+| 2026-11-14 | Rolling is the default segmentation; turns stays as an option | The maintainer's call. Every gate run, replay and session since 2026-11-06 used rolling, and it is ahead of turns on every held-out measure, while the docs and the default still presented it as experimental. Gate runs measure rolling. See [the entry](../log/2026-11-14-rolling-default-and-docs-review.md) |

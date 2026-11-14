@@ -1,6 +1,6 @@
 # Lanes
 
-Verified: 2026-10-27 · Sources: none
+Verified: 2026-11-14 · Sources: none
 
 The five ways Surtitle gets used, defined by where the audio comes from and where the captions go. Lanes are named presets over one pipeline. Today only the input device and the profile flags differ; the source profiles below are planned. Standing and next steps live in [status](status.md); the order is in [roadmap](roadmap.md).
 
@@ -20,7 +20,7 @@ Every input is an ordinary macOS input device that Chrome can open: a USB or Thu
 
 ## Source profiles
 
-Today echo cancellation and noise suppression are hardcoded on, and every input shares one detector setup. That suits a close microphone and is the leading hypothesis for false rejection on the open floor. The plan replaces the fixed flags with a profile the operator picks per session:
+Today echo cancellation and noise suppression are hardcoded on, and every input shares one detector setup. That suits a close microphone. On the open floor most rejections came from the speech gate on faint audio; a faint-level sweep on clean clips did not reproduce them, so room noise under faint speech and the browser's processing both remain candidates. The plan replaces the fixed flags with a profile the operator picks per session:
 
 | Profile | Echo cancellation, noise suppression, auto gain | Gate | Lanes |
 | --- | --- | --- | --- |
@@ -29,7 +29,7 @@ Today echo cancellation and noise suppression are hardcoded on, and every input 
 | Far field | off, off, deterministic per-turn gain in the worker before the speech gate | calibrated, more sensitive | Open floor, Audience seat |
 | App audio | off, off, off | fixed | Remote call listening |
 
-Values in the gate column are starting points to test with the planned faint-level sweep and the processing on-versus-off room session. Diagnostics record the active profile so field logs say which one ran.
+Values in the gate column are starting points to test with `scripts/faint-sweep.ts`, with a noise bed closer to a room's, and with a processing on-versus-off room session. Diagnostics record the active profile so field logs say which one ran.
 
 ## Sources and direction
 
