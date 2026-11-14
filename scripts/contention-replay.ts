@@ -22,17 +22,20 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   // The local translator computes the shared start of its prompts for every request, as before 2026-11-11; live reuses it.
   'no-prompt-cache': { type: 'boolean', default: false },
   pair: { type: 'string', default: 'en-ja' },
+  // Quiet in ms before a rolling decode may serve as the closing one, live 300; off: decodes on the interval only.
+  pause: { type: 'string', default: '300' },
 } });
 const [sentenceMs, maxMs, clause] = values.rows!.split(',');
 const rows = { sentenceMs: Number(sentenceMs), maxMs: Number(maxMs), clauseMs: clause === 'off' ? null : Number(clause) };
 const [intervalMs, settleMs] = values.cadence!.split(',').map(Number);
 const cadence = { intervalMs: intervalMs!, settleMs: settleMs! };
+const pauseMs = values.pause === 'off' ? null : Number(values.pause);
 if (!values.out || !positionals.length || !['local', 'off'].includes(values.translate!)
   || !(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(values.model!)
   || ![rows.sentenceMs, rows.maxMs, rows.clauseMs ?? 1000].every(ms => Number.isInteger(ms) && ms >= 1000 && ms <= 20_000)
   || ![cadence.intervalMs, cadence.settleMs].every(ms => Number.isInteger(ms) && ms >= 300 && ms <= 3000)
-  || !['row', 'piece'].includes(values.units!)) {
-  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
+  || !['row', 'piece'].includes(values.units!) || !(pauseMs === null || (Number.isInteger(pauseMs) && pauseMs >= 100 && pauseMs <= 650))) {
+  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--pause ms|off] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
 let pair: Pair;
@@ -41,7 +44,7 @@ const translator = values.translate === 'local' ? new LocalTranslator({ model: v
 await translator?.start();
 const controller = new Controller({ pair, backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
-  transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence }) });
+  transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence, pauseMs }) });
 // Collected as rows change: a snapshot holds only the latest rows. Keyed by recording and sequence.
 const review = new Map<string, { recording: number; sequence: number; original: string; translation: string | null; state: string }>();
 let recording = 0;

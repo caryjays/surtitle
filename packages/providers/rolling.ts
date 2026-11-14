@@ -8,6 +8,9 @@ export const ROLLING = {
   intervalMs: 1000, // new audio between decodes; one decode in flight at most
   minWindowMs: 500,
   settleMs: 500, // a segment must end this long before the newest audio to lock
+  // A decode sent once a stretch has been quiet this long becomes its closing decode if the stretch then closes. No decode
+  // is sent in a shorter quiet, where it would hold the worker when the close comes.
+  pauseMs: 300,
   forceMs: 25_000, // lock without agreement rather than approach Whisper's 30 s input
   maxWindowMs: 29_000,
   noiseMs: 3000, // no segments over this long a window means noise; keep only the last second

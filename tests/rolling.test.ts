@@ -267,6 +267,30 @@ test('a decode in flight when its stretch closes is ignored; the closing decode 
   assert.deepEqual(f.events.map(e => e.type), ['begin', 'final']);
   assert.equal(finals(f.events)[0]!.text, 'w0');
 });
+test('a decode sent in the closing pause becomes the closing decode; without the rule the close decodes again', async t => {
+  const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(3); const before = f.requests.length;
+  f.quiet(); await f.stream.finish();
+  // One request, sent 300 ms into the quiet and not again at the close 400 ms later.
+  assert.equal(f.requests.length, before + 1); assert.equal(f.requests.at(-1)! % 1000, 300);
+  const closing = f.measurements.find(m => m.value.boundary === 'silence')!.value;
+  assert.equal(closing.recognitionQueueMs, 0); assert.equal(closing.trailingQuietMs, 700);
+  const g = fixture('rolling', { pauseMs: null }); t.after(() => g.stream.close()); await g.stream.connect();
+  await g.speak(3); const earlier = g.requests.length;
+  g.quiet(); await g.stream.finish();
+  assert.equal(g.requests.length, earlier + 1); assert.equal(g.requests.at(-1)! % 1000, 700);
+  assert.deepEqual(finals(f.events).map(r => r.text), finals(g.events).map(r => r.text));
+});
+test('no decode is sent in a short pause, and one follows as soon as speech resumes', async t => {
+  const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(1); const before = f.requests.length;
+  const frame = (voiced: boolean) => { const pcm = Buffer.alloc(2400); if (voiced) for (let i = 0; i < 2400; i += 2) pcm.writeInt16LE(6000, i); return pcm; };
+  for (let i = 0; i < 16; i++) f.stream.audio(frame(true));
+  for (let i = 0; i < 5; i++) f.stream.audio(frame(false)); // a second since the last request passes 200 ms into the quiet
+  assert.equal(f.requests.length, before);
+  f.stream.audio(frame(true));
+  assert.equal(f.requests.length, before + 1);
+});
 test('a direction change closes the stretch with its old language and the next uses the new one', async t => {
   const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(3); f.stream.setMode('en-ja'); await f.speak(2); f.quiet(); await f.stream.finish();

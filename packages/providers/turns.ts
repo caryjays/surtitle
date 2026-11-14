@@ -39,6 +39,8 @@ export class TurnDetector {
     return { state: this.calibrationRemaining ? 'calibrating' : this.active ? 'speech' : 'quiet',
       level: this.level, threshold: this.threshold, remainingMs: this.calibrationRemaining, ...(this.masked ? { masked: true } : {}) };
   }
+  // Quiet at the end of the open turn so far; a turn closes at 700 ms of it.
+  get quietMs() { return this.active ? this.silence : 0; }
   calibrate() {
     if (!this.options.calibrationMs) return;
     this.finish('recalibration'); this.calibrationRemaining = this.options.calibrationMs; this.noiseLevels = [];

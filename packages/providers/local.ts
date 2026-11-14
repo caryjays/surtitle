@@ -26,6 +26,8 @@ export type LocalOptions = {
   // Rolling decode cadence, for experiments, defaults in ROLLING: new audio between decodes, and how long a segment must end
   // before the newest audio to lock.
   cadence?: { intervalMs: number; settleMs: number };
+  // Quiet before a rolling decode may serve as the closing one; null sends decodes on the interval only. Replays set it.
+  pauseMs?: number | null;
   previewIntervalMs?: number; glossary?: Glossary; calibrationMs?: number;
   startupTimeoutMs?: number; inferenceTimeoutMs?: number;
   workerFactory?: () => ChildProcessWithoutNullStreams;
@@ -34,6 +36,8 @@ export type LocalOptions = {
 };
 type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' | 'close'; language: Language | null;
   audio: Buffer; queued: number; sent?: number;
+  // A rolling decode that became the closing decode while in flight: when the stretch closed.
+  committed?: number;
   // Set by a recalibration while the decode is in flight: its reply is read and ignored.
   dropped?: boolean;
   // Rolling jobs: the stretch and row they decode for, and the closing boundary.
@@ -90,12 +94,14 @@ export class LocalTranscriber implements Transcriber {
   private clauseEnds: string;
   private rows: { sentenceMs: number; maxMs: number; clauseMs: number | null };
   private cadence: { intervalMs: number; settleMs: number };
+  private pauseMs: number | null;
   constructor(private options: LocalOptions & Parameters<TranscriberFactory>[0]) {
     this.pair = options.pair ?? DEFAULT_PAIR;
     this.sentenceEnds = this.pair.map(language => profile(language).sentenceEnd).join('');
     this.clauseEnds = this.pair.map(language => profile(language).clauseEnd).join('');
     this.rows = options.rows ?? { sentenceMs: ROLLING.sentenceRowMs, maxMs: ROLLING.maxRowMs, clauseMs: null };
     this.cadence = options.cadence ?? { intervalMs: ROLLING.intervalMs, settleMs: ROLLING.settleMs };
+    this.pauseMs = options.pauseMs === undefined ? ROLLING.pauseMs : options.pauseMs;
     const rolling = options.segmentation === 'rolling';
     this.detector = new TurnDetector(rolling ? {
       begin: () => { this.stretch = { audio: [], windowMs: 0, sinceRequestMs: 0, previous: '', agreed: '', row: this.row() }; },
@@ -107,8 +113,17 @@ export class LocalTranscriber implements Transcriber {
       commit: detail => {
         const stretch = this.stretch;
         if (!stretch) return;
+        // A decode in flight that already heard the speech to its end, with quiet after it, is the closing decode: only
+        // quiet has been added since, so decoding again would wait for it and return the same text.
+        const flying = this.active;
+        if (this.pauseMs !== null && flying?.kind === 'roll' && flying.stretch === stretch && !flying.dropped
+          && detail.trailingQuietMs - (stretch.windowMs - flying.audio.length / BYTES_PER_MS) >= this.pauseMs) {
+          flying.kind = 'close'; flying.row = stretch.row; flying.committed = performance.now();
+          flying.detail = { boundary: detail.boundary, trailingQuietMs: detail.trailingQuietMs };
+          this.stretch = undefined; this.preview = undefined; return;
+        }
         if (this.queue.length >= 2) throw new Error('Local inference backlog');
-        // A decode still in flight for this stretch is superseded: the closing decode covers its audio and locks all of it.
+        // Any other decode still in flight for this stretch is superseded: the closing decode covers its audio and locks all of it.
         this.queue.push({ id: stretch.row.id, requestId: randomUUID(), kind: 'close', language: stretch.row.language,
           audio: this.window(stretch), queued: performance.now(), row: stretch.row,
           detail: { boundary: detail.boundary, trailingQuietMs: detail.trailingQuietMs } });
@@ -249,17 +264,19 @@ export class LocalTranscriber implements Transcriber {
       row.audioMs += windowMs;
       // Speech that shows nothing leaves a marker instead: speech outside the pair, or speech the filters rejected. Not
       // for non-speech, nor after a noise trim without a confident decode.
+      // A decode that became the closing one in flight is timed from the close, where its wait began.
+      const since = job.committed ?? job.queued;
       const quality = message.measurement?.quality;
       const filtered = rejected && quality && !quality.speechGateRejected && !unconfirmed
         && (repeated || quality.repetitionDrops + quality.lowConfidenceDrops + quality.stockPhraseDrops > 0);
       const uncaptioned = row.marked ? undefined : row.otherDrops ? 'language' as const : filtered ? 'filtered' as const : undefined;
       this.closeRow(row, job.detail!.boundary, { trailingQuietMs: job.detail!.trailingQuietMs,
-        recognitionQueueMs: Math.round(job.sent! - job.queued), recognitionInferenceMs: message.inferenceMs,
-        commitToFinalMs: Math.round(performance.now() - job.queued), adapterRepetitionRejected: repeated,
+        recognitionQueueMs: Math.round(Math.max(0, job.sent! - since)), recognitionInferenceMs: message.inferenceMs,
+        commitToFinalMs: Math.round(performance.now() - since), adapterRepetitionRejected: repeated,
         ...(message.measurement?.recognitionLanguage ? { recognitionLanguage: message.measurement.recognitionLanguage } : {}),
       }, rejected || unconfirmed || otherLanguage, uncaptioned);
-      this.options.onTiming?.({ id: row.id, audioMs: row.audioMs, queueMs: job.sent! - job.queued,
-        inferenceMs: message.inferenceMs, commitToFinalMs: performance.now() - job.queued });
+      this.options.onTiming?.({ id: row.id, audioMs: row.audioMs, queueMs: Math.max(0, job.sent! - since),
+        inferenceMs: message.inferenceMs, commitToFinalMs: performance.now() - since });
       return;
     }
     const current = hypothesis(segments);
@@ -394,7 +411,12 @@ export class LocalTranscriber implements Transcriber {
       this.options.onGate?.(this.detector.status());
     }
     const stretch = this.stretch;
-    if (stretch && stretch.sinceRequestMs >= this.cadence.intervalMs && stretch.windowMs >= ROLLING.minWindowMs
+    // In a pause: nothing is sent until the quiet is long enough for the decode to serve as the closing one, and then one
+    // is sent at once, unless the last request already heard that much quiet.
+    const quiet = this.pauseMs === null ? 0 : this.detector.quietMs;
+    const due = stretch && (quiet === 0 ? stretch.sinceRequestMs >= this.cadence.intervalMs
+      : quiet >= this.pauseMs! && stretch.sinceRequestMs > quiet - this.pauseMs!);
+    if (stretch && due && stretch.windowMs >= ROLLING.minWindowMs
       && !this.active && !this.queue.length && !this.preview) {
       // Backpressure: a slow decode delays the next request rather than queueing more.
       stretch.sinceRequestMs = 0;
