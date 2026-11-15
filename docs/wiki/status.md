@@ -1,6 +1,6 @@
 # Status
 
-Verified: 2026-11-16 · Sources: none
+Verified: 2026-11-15 · Sources: none
 
 This is the handoff page. Rewrite it at the end of every session; `pnpm docs:check` warns when it is older than 14 days. Personal observations belong in `private/`, technical ones here. Measurements are in the linked log entries.
 
@@ -36,11 +36,11 @@ The maintainer does not read the gate languages, so an agent session grades the 
 
 ## The Spanish pilot
 
-It has a profile, public and held-out sets, a gate file and one full gate run in rolling: every accuracy target passes for Spanish and English, and lock lag and first text miss narrowly, as English does in the Japanese gate. Open: a rating of held-out rows for recognition, a spot check of the references, which are unchecked, and a judged translation run. See [the pilot](../log/2026-11-11-spanish-pilot.md) and [its further steps](../log/2026-11-12-spanish-pilot-steps.md).
+It has a profile, public and held-out sets, a gate file and one full gate run in rolling: every measured accuracy target passes for Spanish and English, and lock lag and first text miss narrowly, as English does in the Japanese gate. The share of held-out rows rated major or hallucinated is a target too and is not measured until the rows are rated. Open: a rating of held-out rows for recognition, a spot check of the references, which are unchecked, and a judged translation run. See [the pilot](../log/2026-11-11-spanish-pilot.md) and [its further steps](../log/2026-11-12-spanish-pilot-steps.md).
 
 ## French, Italian and Portuguese
 
-Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every accuracy target. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag misses in all three and first text in Italian. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-15-french-italian-portuguese.md).
+Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every measured accuracy target; the rated share of major rows is not measured in any of the three. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag misses in all three and first text in Italian. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-14-french-italian-portuguese.md).
 
 The two French talks have the shape of the Japanese talk with frequent pauses: nearly every row closed by a pause and many under two seconds. The Portuguese talk loses whole phrases in its first two minutes, where the speech gate rejects decodes at a normal level; the cause was not listened for. Whether to accept either as a limit is the maintainer's decision. The local translator returns valid replies in the right direction on every public clip of the three pairs, and the offline browser smoke passes in each. A read-through of Italian puts Italian to English at a mean of 4.4 of 5 on correctly recognized rows and English to Italian at 4.1, neither meeting part 4's targets. No microphone session has run in the three pairs. See [the trace and read-through](../log/2026-11-15-failing-talks-and-italian-read-through.md).
 
@@ -83,7 +83,7 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 
 ## Housekeeping
 
-The work on French, Italian and Portuguese is committed on the local branch `french-italian-portuguese`, not pushed and not merged into `main`. The repository is public on GitHub. Personal context lives in the ignored `private/` overlay, and the leak scan runs inside `pnpm check`. Dev dependencies `typescript`, `esbuild` and `@types/node` are behind by major versions; not urgent.
+The work on French, Italian and Portuguese is committed on the local branch `french-italian-portuguese`, not pushed and not merged into `main`. Dates in the docs follow the Mac's clock; see [the corrections](../log/2026-11-15-docs-corrections.md). The repository is public on GitHub. Personal context lives in the ignored `private/` overlay, and the leak scan runs inside `pnpm check`. Dev dependencies `typescript`, `esbuild` and `@types/node` are behind by major versions; not urgent.
 
 ## Next session
 

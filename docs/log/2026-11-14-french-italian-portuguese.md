@@ -1,6 +1,6 @@
 # French, Italian and Portuguese: profiles, material, sweeps and one gate run each
 
-2026-11-15. The maintainer asked for the three languages; Portuguese is new to the sequence, see [decisions](../wiki/decisions.md). Everything follows [the Spanish pilot](2026-11-11-spanish-pilot.md) and [its further steps](2026-11-12-spanish-pilot-steps.md). Local recognition only, no translation, no paid calls. Public material; held-out talks were read by scripts only and are reported as counts.
+2026-11-14. The maintainer asked for the three languages; Portuguese is new to the sequence, see [decisions](../wiki/decisions.md). Everything follows [the Spanish pilot](2026-11-11-spanish-pilot.md) and [its further steps](2026-11-12-spanish-pilot-steps.md). Local recognition only, no translation, no paid calls. Public material; held-out talks were read by scripts only and are reported as counts.
 
 ## Setup
 

@@ -1,6 +1,6 @@
 # Language gates
 
-Verified: 2026-11-16 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
+Verified: 2026-11-15 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
 
 A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the parts; this page sets the numbers. Japanese is the first gate; Spanish is the pilot of the further gates, and French, Italian and Portuguese have gates in its shape. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
@@ -97,7 +97,7 @@ Material so far: the public set, `benchmarks/gate-fleurs-es.json` from `pnpm gat
 
 ## French, Italian and Portuguese gates
 
-`benchmarks/gate-fr.json`, `gate-it.json` and `gate-pt.json`, pairs `en-fr`, `en-it` and `en-pt`, written on 2026-11-15 before any measurement in those languages. Rules, parts and targets are the Spanish gate's table above, read with the gate's language in place of Spanish: all three are word-scored and written with spaces.
+`benchmarks/gate-fr.json`, `gate-it.json` and `gate-pt.json`, pairs `en-fr`, `en-it` and `en-pt`, written on 2026-11-14 before any measurement in those languages. Rules, parts and targets are the Spanish gate's table above, read with the gate's language in place of Spanish: all three are word-scored and written with spaces.
 
 Material, each chosen by the Spanish gate's rules before any recognition:
 

@@ -1,6 +1,6 @@
 # The failing French and Portuguese talks traced; translation in the three pairs; an Italian read-through
 
-2026-11-15, after [the gate runs](2026-11-15-french-italian-portuguese.md). Local recognition and the local translator only; no paid calls. Held-out talks were read by scripts as counts, and the Italian review transcripts by agent sessions under the rule for the `review/` folder. Aggregates only. No code changed.
+2026-11-15, after [the gate runs](2026-11-14-french-italian-portuguese.md). Local recognition and the local translator only; no paid calls. Held-out talks were read by scripts as counts, and the Italian review transcripts by agent sessions under the rule for the `review/` folder. Aggregates only. No code changed.
 
 ## The three failing talks
 
