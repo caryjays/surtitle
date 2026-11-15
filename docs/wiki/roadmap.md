@@ -1,12 +1,12 @@
 # Roadmap
 
-Verified: 2026-11-14 · Sources: none
+Verified: 2026-11-15 · Sources: none
 
 Where the project is going and in what order. What is done and open right now lives in [status](status.md); the reasons are in [decisions](decisions.md).
 
 ## Identity
 
-Surtitle is a local-first live caption layer for bilingual talks, controlled by the presenter. Each session pairs English with one other language. Japanese is the first pair. A Spanish pilot runs beside the open parts of the Japanese gate, by the maintainer's decision of 2026-11-11; no other language starts before Japanese passes. The maintainer builds it for their own lectures and publishes it as open source. Closed productization, hosting, accounts and paid tiers are a separate venture and out of scope.
+Surtitle is a local-first live caption layer for bilingual talks, controlled by the presenter. Each session pairs English with one other language. Japanese is the first pair. Other languages no longer wait for the Japanese gate, by the maintainer's decision of 2026-11-14: what is open in that gate is a paid translation eval and the maintainer's own reviews, which engineering on Japanese cannot close. Each language still ships only by passing its own gate, and the order below holds. Spanish is the pilot; French, Italian and Portuguese follow it with gates of their own. The maintainer builds it for their own lectures and publishes it as open source. Closed productization, hosting, accounts and paid tiers are a separate venture and out of scope.
 
 It serves presenters who speak while the room reads, and attendees who listen and read alone, through one pipeline. The five concrete setups, Remote call, Hosted stage, Direct stage, Open floor and Audience seat, are defined in [lanes](lanes.md).
 
@@ -20,9 +20,9 @@ The service and pages stay TypeScript. Recognition stays in a Python worker beca
 
 | Stage | Pair | Notes |
 | --- | --- | --- |
-| 0 | Generalize the pair | Protocol takes a configured pair, modes become `auto` and the two directions, language-specific rules move into one profile per language. The gate runner, replay and translation eval take a gate or pair as well. This work does not wait for the Japanese gate. Done: English, Japanese and Spanish have profiles |
-| 1 | EN ↔ JA | Must pass the Japanese gate below |
-| 2 | EN ↔ ES, then FR and IT | Shared profile shape: spaces, Latin punctuation, WER scoring. Spanish goes first, alone, as the pilot that proves the per-language gate tooling. Risk: per-language stock-phrase hallucinations, and close neighbours such as Portuguese as third languages |
+| 0 | Generalize the pair | Protocol takes a configured pair, modes become `auto` and the two directions, language-specific rules move into one profile per language. The gate runner, replay and translation eval take a gate or pair as well. This work does not wait for the Japanese gate. Done: English, Japanese, Spanish, French, Italian and Portuguese have profiles |
+| 1 | EN ↔ JA | Ships when it passes the Japanese gate below; later stages do not wait for it |
+| 2 | EN ↔ ES, then FR, IT and PT | Shared profile shape: spaces, Latin punctuation, WER scoring. Spanish went first, alone, as the pilot that proved the per-language gate tooling; French, Italian and Portuguese each have a gate in its shape. Risk: per-language stock-phrase hallucinations, and these close neighbours as each other's third languages |
 | 3 | EN ↔ ZH, Simplified and Traditional | Reuses Japanese CJK work: CER, `。！？`, no spaces. Script normalized with OpenCC as a profile setting; regional vocabulary handled by glossary and context |
 | 4 | EN ↔ KO | Easier recognition than Japanese; translation shares the dropped-subject and word-order problems |
 | 5 | EN ↔ DE | Clause-final verbs make mid-sentence cuts force guessing; depends on rolling mode locking only settled segments |

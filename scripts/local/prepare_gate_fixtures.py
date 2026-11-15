@@ -21,7 +21,7 @@ FLEURS_REVISION = '70bb2e84b976b7e960aa89f1c648e09c59f894dd'
 FLEURS = f'https://huggingface.co/datasets/google/fleurs/resolve/{FLEURS_REVISION}/data/'
 FLEURS_LOCALES = {'en': 'en_us', 'ja': 'ja_jp'}
 # Languages with a gate of their own beside English, each with its own public manifest; see select_language.
-GATE_LOCALES = {'es': 'es_419'}
+GATE_LOCALES = {'es': 'es_419', 'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br'}
 # Speech outside the pair, which Auto should reject: a kanji language and three Latin-script ones.
 OTHER_LOCALES = {'zh': 'cmn_hans_cn', 'ko': 'ko_kr', 'es': 'es_419', 'de': 'de_de'}
 PER_OTHER = 10
@@ -163,14 +163,15 @@ def select_fleurs():
 
 def select_language(language):
     """A further gate's public set: that language's first clips, with the English clips of the first gate unchanged."""
-    other = json.loads((ROOT / 'benchmarks/gate-other.json').read_text())['fixtures']
-    used = {f['id'].split('-')[-1] for f in other if f['language'] == language}
+    # Its clips in any third-language set, the shared one or another gate's neighbours, stay out of its own gate.
+    used = {f['id'].split('-')[-1] for path in sorted((ROOT / 'benchmarks').glob('gate-other*.json'))
+            for f in json.loads(path.read_text())['fixtures'] if f['language'] == language}
     english = [f for f in json.loads((ROOT / 'benchmarks/gate-fleurs.json').read_text())['fixtures'] if f['language'] == 'en']
     locale = GATE_LOCALES[language]
     fixtures = first_clips(language, locale, fleurs_references(locale), used, PER_LANGUAGE)
     return {'dataset': 'Google FLEURS', 'revision': FLEURS_REVISION, 'license': 'CC-BY-4.0',
             'scope': f'Language-gate public set for {language}: its first {PER_LANGUAGE} distinct sentence IDs in test-archive order, '
-                     f'{SECONDS[0]} to {SECONDS[1]} s, excluding its IDs in gate-other.json, chosen before recognition; and the '
+                     f'{SECONDS[0]} to {SECONDS[1]} s, excluding its IDs in gate-other*.json, chosen before recognition; and the '
                      'English fixtures of gate-fleurs.json, unchanged.',
             'fixtures': fixtures + english}
 

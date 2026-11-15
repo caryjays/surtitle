@@ -1,0 +1,104 @@
+{
+  "datasets": {
+    "Multilingual TEDx": {
+      "revision": "0b97ef40298de2b7ec1c78e76be3969d604aa022",
+      "license": "CC BY-NC-ND 4.0",
+      "source": "https://www.openslr.org/100",
+      "mirror": "https://huggingface.co/datasets/deepdml/mtedx",
+      "mirrorSha256": "2eae542d385a340896ec6886e6b7251406e92dcd6f4755abfcb51b8590b2ced7"
+    }
+  },
+  "scope": "Held-out set of the Italian gate. Italian: talks of the Multilingual TEDx Italian test split in talk-ID order whose segments span at least 480 s; whole segments from the first starting at or after 60 s, until at least 300 s; each excerpt is its segment clips at their own times over digital silence; transcripts without bracketed sound annotations. At least 1800 s. English: the excerpts of gate-held-out.json, unchanged. Chosen before recognition.",
+  "fixtures": [
+    {
+      "id": "held-it-7TqiEZn5uBE",
+      "language": "it",
+      "source": "https://huggingface.co/datasets/deepdml/mtedx/resolve/0b97ef40298de2b7ec1c78e76be3969d604aa022/it/test-00000-of-00001.parquet",
+      "talk": "7TqiEZn5uBE",
+      "startSeconds": 77.52,
+      "endSeconds": 380.79,
+      "segments": [
+        5,
+        52
+      ],
+      "seconds": 303.27,
+      "audioSha256": "86924e8c1fb55a2f836384fc6cd4f6a96239558d31bed15245bacaf04c157be7",
+      "referenceSha256": "bd32ca532fa41544a7f1dd560783e0b90e81d8b29fb76fa66ef16c26e4660604"
+    },
+    {
+      "id": "held-it-AILi62xo7j8",
+      "language": "it",
+      "source": "https://huggingface.co/datasets/deepdml/mtedx/resolve/0b97ef40298de2b7ec1c78e76be3969d604aa022/it/test-00000-of-00001.parquet",
+      "talk": "AILi62xo7j8",
+      "startSeconds": 65.49,
+      "endSeconds": 372.32,
+      "segments": [
+        6,
+        39
+      ],
+      "seconds": 306.83,
+      "audioSha256": "fa3f86586994cc24cfaa17e5689f811197291e19e58785b6900495ef23849818",
+      "referenceSha256": "02408f02553181d1217fc161e43e4241cda9d13ae824780edbb132dc50f0b0c2"
+    },
+    {
+      "id": "held-it-RjY6MZUGiHQ",
+      "language": "it",
+      "source": "https://huggingface.co/datasets/deepdml/mtedx/resolve/0b97ef40298de2b7ec1c78e76be3969d604aa022/it/test-00000-of-00001.parquet",
+      "talk": "RjY6MZUGiHQ",
+      "startSeconds": 60.57,
+      "endSeconds": 362.76,
+      "segments": [
+        5,
+        56
+      ],
+      "seconds": 302.19,
+      "audioSha256": "3c02a3af2eaafeafb7765dbdc32bc6a9d7a603cab54e38eab2c4dfb9f10cbf1e",
+      "referenceSha256": "6a36487c89cf2d6c381603989a67c5bc9168151fb3c659c3efd3018375b11583"
+    },
+    {
+      "id": "held-it-TpJ2LjF16s8",
+      "language": "it",
+      "source": "https://huggingface.co/datasets/deepdml/mtedx/resolve/0b97ef40298de2b7ec1c78e76be3969d604aa022/it/test-00000-of-00001.parquet",
+      "talk": "TpJ2LjF16s8",
+      "startSeconds": 64.98,
+      "endSeconds": 370.72,
+      "segments": [
+        9,
+        39
+      ],
+      "seconds": 305.74,
+      "audioSha256": "bbb2eab6543e93f661b53a3ee079d1e14a8b5cc4997e101ac6cfedd9d4550fb2",
+      "referenceSha256": "4e6ade0b93aa18fbb4aa036352b65f947910f1449c88b7345f400fd8a659c27d"
+    },
+    {
+      "id": "held-it-bInuBKb-mN0",
+      "language": "it",
+      "source": "https://huggingface.co/datasets/deepdml/mtedx/resolve/0b97ef40298de2b7ec1c78e76be3969d604aa022/it/test-00000-of-00001.parquet",
+      "talk": "bInuBKb-mN0",
+      "startSeconds": 81.18,
+      "endSeconds": 386.04,
+      "segments": [
+        7,
+        33
+      ],
+      "seconds": 304.86,
+      "audioSha256": "448535b8516e6f257827eccd960190a50579f5a521b8756422df2fd7c0aafd97",
+      "referenceSha256": "708faabc114713b26d15c9b80eae614022a0f44dbe0ea0b1ef1a43af68140bd0"
+    },
+    {
+      "id": "held-it-pRLMJnMo3zI",
+      "language": "it",
+      "source": "https://huggingface.co/datasets/deepdml/mtedx/resolve/0b97ef40298de2b7ec1c78e76be3969d604aa022/it/test-00000-of-00001.parquet",
+      "talk": "pRLMJnMo3zI",
+      "startSeconds": 71.38,
+      "endSeconds": 376.6,
+      "segments": [
+        7,
+        56
+      ],
+      "seconds": 305.22,
+      "audioSha256": "7161f41bf04e4ed28ddc9706b9da10a29a210bf38d8f7f14513b65b632a7e6ee",
+      "referenceSha256": "b72bcaf7cc15001b9a0b4625c9552a81130d592d22926e1a293bfcae96bca3cd"
+    }
+  ]
+}

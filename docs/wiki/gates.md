@@ -1,8 +1,8 @@
 # Language gates
 
-Verified: 2026-11-14 · Sources: scripts/local/gate.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json
+Verified: 2026-11-15 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
 
-A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the parts; this page sets the numbers. Japanese is the first gate; a Spanish pilot gate has its file, public set and targets. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
+A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the parts; this page sets the numbers. Japanese is the first gate; Spanish is the pilot of the further gates, and French, Italian and Portuguese have gates in its shape. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
 ## Rules for every gate run
 
@@ -95,6 +95,37 @@ The delay from the middle of a row is reported, not targeted: about half a row o
 
 Material so far: the public set, `benchmarks/gate-fleurs-es.json` from `pnpm gate:fixtures --language es`, 60 Spanish FLEURS test clips in archive order that are not in the third-language set, with the first gate's 60 English clips unchanged; the shared non-speech set; and the third-language set without its Spanish clips, followed by the gate's own `benchmarks/gate-other-es.json`, named by the gate file's `other`: ten clips each of French, Italian and Portuguese, Spanish's close neighbours. The held-out set, `benchmarks/gate-held-out-es.json` from `pnpm gate:held-out-fixtures --language es`: excerpts of six talks from the Spanish test split of Multilingual TEDx, chosen by fixed rules before any recognition, with the first gate's English excerpts unchanged; audio and references stay in the ignored cache, and each excerpt is its transcribed segments placed at their own times over digital silence, so untranscribed sound is absent. Its references have not been hand-checked. For translation, `benchmarks/translation-terms-es.json` holds required terms for 50 of the public clips, written from the references before any translation, and `pnpm eval:translation-cases --gate es` freezes the cases; no judged run exists. The Spanish stock phrases come from a sweep with `scripts/local/stock_sweep.py`. Not yet done: a judged translation run for the pair. Parts 5 and 6 apply to Japanese only for now.
 
+## French, Italian and Portuguese gates
+
+`benchmarks/gate-fr.json`, `gate-it.json` and `gate-pt.json`, pairs `en-fr`, `en-it` and `en-pt`, written on 2026-11-15 before any measurement in those languages. Rules, parts and targets are the Spanish gate's table above, read with the gate's language in place of Spanish: all three are word-scored and written with spaces.
+
+Material, each chosen by the Spanish gate's rules before any recognition:
+
+- Public: `benchmarks/gate-fleurs-<language>.json` from `pnpm gate:fixtures --language <language>`, 60 FLEURS test clips of the language that are in no third-language set, with the first gate's 60 English clips unchanged. FLEURS holds Brazilian Portuguese only.
+- Third languages: the shared set, then `benchmarks/gate-other-es.json` without the gate's own language, so each of the three hears the other two and Spanish.
+- Held-out: `benchmarks/gate-held-out-<language>.json` from `pnpm gate:held-out-fixtures --language <language>`, excerpts of six talks from the language's test split of Multilingual TEDx, with the first gate's English excerpts unchanged. Its references have not been hand-checked, and its excerpts carry digital silence between segments.
+- Stock phrases: each profile's list comes from a sweep with `scripts/local/stock_sweep.py`.
+
+Not built for these three: required terms and frozen cases for a translation eval. Their translations need a reader of the language or the [read-through](#translation-read-through). Parts 5 and 6 apply to Japanese only.
+
+## Translation read-through
+
+Reported, not gated, and no substitute for part 4, which needs two judges from different model families. The maintainer does not read the gate languages, so by their decision of 2026-11-14 an agent session grades the offline profile's translations by reading whole talks. The rubric below was written before any transcript was read.
+
+`.local/venv/bin/python scripts/local/review_export.py --gate <language>` replays the gate's public held-out talks in real time with the local translator and writes one transcript per talk under the ignored `review/` folder: each row's original and translation in order, and the talk's reference. The agent reads each talk whole and grades every row that has a translation:
+
+| Grade | Meaning |
+| --- | --- |
+| 5 | Complete and accurate; reads naturally |
+| 4 | Accurate, with a small loss or awkward wording |
+| 3 | The gist is right, with a noticeable omission or distortion |
+| 2 | The gist is wrong or misleading |
+| 1 | Unrelated, empty, untranslated or in the wrong language |
+
+Each row is also flagged for invention, content the original does not hold, and for a recognition error that changes the original's meaning against the reference. Rows with such a recognition error are graded against what was recognized and reported apart, as part 4 does. Per talk the agent notes what a row-by-row judge misses: a name or term rendered several ways, a thread lost between rows, register that drifts.
+
+Reported per direction: rows graded, mean grade and share at 2 or lower on rows recognized without a meaning-changing error, the invention share on all rows, and rows left without a translation. The judge is one model family, and a session's grades are not reproducible by a command; the graded files are kept in `review/` so a later run can be compared row by row.
+
 ## Accepted limits
 
 The Japanese held-out differences are accepted as failing on one talk, 0KTVqevvEjo, by the maintainer's decision of 2026-11-11: its speaker pauses often at low level, the detector cuts it into short stretches, and no rule tested recovers what the short windows lose. The targets and the talk stay as they are; a run reports the failure, and it does not block the gate while that talk accounts for it. See [decisions](decisions.md).
@@ -106,7 +137,7 @@ Part 5, the field session, is accepted as met by the maintainer's decision of 20
 | Step | Command |
 | --- | --- |
 | Public material, once | `pnpm gate:fixtures`; see [benchmarks/README.md](../../benchmarks/README.md#language-gate-fixtures) |
-| Held-out material, once | `pnpm gate:held-out-fixtures`, which needs `yt-dlp`; it writes the gate's held-out manifest to `.local/fixtures/held-out/held-out.json` |
+| Held-out material, once | `pnpm gate:held-out-fixtures`, which needs `yt-dlp`; it writes the gate's held-out manifest to `.local/fixtures/held-out/held-out.json`. With `--language es`, `fr`, `it` or `pt` it writes `held-out-<language>.json` there and needs `pyarrow`; see [benchmarks/README.md](../../benchmarks/README.md#held-out-gate-material) |
 | Replay | `pnpm gate:run --segmentation rolling`; `turns` is measured only for comparison. `--gate <language>` picks the gate file, `ja` by default; the run records its name, its whole content and a digest of the implementation that ran, and `gate:score` reads the name from there. Add `--held-out .local/fixtures/held-out/held-out.json` for the held-out set, or a manifest under `private/` for own recordings. Real time: about an hour without held-out material, about two with it. `--smoke` checks the pipeline on three clips per stream and is never a gate result |
 | Rate held-out rows | Add `"rating"` to each case in the held-out results: `plausible`, `minor`, `major` or `hallucination` |
 | Score | `pnpm gate:score benchmarks/results/gate-<run>`, plus `--held-out <manifest> --held-out-results <results folder next to it>` |

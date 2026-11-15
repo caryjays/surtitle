@@ -12,7 +12,7 @@ Mappings are hints. A glossary cannot repair recognition errors, and glossary te
 
 ## Language profiles
 
-`languages.json` holds one profile per language, keyed by its ISO 639 code as Whisper reports it. The service and the Python worker both read it. `LANGUAGE_PAIR`, default `en-ja`, must name two profiled languages; only English and Japanese exist today, and the [roadmap](../docs/wiki/roadmap.md) sets the gate before another is added.
+`languages.json` holds one profile per language, keyed by its ISO 639 code as Whisper reports it. The service and the Python worker both read it. `LANGUAGE_PAIR`, default `en-ja`, must name two profiled languages. English, Japanese, Spanish, French, Italian and Portuguese have profiles; a profile makes a pair selectable, and the [gates](../docs/wiki/gates.md) say which languages have passed theirs.
 
 | Field | Use |
 | --- | --- |

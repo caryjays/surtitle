@@ -28,5 +28,35 @@
     "stockPhrases": ["suscríbete al canal", "suscríbete", "gracias por ver el video", "gracias por ver el vídeo", "gracias por ver", "subtítulos realizados por la comunidad de amara.org", "subtítulos por la comunidad de amara.org", "gracias"],
     "reading": { "floor": 8, "ceiling": 25 },
     "uncaptioned": "sin subtítulos"
+  },
+  "fr": {
+    "name": "French",
+    "scoring": "word",
+    "spaced": true,
+    "sentenceEnd": ".!?",
+    "clauseEnd": ",;:",
+    "stockPhrases": ["sous-titres réalisés par la communauté d'amara.org", "sous-titres réalisés para la communauté d'amara.org", "sous-titrage société radio-canada", "sous-titrage st' 501", "merci d'avoir regardé cette vidéo", "merci d'avoir regardé", "merci"],
+    "reading": { "floor": 8, "ceiling": 25 },
+    "uncaptioned": "non sous-titré"
+  },
+  "it": {
+    "name": "Italian",
+    "scoring": "word",
+    "spaced": true,
+    "sentenceEnd": ".!?",
+    "clauseEnd": ",;:",
+    "stockPhrases": ["sottotitoli creati dalla comunità amara.org", "sottotitoli e revisione a cura di qtss", "grazie per aver guardato il video", "grazie per la visione", "grazie a tutti", "grazie"],
+    "reading": { "floor": 8, "ceiling": 25 },
+    "uncaptioned": "senza sottotitoli"
+  },
+  "pt": {
+    "name": "Portuguese",
+    "scoring": "word",
+    "spaced": true,
+    "sentenceEnd": ".!?",
+    "clauseEnd": ",;:",
+    "stockPhrases": ["legendas pela comunidade amara.org", "obrigado por assistir", "obrigada por assistir", "obrigado", "obrigada", "e aí"],
+    "reading": { "floor": 8, "ceiling": 25 },
+    "uncaptioned": "sem legendas"
   }
 }

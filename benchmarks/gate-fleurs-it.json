@@ -1,0 +1,1088 @@
+{
+  "dataset": "Google FLEURS",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "scope": "Language-gate public set for it: its first 60 distinct sentence IDs in test-archive order, 4 to 16 s, excluding its IDs in gate-other*.json, chosen before recognition; and the English fixtures of gate-fleurs.json, unchanged.",
+  "fixtures": [
+    {
+      "id": "gate-it-1773",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1024005671072986451.wav",
+      "sha256": "722cdce46e0082c6b0aa699ff94bac810d78b97ad9f432d56a5ba8828c2fb727",
+      "seconds": 15.9,
+      "reference": "L'interruzione del sonno è il processo di risveglio intenzionale che avviene durante il periodo di sonno normale, a cui fa seguito una ripresa del sonno (10–60 minuti più tardi)."
+    },
+    {
+      "id": "gate-it-1871",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10363722267618555781.wav",
+      "sha256": "3c432a9f1d26796c6880050f7bb429d0887be9cd69974040d8ee98750ab00bd3",
+      "seconds": 8.28,
+      "reference": "Grazie al clima mite che caratterizza il Medio Oriente, la casa non era di fondamentale importanza."
+    },
+    {
+      "id": "gate-it-1881",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1040642958705021773.wav",
+      "sha256": "c4217f24919aef6191e87ad80e7b30bc802fc461ce3867d9e3a1f5352e10f285",
+      "seconds": 12.18,
+      "reference": "Condividere una gita scolastica virtuale è inoltre un ottimo pretesto per condividere esperienze e riflessioni di viaggio con le classi future."
+    },
+    {
+      "id": "gate-it-1910",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10421376619578532077.wav",
+      "sha256": "d625b9595a91df978fe460c2420879665e560d9c9a8f985ccb0a10b7118bd561",
+      "seconds": 8.82,
+      "reference": "I parigini hanno fama di essere egocentrici, scortesi e presuntuosi."
+    },
+    {
+      "id": "gate-it-1940",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10437794928490533393.wav",
+      "sha256": "955385bcb262479d7f22b03a08ff2d70b43bc0c7039e6c1a04b4653d2c0effcd",
+      "seconds": 13.08,
+      "reference": "Alla luce di tutto ciò, non dovrebbe sorprendere il fatto che i nostri stessi antenati abbiano risolto il loro \"problema proteico\" in un certo senso come fanno oggi gli scimpanzé della savana."
+    },
+    {
+      "id": "gate-it-1671",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10479866160281873942.wav",
+      "sha256": "64672bb33dfb409a16580ba27d37b202aa58abe1fd275c21494ac12ebc6c0d80",
+      "seconds": 14.16,
+      "reference": "L'iniziativa contro le oscenità è stata finanziata dal Congresso a partire dall'anno fiscale 2005, con la specifica richiesta all'FBI di assegnare 10 agenti alla pornografia per adulti."
+    },
+    {
+      "id": "gate-it-1748",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10503040099407806416.wav",
+      "sha256": "2a63c85555ab5b7ccff32aed6574f44340b2d5b5208bcee490dcc8854dc34676",
+      "seconds": 7.5,
+      "reference": "Le squadre antincendio alla fine sono riuscite a domare il fuoco alle 23:35."
+    },
+    {
+      "id": "gate-it-1962",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10536267797820820051.wav",
+      "sha256": "e62c83e01ae385eb90ea539901d20c3adee140195dcf34c04ba4eca82dfdab31",
+      "seconds": 14.28,
+      "reference": "Il livello di pH della sostanza chimica analizzata è dato dalla quantità di ioni di idrogeno presenti (la lettera H di pH)."
+    },
+    {
+      "id": "gate-it-1741",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10568286449112693066.wav",
+      "sha256": "34d0c331aaf4c5d3e8111528d42dcc2735b405235d11a1df9a13af675307b5ad",
+      "seconds": 12.06,
+      "reference": "Le ampie aree più a settentrione sono scarsamente popolate, tra queste alcune sono lande selvagge quasi disabitate."
+    },
+    {
+      "id": "gate-it-1917",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10571870825120879633.wav",
+      "sha256": "b3f252fa16a908eb1e074da987a78fe4bb6115db73f686d3209e453885e68672",
+      "seconds": 9.54,
+      "reference": "In vari punti di Roma sono stati installati grandi schermi televisivi per permettere alla gente di assistere alla cerimonia."
+    },
+    {
+      "id": "gate-it-1756",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1061754421613910766.wav",
+      "sha256": "18d72ed9748432ea45f795f16385cbbc14059f168eea67e3b86aa78c90f6c058",
+      "seconds": 13.68,
+      "reference": "Nella serata di domenica, il presidente degli Stati Uniti Donald Trump, ha fornito una dichiarazione attraverso il suo addetto stampa, in cui annunciava il ritiro delle truppe americane dalla Siria."
+    },
+    {
+      "id": "gate-it-1680",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10663019413117022741.wav",
+      "sha256": "9a81ab70e730606131b49baec84a787a76ea1db66d6acb99b93be63d41193c4a",
+      "seconds": 14.7,
+      "reference": "Un atleta completo: la tigre è in grado di arrampicarsi (seppure non troppo bene), nuotare, fare salti molto lunghi ed esercitare una forza di trazione cinque volte superiore a quella di un uomo forte."
+    },
+    {
+      "id": "gate-it-1988",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10669712606378135112.wav",
+      "sha256": "55fa58d91230cc68bc4f19cbd7e695f927301220263e2b9282fe07ddaa9065b8",
+      "seconds": 14.4,
+      "reference": "Negli anni '20, gli atteggiamenti prevalenti di gran parte dei cittadini e delle nazioni erano il pacifismo e l'isolamento."
+    },
+    {
+      "id": "gate-it-1966",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10713904656493882072.wav",
+      "sha256": "12029a05b03495a3d4c552df0bc37adc522f1eda4b8eafd3e6a78279ee976461",
+      "seconds": 9.0,
+      "reference": "La commissione ha costituito la risposta di Martelly alle diffuse proteste, iniziate a ottobre, che contestano il regime."
+    },
+    {
+      "id": "gate-it-1921",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10724761538669846878.wav",
+      "sha256": "f8c94124e2b2489b4384968037b1212405991d44f23f4438592174f7e50974c3",
+      "seconds": 12.48,
+      "reference": "Tuttavia, ghiaccio e neve sono condizioni normali in molti paesi, e il traffico continua a scorrere quasi ininterrottamente per tutto l'anno."
+    },
+    {
+      "id": "gate-it-1912",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10775229660857585342.wav",
+      "sha256": "e1b10491d83d1f665bafcbd4b6993da5b08831c2ac55982f54e60deb53254d6a",
+      "seconds": 9.6,
+      "reference": "Quasi tutte le isole minori, note come lussuosi resort balneari, sono per lo più nazioni indipendenti o associate alla Francia."
+    },
+    {
+      "id": "gate-it-1844",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1086199108496852370.wav",
+      "sha256": "93577a6e4f199fe8e4c62d7136776dfb41ffd425fefc36a4d46e49928e950161",
+      "seconds": 8.52,
+      "reference": "La superficie della Luna è costituita da rocce e polvere e il suo strato esterno si chiama crosta."
+    },
+    {
+      "id": "gate-it-1963",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10875261210227541858.wav",
+      "sha256": "6f98114d92f4b381b71c6d17e8cc7ecf298c389def96ed190d5645c68add7e11",
+      "seconds": 15.84,
+      "reference": "Stirare gli abiti umidi può facilitarne l'asciugatura. Molti hotel offrono l'uso del ferro e dell'asse da stiro, anche se non sono presenti in camera."
+    },
+    {
+      "id": "gate-it-1815",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10906900159238464755.wav",
+      "sha256": "8262708ae979aae767020473f6e8d9200bd82a5ef197a5ee6929f1a931ba0103",
+      "seconds": 14.16,
+      "reference": "Il principio secondo cui è necessaria energia per mettere insieme un nucleo con molti protoni e neutroni è alla base del funzionamento della bomba a fissione."
+    },
+    {
+      "id": "gate-it-1991",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1092346771486144638.wav",
+      "sha256": "bc6625d3f4ca0695321c2ce14ce1f6ec2787d0fd3c5c27524d0ed5ee8940e7dd",
+      "seconds": 9.72,
+      "reference": "In questa fase della storia europea, la Chiesa cattolica, divenuta ricca e potente, si titrovò ad essere sotto esame."
+    },
+    {
+      "id": "gate-it-1800",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10947843864094561051.wav",
+      "sha256": "30459a32b9ddaffbd4cc10a6dcce24b489aabe595422e543a0c40d1afe309f23",
+      "seconds": 14.04,
+      "reference": "A settembre 2017, quando probabilmente i checkpoint doganali brasiliani saranno ultimati, il ponte dovrebbe essere totalmente funzionante."
+    },
+    {
+      "id": "gate-it-1820",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/10955367583686005647.wav",
+      "sha256": "c008aadd067c0bba600f683deafcd8aa3a35516a19bcb7373896c563b8eff2ad",
+      "seconds": 10.02,
+      "reference": "Oggi tutti scrivono i messaggi sugli schermi dei computer e non hanno mai la necessità di avvicinarsi a un temperamatite."
+    },
+    {
+      "id": "gate-it-1933",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11029373772918561866.wav",
+      "sha256": "ac912ea9955d1bd20b1e2c82c46e8db8e9b0059e38b6e7797ca3ecadd9e48ab9",
+      "seconds": 13.68,
+      "reference": "Infine, esistono molti piccoli felini (compresi i gatti domestici in libertà) che si nutrono di piccole prede, notevolmente più numerose, come insetti, roditori, lucertole e uccelli."
+    },
+    {
+      "id": "gate-it-1785",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11065864919517073072.wav",
+      "sha256": "c804eb2876b9b0c793cf9877493bbbbb006c91861509c76e1e7a40c5fcafc4cb",
+      "seconds": 14.76,
+      "reference": "Lo scaffolding non è una modalità di apprendimento, quanto più un aiuto per chi intraprende una nuova esperienza di apprendimento, come può essere l'utilizzo di un nuovo programma per computer o l'avvio di un nuovo progetto."
+    },
+    {
+      "id": "gate-it-1898",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11067362407565311789.wav",
+      "sha256": "d402b2d2e2b0ba379a500907ecb65ba09c7212f68fb2ceac52d11284d415a056",
+      "seconds": 15.96,
+      "reference": "In sostanza [Wales] ci ha mentito sin dall'inizio. Innanzitutto, comportandosi come se fosse per motivi legali. In secondo luogo, fingendo di darci ascolto fino al momento della effettiva cancellazione delle opere da parte sua."
+    },
+    {
+      "id": "gate-it-1691",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11090002047836477069.wav",
+      "sha256": "0fcee989213317617a58a0ac2050274d4848024a2d472912427d2653e5bc3fea",
+      "seconds": 11.52,
+      "reference": "Per alcuni tragitti le società più grandi utilizzano i propri aerei, ma per altre rotte e nel caso di società più piccole emergevano dei problemi."
+    },
+    {
+      "id": "gate-it-1935",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11103659218459013642.wav",
+      "sha256": "c509fc3d348a289156499328c22604945cd5bc1794b0ed917e0fa246fec7d8c3",
+      "seconds": 11.64,
+      "reference": "Comunque, questo è falso. Anche se sul retro del documento c'è scritto qualcosa, non si tratta di una mappa del tesoro."
+    },
+    {
+      "id": "gate-it-1977",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11132777102495413698.wav",
+      "sha256": "e3d61c1ccd8841f7f7f2c64a5b5e59665e83b6c5f90a3a5509bde2d06cf00498",
+      "seconds": 11.04,
+      "reference": "I branchi sono composti da maschi adulti, solitamente 2 o 3 imparentati tra loro, e da un numero di femmine e cuccioli che può arrivare a 30."
+    },
+    {
+      "id": "gate-it-2006",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11191231201416885655.wav",
+      "sha256": "5500f8a45b51bb3d78431234a82df1e30b9dab406f30c2623d4fdb72ba2bbcee",
+      "seconds": 12.54,
+      "reference": "Gli elementi come il calcio e il potassio sono ritenuti dei metalli. Ovviamente, esistono anche metalli come l'argento e l'oro."
+    },
+    {
+      "id": "gate-it-1979",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1121305088935168255.wav",
+      "sha256": "3615e91279860f254b00a867bed27b5b68f86fcec8cc05ecb945bac8cf29facf",
+      "seconds": 13.68,
+      "reference": "Le Falkland hanno la loro moneta ufficiale, la sterlina delle Falkland (FKP), il cui valore equivale a quello della sterlina britannica (GBP)."
+    },
+    {
+      "id": "gate-it-1811",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11220306642761000530.wav",
+      "sha256": "82e8a52e5d040aa752528718b037a82f0adc9b29bc293ce8c588f224cbc92806",
+      "seconds": 13.26,
+      "reference": "Lo standard 802.11n può operare sia nella banda dei 2.4Ghz che in quella dei 5.0Ghz."
+    },
+    {
+      "id": "gate-it-1821",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1124830659756702543.wav",
+      "sha256": "d5444663da3e1bd2920c4085a2811e407800ac4adb8de141ccd8fb0b511d44ba",
+      "seconds": 11.22,
+      "reference": "Il legame tra la patologia cerebrale e il comportamento è alla base delle ricerche degli scienziati."
+    },
+    {
+      "id": "gate-it-1846",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11269701542362527128.wav",
+      "sha256": "af643a8f8b85b3e79e7e4242870bc9f405ac943cc8eb51c16264ce0bf1bc437a",
+      "seconds": 11.64,
+      "reference": "Le proporzioni di questo formato (dividendo per dodici per ottenere il più semplice rapporto di numeri interi) sono pertanto considerate 3:2."
+    },
+    {
+      "id": "gate-it-1686",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11432710681817462062.wav",
+      "sha256": "0a090418b467b9af7256af5b283acb471fdf27771070591729486dc09ac4c7c9",
+      "seconds": 15.12,
+      "reference": "Conseguentemente, il percorso di collaborazione all'interno di un'organizzazione per superare un ostacolo può condurre a un nuovo processo innovativo per soddisfare i bisogni del cliente."
+    },
+    {
+      "id": "gate-it-1947",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11432759043974694935.wav",
+      "sha256": "c87ab342871942e679f276d94b2d948b295744b0940dc2da39121a82f052146c",
+      "seconds": 12.84,
+      "reference": "Prima dell'arrivo delle truppe, i problemi di Haiti legati alla malattia risalivano al 1800."
+    },
+    {
+      "id": "gate-it-1736",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11459366051396344325.wav",
+      "sha256": "269df70d68e468a3df461115ab7237bd6b203fe413a6caa5f30d109831639106",
+      "seconds": 6.96,
+      "reference": "Con il suo fucile M16 Rolando Mendoza ha fatto fuoco sui turisti."
+    },
+    {
+      "id": "gate-it-1914",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11476189529866908174.wav",
+      "sha256": "a09fe609f49489e721420b0e83d9d444bdc46dafd00ba23b8570a8d93fa7c7f5",
+      "seconds": 11.4,
+      "reference": "Nel XX secolo la ricerca ha dimostrato l'esistenza di due pool di variabilità genetica, ovvero variabilità nascosta e variabilità espressa."
+    },
+    {
+      "id": "gate-it-1957",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11501403537812004395.wav",
+      "sha256": "6bb4fdcd06ea7e6d20fb80c2e1984ecfc67bfb553edc4f45f60b053f73e93c1e",
+      "seconds": 10.62,
+      "reference": "Secondo lui le speculazioni non sono altro che \"chiacchiere e idiozie politiche\"."
+    },
+    {
+      "id": "gate-it-1701",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11569512800540335748.wav",
+      "sha256": "655fa97ba65335519f24e0f9c87857632d530dcba4a47712bc06031b31bfff68",
+      "seconds": 14.22,
+      "reference": "A quanto sembra, le capre furono addomesticate per la prima volta circa 10.000 anni fa sui monti Zagros, in Iran."
+    },
+    {
+      "id": "gate-it-1697",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11597248049266956557.wav",
+      "sha256": "b37d98aee1b5b3be63f85b11b7e3920b4e67e0b5b0791d353883830fa76c6648",
+      "seconds": 9.24,
+      "reference": "Non ha potuto assumere i farmaci necessari per superare il dolore perché sono banditi dai Giochi."
+    },
+    {
+      "id": "gate-it-1683",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11604735238260450088.wav",
+      "sha256": "f411e39fe3037398f211f942a6d4bf96425faa2e195f038e94a2e78b9e922e9c",
+      "seconds": 14.34,
+      "reference": "Ci sono ancora molti uomini e donne sopravvissuti a questi luoghi, e molti altri che hanno visto i propri cari assassinati o fatti lavorare fino alla morte, sia ebrei che non."
+    },
+    {
+      "id": "gate-it-1693",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11668300409636665932.wav",
+      "sha256": "393f1455530b0bc38251fdd429660ae247baf00f4186bc6bc00f4c798329d8cd",
+      "seconds": 14.64,
+      "reference": "Poi il capitano ha perso il suo wicket, e da quel momento fino alla fine degli inning l'India ha realizzato solo 36 run, perdendo 7 wicket."
+    },
+    {
+      "id": "gate-it-1738",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11691725068293539420.wav",
+      "sha256": "3097dc0acc0b0353d7b9993f10b0c14f01184e9a4299e5bcca3e2f3aa65f75c8",
+      "seconds": 10.26,
+      "reference": "Attaccava anche qualsiasi cosa entrasse in acqua; perfino un dinosauro gigantesco come il T-Rex non avrebbe potuto competere con lui."
+    },
+    {
+      "id": "gate-it-1953",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11697287891158582963.wav",
+      "sha256": "7ed9151b62432ecbe4aa0c06af06bc1d05d402b7647cc1d8a63767d774613e75",
+      "seconds": 6.9,
+      "reference": "È stato poi trasferito all'Addenbrooke's Hospital di Cambridge."
+    },
+    {
+      "id": "gate-it-1965",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11705998923188893576.wav",
+      "sha256": "8eca32ad73d9fcd1c504587cd01f8b86e6161eb28186c3b469c2bc8349debd0e",
+      "seconds": 10.68,
+      "reference": "Si tratta principalmente di spiagge sabbiose, sicure per il nuoto, e la maggior parte di esse gode dell'ombra degli alberi di pohutukawa."
+    },
+    {
+      "id": "gate-it-1740",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1177673088906247318.wav",
+      "sha256": "90c26ca49671e94cd864360526c2256fa9895f49fe9f338852d42aba45815209",
+      "seconds": 14.16,
+      "reference": "Lo spettacolo di suoni e luci della piramide è quanto di più interessante ci sia nella zona per i bambini."
+    },
+    {
+      "id": "gate-it-1860",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/1184559682288866813.wav",
+      "sha256": "9b330681eb71a0290c44648d2f7cc93cccaf99e1fe24bcf8b837cecd32f85f63",
+      "seconds": 9.6,
+      "reference": "L'ufficio del governatore ha riferito che tra i feriti, diciannove erano agenti di polizia."
+    },
+    {
+      "id": "gate-it-1808",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11852448763726016480.wav",
+      "sha256": "cd5f86618adc0dbf1693b6927b614ae90e478bd810912b0d6420c3c8468c7b90",
+      "seconds": 15.3,
+      "reference": "Trascorsi due anni dalla fine della guerra, gli alleati di un tempo erano diventati nemici; ebbe così inizio la Guerra fredda."
+    },
+    {
+      "id": "gate-it-1992",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11895462199050986312.wav",
+      "sha256": "685efe6fae21bfc8ec18ff5af218025653697e09703e32d8b0f5c5ba568d0584",
+      "seconds": 14.4,
+      "reference": "Nel suo uso popolare, il termine safari fa riferimento a viaggi svolti via terra, in particolare nella savana, per vedere la bellissima fauna selvatica africana."
+    },
+    {
+      "id": "gate-it-2002",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11899161547977593341.wav",
+      "sha256": "0cbd127a571dfc9b54a014e9700c88d0712fa81442d226695244f4c2b02e297f",
+      "seconds": 9.06,
+      "reference": "Questo consentirà ai giocatori di controllare le azioni e i movimenti all'interno del videogioco muovendo in aria il dispositivo."
+    },
+    {
+      "id": "gate-it-1750",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11955008895760981329.wav",
+      "sha256": "05bd71c97143118558a8065d5b054b6c2a457b906a8351a901a6c6f48219d71d",
+      "seconds": 15.84,
+      "reference": "La scoperta permette inoltre di ottenere informazioni dettagliate in merito all'evoluzione delle piume degli uccelli."
+    },
+    {
+      "id": "gate-it-1837",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11957109347956835276.wav",
+      "sha256": "ece36078f126344705e7426c8fa98df385b2638de4182d75c517ea7f60cef04a",
+      "seconds": 13.92,
+      "reference": "La critica liberale nei confronti dell'impegno di ricostruzione si è focalizzata sull'assegnazione di contratti per la ricostruzione a insider di Washington riconosciuti."
+    },
+    {
+      "id": "gate-it-1834",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11967348161453086843.wav",
+      "sha256": "049997bb0c2d9af32938ba05685d2c137f0c75808743764bea4bbb02f1e659b9",
+      "seconds": 10.32,
+      "reference": "Sempre a nord, visitate il grande santuario della Madonna di Fatima (luogo di culto), luogo di apparizioni mariane celebri in tutto il mondo."
+    },
+    {
+      "id": "gate-it-1833",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/11997949401429734706.wav",
+      "sha256": "b5953ff152695c70bd5feb8fa46eb220c314e1053fe2af86ad614cb7888974dc",
+      "seconds": 15.12,
+      "reference": "Secondo il filosofo Aristotele, ogni cosa è composta da una combinazione di uno o più dei seguenti quattro elementi: terra, acqua, aria e fuoco."
+    },
+    {
+      "id": "gate-it-1769",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/12013566675598043608.wav",
+      "sha256": "ff23d2affcb2bbf73504c118c7a0638175c8b922ff88e1b270f5b1b62ad82d51",
+      "seconds": 13.68,
+      "reference": "Costruita dagli Egizi nel terzo secolo a.C., la Grande Piramide è una delle grandi strutture piramidali edificate in onore del faraone morto."
+    },
+    {
+      "id": "gate-it-1893",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/12103438688786487405.wav",
+      "sha256": "0b6646a6d2c709a427abdf03b6dceb5a52b7a00cd5c938e5cc1dac556549ca4e",
+      "seconds": 15.84,
+      "reference": "Le Sundarbans sono la più ampia fascia litoranea di mangrovie a livello mondiale. Si estende per 80 km (50 mi) dalla costa nell'entroterra di Bangladesh e India."
+    },
+    {
+      "id": "gate-it-1895",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/12137746508495051699.wav",
+      "sha256": "e5932e4e5f5430bffad714d1b34040c0eb4a4b15843754611731fa2af751b420",
+      "seconds": 13.32,
+      "reference": "Con il progressivo declino della lingua greca, l’Occidente è stato isolato dalle sue radici greche filosofiche e scientifiche."
+    },
+    {
+      "id": "gate-it-1666",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/12244110148027093174.wav",
+      "sha256": "c624abedc42167a07aff69bb2716ac212db50ca401ccd1cb774a4a9977bf1229",
+      "seconds": 13.8,
+      "reference": "Ti potrebbero anche interessare i pareri di governi diversi dal tuo, ma tieni comunque presente che tali pareri sono mirati ai cittadini di quei governi."
+    },
+    {
+      "id": "gate-it-1679",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/12246544248459645757.wav",
+      "sha256": "a266db129f824c545a9958a71b88e6084fcd18dbb46d3f3aa168d0ab7a8ddc02",
+      "seconds": 8.76,
+      "reference": "I successivi concerti del tour sono stati annullati dagli Aerosmith."
+    },
+    {
+      "id": "gate-it-1825",
+      "language": "it",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/it_it/audio/test.tar.gz",
+      "member": "test/12264720524290304125.wav",
+      "sha256": "25fc022c93ebfa2e47d1c904e61df2a5e0d3c39746dbc70cca612fab5310c6ed",
+      "seconds": 9.18,
+      "reference": "Per essere vicini al centro dell'azione è necessario arrivare presto e aggiudicarsi uno spazio vicino alla musica."
+    },
+    {
+      "id": "gate-en-1972",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10233995782544396174.wav",
+      "sha256": "bfa2f3fb72a05cbcb7c0000a460435f2d0eedca7c5cc90f01aacc89127df7f63",
+      "seconds": 4.32,
+      "reference": "Many people don't think about them as dinosaurs because they have feathers and can fly."
+    },
+    {
+      "id": "gate-en-1938",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10235738076911595987.wav",
+      "sha256": "3802ffc3e69c66e0d2e66652015bff0c6b1b8498bfb8670623eb4e34bc9e008d",
+      "seconds": 11.42,
+      "reference": "The hospital has followed protocol for infection control, including separating the patient from others to prevent possible infection of others."
+    },
+    {
+      "id": "gate-en-1876",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10323357556845456822.wav",
+      "sha256": "6b3081a29a5bb6fc6434e8525690edc26b23844841e119c916183f4ba1863372",
+      "seconds": 10.8,
+      "reference": "The Northern Marianas emergency management office said that there were no damages reported in the nation."
+    },
+    {
+      "id": "gate-en-1914",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10335587906469246566.wav",
+      "sha256": "14c9f40d7087ed487823917a9bc1838a037d78d315a694f7ace632651c612a61",
+      "seconds": 6.96,
+      "reference": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed."
+    },
+    {
+      "id": "gate-en-1846",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10344335557154974057.wav",
+      "sha256": "8152d901627ad1bb88fee68b1f3adb706e33d2292bca02ef4d92465e2db4c84f",
+      "seconds": 11.04,
+      "reference": "The aspect ratio of this format (dividing by twelve to obtain the simplest whole-number ratio) is therefore said to be 3:2."
+    },
+    {
+      "id": "gate-en-1806",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1036771894648013441.wav",
+      "sha256": "9514bffb9e0bd3397f2cf90041eff51b87e68293335f7ff904515a19f8d416e3",
+      "seconds": 9.9,
+      "reference": "As light pollution in their heyday was not the kind of problem it is today, they are usually located in cities or at campuses, easier to reach than those built in modern times."
+    },
+    {
+      "id": "gate-en-1776",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1038214857203833067.wav",
+      "sha256": "0471eb4c8306e143524c09a45c2b4137204ac2a19fc7ed896ed8391ac864347c",
+      "seconds": 4.8,
+      "reference": "Through the night between 150 and 200 copies were made, now known as \"Dunlap broadsides\"."
+    },
+    {
+      "id": "gate-en-1729",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10383288285905292158.wav",
+      "sha256": "76e349546fc73bf40326c0ac33d62b87ffe7b5455afd825f431494e2f7690a8c",
+      "seconds": 11.28,
+      "reference": "For example, each year students from Bennet School in North Carolina design a website about their trip to the State Capital, each year the website gets remodeled, but old versions are kept online to serve as a scrapbook."
+    },
+    {
+      "id": "gate-en-1855",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10405958125670257178.wav",
+      "sha256": "cd878b528dca67fdf3754d07a5d43c64dc3577e2105966ba529267d35dc5968b",
+      "seconds": 10.92,
+      "reference": "Lion prides act much like packs of wolves or dogs, animals surprisingly similar to lions (but not other big cats) in behavior, and also very deadly to their prey."
+    },
+    {
+      "id": "gate-en-1919",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10411016628242228511.wav",
+      "sha256": "f93693f080704373d85c2761a4fe12c2a2a4a6ea721576c5c3bf4226dfefa44c",
+      "seconds": 11.28,
+      "reference": "The city is also the base to climb the Nyiragongo volcano along with some of the cheapest Mountain Gorilla tracking in Africa."
+    },
+    {
+      "id": "gate-en-1802",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1042003289011443756.wav",
+      "sha256": "80c74220cd80f918367c517e5ddff1ea9b2d366b7711b83a276a828564cfcc49",
+      "seconds": 5.72,
+      "reference": "The Internet combines elements of both mass and interpersonal communication."
+    },
+    {
+      "id": "gate-en-1711",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1043394666292127188.wav",
+      "sha256": "8c5d2b4634bab071370c4d03aca8134cdc25dc256f7409fe872dc82803d3b4c7",
+      "seconds": 15.56,
+      "reference": "These theories look at what it is about certain people that make them want the things that they do and what things in their environment will make them do or not do certain things."
+    },
+    {
+      "id": "gate-en-1685",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1045619486290403122.wav",
+      "sha256": "b32ac05d6df3e023930ff5687e27634e5ca78a44474437e634a794158654a4de",
+      "seconds": 13.92,
+      "reference": "For example, the most common still image photography format in the world is 35mm, which was the dominant film size at the close of the analog film era."
+    },
+    {
+      "id": "gate-en-1992",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1046653381869710616.wav",
+      "sha256": "32bafaf58802bef28cbde443d173e51c0afe7c58c8260cb0f5776e2c60a2a3a5",
+      "seconds": 8.64,
+      "reference": "The term safari in popular use refers to overland travel to view the stunning African wildlife, particularly on savanna."
+    },
+    {
+      "id": "gate-en-2005",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10471564175308895403.wav",
+      "sha256": "5a56cbc0ec373f9873b762d79e8b6874c889ba07e2bd195c40098e84bd170f5e",
+      "seconds": 5.36,
+      "reference": "But there are a lot of things about birds that still look like a dinosaur."
+    },
+    {
+      "id": "gate-en-1982",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10481451226514948764.wav",
+      "sha256": "6ba50cd176389e65cafd4172d0f6b9849dd12ee2962ee3b0f224bbf55e4a2365",
+      "seconds": 10.14,
+      "reference": "Women: It is recommended that any women travellers say that they are married, regardless of actual marital status."
+    },
+    {
+      "id": "gate-en-1674",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10492135991603561867.wav",
+      "sha256": "ed78d88661c8f76d7b8951665a3c2e9adea23828fe3e70fd9df95465cb8f8ede",
+      "seconds": 5.64,
+      "reference": "In some areas boiling water for a minute is enough, in others several minutes are needed."
+    },
+    {
+      "id": "gate-en-1952",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10492761258488775721.wav",
+      "sha256": "3f498f6216c60544714c9b334c4cfe4811b60b2dadbc710e68d127371a5ffdfd",
+      "seconds": 8.58,
+      "reference": "Anyone who's going to drive at high latitudes or over mountain passes should consider the possibility of snow, ice, or freezing temperatures."
+    },
+    {
+      "id": "gate-en-1752",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10536763405165824117.wav",
+      "sha256": "efd479bbb60aebde59283b7cbb6ba748113d16799427a052c43fa02da5e68f8a",
+      "seconds": 11.44,
+      "reference": "As a result, two fish species have become extinct, and two others have become endangered, including the humpback chub."
+    },
+    {
+      "id": "gate-en-1749",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1054805305879816018.wav",
+      "sha256": "62a8881cf2a0aaec9fa70155b452ce23e5a46738490fe764011b927b24842ef1",
+      "seconds": 9.6,
+      "reference": "It was ruled by the \"Vichy\" French. These were French people who had made peace with the Germans in 1940 and worked with the invaders instead of fighting them."
+    },
+    {
+      "id": "gate-en-1705",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10550734868852131138.wav",
+      "sha256": "3b008cd258b15a8c0ed5bdcaf26b3139b3fcfc8709509f0b2a279dc1bede4f7e",
+      "seconds": 10.12,
+      "reference": "On 15 August 1940, the Allies invaded southern France, the invasion was called \"Operation Dragoon\"."
+    },
+    {
+      "id": "gate-en-1662",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10614481583312370701.wav",
+      "sha256": "0f92f2bed63210286148e6947faf7ca90bb635ec7525bcb7f48bdedfe79b425d",
+      "seconds": 8.38,
+      "reference": "Alloys are basically a mixture of two or more metals. Don't forget that there are many elements on the periodic table."
+    },
+    {
+      "id": "gate-en-1790",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10731896540541531669.wav",
+      "sha256": "bf0d559b48ed4a6e241f81db66fe7224d615b63eea0cb04bde55f4b18ea95b33",
+      "seconds": 14.66,
+      "reference": "His work is of such recognized quality and detail that he is one of the very few \"household names\" among philatelists. Some specialize in collecting his work alone."
+    },
+    {
+      "id": "gate-en-1858",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10751756685109361684.wav",
+      "sha256": "07cce1e9fe871d0d584490855fcb02a029eb6a0cc6e37b316e39990c4164a1a2",
+      "seconds": 6.3,
+      "reference": "Danielle Lantagne, a UN expert on the disease, stated the outbreak was likely caused by the peacekeepers."
+    },
+    {
+      "id": "gate-en-1789",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10768814098664478369.wav",
+      "sha256": "72f827270ff9808e65b0ea15f47313207d360a0d5b49ad4c647b9c93fecb9f47",
+      "seconds": 14.6,
+      "reference": "The other nominations include Best Picture, Director, Cinematography, Costume Design, Film-editing, Original Score, Production Design, Sound Editing, Sound Mixing and Original Screenplay."
+    },
+    {
+      "id": "gate-en-1909",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10849792007407044602.wav",
+      "sha256": "48040b2408179454e0299ee86e69c7f1e59c66003a8967aa3ae0b06e53eb654e",
+      "seconds": 5.64,
+      "reference": "Virtual teams are held to the same standards of excellence as conventional teams, but there are subtle differences."
+    },
+    {
+      "id": "gate-en-1897",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10861831846737909528.wav",
+      "sha256": "6684928f432514e69a5fb8157b817981e63f2c2697ce09c4dbe8a946e1a30062",
+      "seconds": 9.58,
+      "reference": "In the north the region is bounded by the Sahel, and in the south and west by the Atlantic Ocean."
+    },
+    {
+      "id": "gate-en-1680",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10894616243452123700.wav",
+      "sha256": "7df2a964d8ce3931be897abeac59dd02669c709163fe23e928d917d31cf27601",
+      "seconds": 10.2,
+      "reference": "A well rounded athlete, the tiger can climb (though not well), swim, leap great distances and pull with five times the force of a strong human."
+    },
+    {
+      "id": "gate-en-1953",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10899527843662463911.wav",
+      "sha256": "6fb8634b7820a56c76d53120be3accf3c63059a338fdef4b0fe2ca09665ee0a8",
+      "seconds": 6.84,
+      "reference": "He was subsequently relocated to Addenbrooke's Hospital in Cambridge."
+    },
+    {
+      "id": "gate-en-1740",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10903101168349732260.wav",
+      "sha256": "6450b7622ccab79fd14d3d317c9d88e6e54bbad391004e12e0aa981bd77fb764",
+      "seconds": 8.34,
+      "reference": "The pyramid sound and light show is one of the most interesting things in the area for kids."
+    },
+    {
+      "id": "gate-en-1717",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10933070083389897676.wav",
+      "sha256": "50a77dbf37a15f5529162b650c7c5f76486d9215cebb026a6be9f95aa9e65a01",
+      "seconds": 10.92,
+      "reference": "Due to the underwater topology the return flow is concentrated at a few deeper sections, and a fast current to deep water may form there."
+    },
+    {
+      "id": "gate-en-1987",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10937407360976471523.wav",
+      "sha256": "5c67e2a8371caa74a5445a30dedd91dc43e4b6a8a7ffadbf67e06d7acc1349eb",
+      "seconds": 9.82,
+      "reference": "The crash occurred high up in mountainous terrain, and is believed to have been the result of hostile fire."
+    },
+    {
+      "id": "gate-en-1990",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10938576782105608041.wav",
+      "sha256": "34eef6d3531779f297c25d5f695baf92a37ef32149e293d79b9afac4ff36654c",
+      "seconds": 8.76,
+      "reference": "Blogs can also help improve student writing. While students often begin their blog experience with sloppy grammar and spelling, the presence of an audience generally changes that."
+    },
+    {
+      "id": "gate-en-1908",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10969774925516121312.wav",
+      "sha256": "087fbfdba69858b9397d67a2c80f34d827ce09a46e895ac1c7df97fc8c44d635",
+      "seconds": 4.5,
+      "reference": "This is an important way to distinguish between some verbs and objects."
+    },
+    {
+      "id": "gate-en-1678",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1111475259790805601.wav",
+      "sha256": "2ec0ade3595e05c1e91a751fc73811f69606b9682a23b2eeb48c6840e959bee9",
+      "seconds": 12.78,
+      "reference": "Oliver Sacks, in his paper The President's Speech, indicated how people who are unable to understand speech because of brain damage are nevertheless able to assess sincerity accurately."
+    },
+    {
+      "id": "gate-en-1701",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11147918080606585533.wav",
+      "sha256": "3859f7a841e3d99099cb1f5f88057c864bc560c3700566369f7acc79a7f7c3db",
+      "seconds": 10.62,
+      "reference": "Goats seem to have been first domesticated roughly 10,000 years ago in the Zagros Mountains of Iran."
+    },
+    {
+      "id": "gate-en-2001",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1116140877447157610.wav",
+      "sha256": "4b4fbbb4ccd842960f70b767882296ef7e9e96613ed6b20acd2baf0f90d96eb3",
+      "seconds": 7.32,
+      "reference": "Travellers are strongly advised to be aware of any risk of severe weather affecting their area as they may affect any travel plans."
+    },
+    {
+      "id": "gate-en-1991",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1116401173651214130.wav",
+      "sha256": "81df6287d12095143e798c36bc6a2809f14e2ad09ed3e176d81b8a574bf448f2",
+      "seconds": 11.4,
+      "reference": "During this period of European history, the Catholic Church, which had become rich and powerful, came under scrutiny."
+    },
+    {
+      "id": "gate-en-1895",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11200231708585274851.wav",
+      "sha256": "023f7620e05af8b94de3de49a50c5a4d9d9d0d74501b4d7e2d1b3f91aca0594b",
+      "seconds": 10.18,
+      "reference": "As knowledge of Greek declined, the West found itself cut off from its Greek philosophical and scientific roots."
+    },
+    {
+      "id": "gate-en-1710",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11260391063812418810.wav",
+      "sha256": "52146e497ab6ec9ea0f95029b00019b7c07ca31ff13143b968c4a7565f15f9d1",
+      "seconds": 9.12,
+      "reference": "Last week, METI announced that Apple had informed it of 34 additional overheating incidents, which the company called \"non-serious.\""
+    },
+    {
+      "id": "gate-en-1975",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11265842188315045636.wav",
+      "sha256": "07385deba3f670720414e0c0b301ec3e311ae617b1b4d0fa3e73d41a1969749c",
+      "seconds": 10.74,
+      "reference": "Vatican City's population is around 800. It is the smallest independent country in the world and the country with the lowest population."
+    },
+    {
+      "id": "gate-en-1720",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11374239868879585530.wav",
+      "sha256": "f42cea08615fab29cbbe5076d44e035906e02985e9ca62e71e994e81813d8136",
+      "seconds": 6.42,
+      "reference": "The hot chocolate is up to Belgian standards. Fruit juices are pricey but excellent."
+    },
+    {
+      "id": "gate-en-1723",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11426556553252626005.wav",
+      "sha256": "e9216146bc8a9054526e538464eea6f016a25753658c7b46a82c0c337a780aab",
+      "seconds": 12.78,
+      "reference": "The harbor was the site of an infamous naval standoff in 1889 when seven ships from Germany, the US, and Britain refused to leave the harbor."
+    },
+    {
+      "id": "gate-en-1769",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11459777646810052940.wav",
+      "sha256": "8c389f0f3ccd71b95b1b2ebf95d873665294b5fc5ec3f0f3cb34d13b0ff6f51f",
+      "seconds": 8.94,
+      "reference": "Built by the Egyptians in the third century BCE, the Great Pyramid is one of many large pyramid structures built to honor dead Pharaoh."
+    },
+    {
+      "id": "gate-en-1794",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1146643745158029931.wav",
+      "sha256": "3f2274e8674add31a68f297a459dd90fb92f1564de16f1e205e1725154ff5892",
+      "seconds": 8.88,
+      "reference": "A civilization is a singular culture shared by a significant large group of people who live and work co-operatively, a society."
+    },
+    {
+      "id": "gate-en-1882",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11504385604540375365.wav",
+      "sha256": "1a70d8dcac8e35870aad704f4c679c3dfdd3f38ebde9fc0804168a9f959a8b99",
+      "seconds": 6.18,
+      "reference": "Scientists hope to understand how planets form, especially how the Earth formed, since comets collided with the Earth long ago."
+    },
+    {
+      "id": "gate-en-1890",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11525263464519603482.wav",
+      "sha256": "c0996d5550e436d59a44587a1c436e9b7f248b81cde6b18d0a88b9934a6d0453",
+      "seconds": 6.84,
+      "reference": "Most modern research telescopes are enormous facilities in remote areas with favorable atmospheric conditions."
+    },
+    {
+      "id": "gate-en-1849",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1153104690713813269.wav",
+      "sha256": "697a11c90a68e690a23d2ec1e25c070f65fb1db92e9a3a143066e1c81367e255",
+      "seconds": 6.78,
+      "reference": "If you have watched the movie National Treasure, you may think a treasure map was written on the back of the Declaration of Independence."
+    },
+    {
+      "id": "gate-en-1893",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11536232800365538941.wav",
+      "sha256": "d08ee182ad247752711fcee9a7b8928d68d32fff3b15d4007b048380fa499742",
+      "seconds": 10.2,
+      "reference": "The Sundarbans are the largest littoral mangrove belt in the world, stretching 80 km (50 mi) into the Bangladeshi and Indian hinterland from the coast."
+    },
+    {
+      "id": "gate-en-1667",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11554335886429174193.wav",
+      "sha256": "6e8948a700c2ee114c7131b8e52a44897b3cf86cf86a1d89bf93b4ad10c802c0",
+      "seconds": 14.22,
+      "reference": "Generally speaking, two behaviors can emerge as managers begin to lead their former peers. One end of the spectrum is trying to remain “one of the guys” (or gals)."
+    },
+    {
+      "id": "gate-en-1814",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11559094331412401332.wav",
+      "sha256": "1601a4599ee795a79f49e7f484733b1a30a4f9f8ca828d719751c8d28213fd80",
+      "seconds": 7.68,
+      "reference": "Hydrogen ions are protons that had their electrons stripped off them (since Hydrogen atoms consist of one proton and one electron)."
+    },
+    {
+      "id": "gate-en-1999",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11596505942268625598.wav",
+      "sha256": "f1e3c56aba23bdf8db9880a17fcadd5d9fbfc6cbc7469488d6a18443ac87e25e",
+      "seconds": 8.76,
+      "reference": "Throughout 1960s, Brzezinski worked for John F. Kennedy as his advisor and then the Lyndon B. Johnson administration."
+    },
+    {
+      "id": "gate-en-1722",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11617272550749387741.wav",
+      "sha256": "8f53bc60c4494b529ba07669695304d3b7b09e0500f07a5ca690eadae5afde87",
+      "seconds": 9.42,
+      "reference": "Cuomo, 53, began his governorship earlier this year and signed a bill last month legalizing same-sex marriage."
+    },
+    {
+      "id": "gate-en-1778",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11665346626937246597.wav",
+      "sha256": "8652db54f8b59b71899bfe28acb9c6bd922c2741f16c3fe99a1a7fab33341e78",
+      "seconds": 5.04,
+      "reference": "Television reports show white smoke coming from the plant."
+    },
+    {
+      "id": "gate-en-1830",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11668734600035674277.wav",
+      "sha256": "e814b6357fba30d26b3ac82a466f532b9b1d529db0fff6fadb8ad8d87e249c74",
+      "seconds": 10.64,
+      "reference": "The ruling party, South West Africa People's Organisation (SWAPO), also retained a majority in the parliamentary elections."
+    },
+    {
+      "id": "gate-en-1841",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11670188897888947692.wav",
+      "sha256": "f6a0424b2478aa6fe8eac741f9f459dd288d93975259441cc7802744e5871ac5",
+      "seconds": 9.48,
+      "reference": "Nothing can be seen other than the clear, beautiful sky above and the many surrounding mountains. Very little of this world can be seen or heard from inside the cave."
+    },
+    {
+      "id": "gate-en-1866",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11705046490861852963.wav",
+      "sha256": "2df691ddc4252a9b222bc422abf9f4fa2d1fc0a03228cce7b553d09f56790077",
+      "seconds": 7.86,
+      "reference": "First, most riders wear riding boots with a heel and a smooth, quite narrow, sole."
+    },
+    {
+      "id": "gate-en-1831",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11781376959217630586.wav",
+      "sha256": "525bbeb705781bd512ce564f73799cb6298e252632cd48e09bc9169cc7097135",
+      "seconds": 15.36,
+      "reference": "The Plitvice Lakes national park is heavily forested, mainly with beech, spruce, and fir trees, and features a mixture of Alpine and Mediterranean vegetation."
+    },
+    {
+      "id": "gate-en-1939",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11820398005906165915.wav",
+      "sha256": "749cadddc168b40d0e26dff9b6c572e6ebc3a665976289613304aca43d85e958",
+      "seconds": 7.02,
+      "reference": "Also after the Revolution occupations were open to all male applicants allowing the most ambitious and successful to succeed."
+    },
+    {
+      "id": "gate-en-1870",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11827077161070295147.wav",
+      "sha256": "f007465752485062d8e1c1d5612979ee61620e05d9fd4c3cc13398d5dba26db8",
+      "seconds": 4.32,
+      "reference": "The scenes are displayed on the pyramids and the different pyramids are lit up."
+    }
+  ]
+}

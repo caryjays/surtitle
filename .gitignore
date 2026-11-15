@@ -14,6 +14,9 @@ coverage/
 *.local.yaml
 *.local.yml
 
+# Transcripts of public held-out talks for a translation read-through; licensed text, never committed
+review/
+
 # Private session data; never commit audience recordings or transcripts
 sessions/
 recordings/

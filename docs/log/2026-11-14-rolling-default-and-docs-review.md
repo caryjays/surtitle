@@ -1,12 +1,16 @@
 # Rolling becomes the default; a review of the docs
 
-2026-11-14. One decision by the maintainer and a pass over the wiki. No measurements, no paid calls.
+2026-11-14. Two decisions by the maintainer and a pass over the wiki. No measurements, no paid calls.
 
 ## Rolling is the default
 
 `LOCAL_SEGMENTATION` defaults to `rolling`; `turns` remains, by the variable or the console's Session panel while capture is off. The operator page lists Rolling first and no longer labels it experimental. Every gate run, replay and microphone session since 2026-11-06 used rolling, and it is ahead of turns on every held-out measure in [the pair of runs](2026-11-11-outlier-talk-and-settle-pair.md). Gate runs measure rolling; turns is measured only for comparison.
 
 Not verified: a microphone session started without the variable. The fake-provider tests and browser check set the segmentation themselves, so they do not exercise the default.
+
+## Other languages no longer wait for the Japanese gate
+
+The maintainer overruled the roadmap's rule that no language starts before Japanese passes. Japanese recognition tuning reached its stop rule on 2026-11-11, and what is open in its gate is the paid translation eval and the maintainer's own reviews. Each language still ships only by passing its own gate, written before its measurements. French and Italian are next, in the Spanish pilot's shape. Nothing was built for them in this session.
 
 ## What the review found and fixed
 
