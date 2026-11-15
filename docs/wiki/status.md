@@ -1,6 +1,6 @@
 # Status
 
-Verified: 2026-11-15 · Sources: none
+Verified: 2026-11-16 · Sources: none
 
 This is the handoff page. Rewrite it at the end of every session; `pnpm docs:check` warns when it is older than 14 days. Personal observations belong in `private/`, technical ones here. Measurements are in the linked log entries.
 
@@ -55,7 +55,7 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 
 1. Faint speech in rooms. Field rejections in breakout sessions came mostly from the speech gate with the energy gate at its floor. A sweep on clean clips did not reproduce them: recognition holds down to 24 dB under a normal level, and below that the energy gate stops rows from opening. A room's noise under faint speech is untested. The operator page warns when speech-like sound stays under the noise gate.
 2. Recognizer failures under load. Each automatic restart reloads the model and loses the speech during it. Whether to drop the oldest queued final instead is open.
-3. Translation quality of the local 4B model. It picks the wrong subject where Spanish or Japanese leaves it out, with the preceding rows in front of it, and terms and names change within a talk. A reworded context instruction fixed about a fifth of the low rows on two talks. Left for now by the maintainer's call. Candidates when it is taken up, each testable by re-translating the stored transcripts: a larger local model, a term list kept during the talk.
+3. Translation quality of the local 4B model. It picks the wrong subject where Spanish, Italian or Japanese leaves it out, with the preceding rows in front of it, and terms and names change within a talk. A reworded context instruction fixed about a fifth of the low rows on two talks. Left for now by the maintainer's call. Candidates when it is taken up, each testable by re-translating the stored transcripts: a larger local model, a term list kept during the talk.
 4. Translation delay. Left to try: a length close that takes the fresh decode's text. See [translation latency](../log/2026-11-11-translation-latency.md).
 5. Proper names and product names are misrecognized in several spellings, which the translation glossary cannot fix. The vocabulary prompt is the candidate, with silence checks.
 6. Turns mode: first text waits up to 12 s on continuous speech, and a third-language final still shows as `unknown`. It loses to rolling on every held-out measure; whether to retire it is open.
@@ -68,6 +68,8 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 - Automatic recognizer restart with the real worker and a real microphone; it is tested with fake providers.
 - The masked-speech warning in a real room, and the fixed physical-microphone silence path.
 - The diagnostics of 2026-11-10 read from a real session with Japanese speech.
+- A microphone session, or any speech but replayed recordings, in `en-fr`, `en-it` or `en-pt`.
+- Translation quality in French and Portuguese under any judge.
 - Translation quality under a second judge from another model family, and the cloud translators under any judge.
 - A lecture-length soak under thermal load.
 - Real-model browser checks since [the review](../log/2026-10-26-review-and-wiki.md).
@@ -81,14 +83,14 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 
 ## Housekeeping
 
-The repository is public on GitHub. Personal context lives in the ignored `private/` overlay, and the leak scan runs inside `pnpm check`. Dev dependencies `typescript`, `esbuild` and `@types/node` are behind by major versions; not urgent.
+The work on French, Italian and Portuguese is committed on the local branch `french-italian-portuguese`, not pushed and not merged into `main`. The repository is public on GitHub. Personal context lives in the ignored `private/` overlay, and the leak scan runs inside `pnpm check`. Dev dependencies `typescript`, `esbuild` and `@types/node` are behind by major versions; not urgent.
 
 ## Next session
 
 1. A microphone session in rolling with Japanese speech, diagnostics on: the first with rolling as the default, the closing decode and three-decode early text. Read input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
 2. Repeat the translation-delay replay on an idle Mac for gate part 6.
-3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one; then a translation read-through of each, as done for Italian.
-4. Decide whether the gate's lock lag and first text should measure shown text. That is a change to the gate, made by a dated decision before the run it applies to.
+3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one, recorded in [decisions](decisions.md) and under accepted limits in [gates](gates.md) if accepted. Then a translation read-through of each, as done for Italian: `review_export.py --gate fr`, about an hour of replay, and one grading session per direction.
+4. Decide whether the gate's lock lag and first text should measure shown text; they miss in all five gates. That is a change to the gate, made by a dated decision before the run it applies to, and a gate run records no shown-text timing today, so it needs that measurement built first.
 5. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
 6. Force a recognizer failure in a rehearsal and watch the restart.
 7. The maintainer's reading of the row-length review files and the pacing rates; see [row length](../log/2026-11-08-row-length.md) and [pacing](../log/2026-11-06-pacing.md).

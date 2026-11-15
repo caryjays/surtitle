@@ -1,6 +1,6 @@
 # Language gates
 
-Verified: 2026-11-15 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
+Verified: 2026-11-16 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
 
 A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the parts; this page sets the numbers. Japanese is the first gate; Spanish is the pilot of the further gates, and French, Italian and Portuguese have gates in its shape. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
@@ -106,7 +106,7 @@ Material, each chosen by the Spanish gate's rules before any recognition:
 - Held-out: `benchmarks/gate-held-out-<language>.json` from `pnpm gate:held-out-fixtures --language <language>`, excerpts of six talks from the language's test split of Multilingual TEDx, with the first gate's English excerpts unchanged. Its references have not been hand-checked, and its excerpts carry digital silence between segments.
 - Stock phrases: each profile's list comes from a sweep with `scripts/local/stock_sweep.py`.
 
-Not built for these three: required terms and frozen cases for a translation eval. Their translations need a reader of the language or the [read-through](#translation-read-through). Parts 5 and 6 apply to Japanese only.
+`pnpm eval:translation-cases --gate <language>` freezes each gate's cases. Not built for these three: required terms for a translation eval, and no judged run exists. Italian has had one [read-through](#translation-read-through); French and Portuguese have had none. Parts 5 and 6 apply to Japanese only.
 
 ## Translation read-through
 

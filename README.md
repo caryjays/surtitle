@@ -2,7 +2,7 @@
 
 Live captions on one Mac, pairing English with one other language per session. Surtitles are the translated text projected above a stage during a live performance; this does the same for a talk, a lecture or a conversation. Chrome captures the microphone, a loopback Node service runs MLX Whisper in an isolated Python worker, and OBS can compose a transparent overlay. Translation is off by default and can run on the same Mac with a local model, or in the cloud. Nothing is recorded or persisted.
 
-Japanese is the first language pair. Spanish runs as a pilot beside it. Each pair ships after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md) and [gates](docs/wiki/gates.md).
+Japanese is the first language pair. Spanish runs as a pilot beside it, and French, Italian and Portuguese are selectable with gates of their own, not yet passed. Each pair ships after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md) and [gates](docs/wiki/gates.md).
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -35,7 +35,7 @@ Three profiles, all with local recognition:
 
 ## Language pair
 
-`LANGUAGE_PAIR=en-ja` is the default; `en-es` selects the Spanish pilot. The console can switch the pair while capture is off. Speech outside the pair is not captioned and leaves a marker row.
+`LANGUAGE_PAIR=en-ja` is the default; `en-es` selects the Spanish pilot, and `en-fr`, `en-it` and `en-pt` the newer pairs. The console can switch the pair while capture is off. Speech outside the pair is not captioned and leaves a marker row.
 
 ## Overlay for OBS
 
