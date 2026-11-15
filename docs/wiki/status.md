@@ -40,7 +40,9 @@ It has a profile, public and held-out sets, a gate file and one full gate run in
 
 ## French, Italian and Portuguese
 
-Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every accuracy target. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag misses in all three and first text in Italian. No neighbour language shows a row in any of the pairs. The pairs are selectable in the operator page, and none has been started, translated or rehearsed. See [the entry](../log/2026-11-15-french-italian-portuguese.md).
+Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every accuracy target. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag misses in all three and first text in Italian. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-15-french-italian-portuguese.md).
+
+The two French talks have the shape of the Japanese talk with frequent pauses: nearly every row closed by a pause and many under two seconds. The Portuguese talk loses whole phrases in its first two minutes, where the speech gate rejects decodes at a normal level; the cause was not listened for. Whether to accept either as a limit is the maintainer's decision. The local translator returns valid replies in the right direction on every public clip of the three pairs, and the offline browser smoke passes in each. A read-through of Italian puts Italian to English at a mean of 4.4 of 5 on correctly recognized rows and English to Italian at 4.1, neither meeting part 4's targets. No microphone session has run in the three pairs. See [the trace and read-through](../log/2026-11-15-failing-talks-and-italian-read-through.md).
 
 ## Known limits
 
@@ -85,7 +87,7 @@ The repository is public on GitHub. Personal context lives in the ignored `priva
 
 1. A microphone session in rolling with Japanese speech, diagnostics on: the first with rolling as the default, the closing decode and three-decode early text. Read input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
 2. Repeat the translation-delay replay on an idle Mac for gate part 6.
-3. French, Italian and Portuguese: trace the two French talks and the one Portuguese talk behind the failed held-out targets, by counts; then the Spanish pilot's further steps for each: local translation in the pair, a browser smoke with `--pair`, and a read-through of translations.
+3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one; then a translation read-through of each, as done for Italian.
 4. Decide whether the gate's lock lag and first text should measure shown text. That is a change to the gate, made by a dated decision before the run it applies to.
 5. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
 6. Force a recognizer failure in a rehearsal and watch the restart.

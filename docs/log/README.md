@@ -57,6 +57,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-14-rolling-default-and-docs-review.md](2026-11-14-rolling-default-and-docs-review.md) | Rolling as the default segmentation, and a review of the wiki: status rewritten, stale statements fixed |
 | [2026-11-14-translation-read-through.md](2026-11-14-translation-read-through.md) | An agent session grades the offline profile's translations by reading whole held-out talks, in four directions |
 | [2026-11-15-french-italian-portuguese.md](2026-11-15-french-italian-portuguese.md) | French, Italian and Portuguese: profiles, public and held-out sets, stock-phrase sweeps, one gate run each |
+| [2026-11-15-failing-talks-and-italian-read-through.md](2026-11-15-failing-talks-and-italian-read-through.md) | The failing French and Portuguese talks traced by counts, local translation and browser smoke in the three pairs, Italian translation read-through |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26
