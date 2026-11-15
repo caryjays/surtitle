@@ -56,6 +56,7 @@ starts.forEach((start, i) => {
   const kept = [...turns.values()].filter(t => !['rejected', 'capturing', 'empty'].includes(t.outcome as string));
   console.log('  Recognition, all kept rows');
   line('row start to first locked text', kept.map(t => t.firstTextMs as number | undefined));
+  line('row start to first text shown early', kept.map(t => t.firstShownMs as number | undefined));
   line('lock lag (locked audio end to lock)', kept.map(t => t.lockLagMs as number | undefined));
   line('closing decode inference', kept.map(t => t.recognitionInferenceMs as number | undefined));
   line('speech end to final text', kept.map(t => t.speechEndToFinalMs as number | undefined));

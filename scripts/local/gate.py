@@ -357,6 +357,11 @@ def score(args):
             timed = [c for c, expected in entries if expected and not c['id'].startswith('public-')]
             measured.setdefault('lockLagP90Ms', {})[language] = p90([c['turn']['lockLagMs'] for c in timed if 'lockLagMs' in c['turn']])
             measured.setdefault('firstTextP90Ms', {})[language] = p90([c['turn']['firstTextMs'] for c in timed if 'firstTextMs' in c['turn']])
+            # Reported, not gated: the same from the first text a display that shows text early has, the overlay's default.
+            # Runs from before 2026-11-15 do not record it.
+            shown = [c['turn']['firstShownMs'] for c in timed if 'firstShownMs' in c['turn']]
+            if shown:
+                measured.setdefault('firstShownP90Ms', {})[language] = p90(shown)
 
     report, failed, missing = [], False, False
     for target in gate['targets']:
@@ -380,6 +385,9 @@ def score(args):
         print(f"{'info':14} {'thirdLanguageRows':27} {sum(third_rows.values())} rows, by row language "
               + (', '.join(f'{k} {v}' for k, v in sorted(third_rows.items())) or 'none'))
         info['thirdLanguageRows'] = third_rows
+    if 'firstShownP90Ms' in measured:
+        info['firstShownP90Ms'] = measured['firstShownP90Ms']
+        print(f"{'info':14} {'firstShownP90Ms':27} " + ', '.join(f'{k} {v / 1000:.2f} s' for k, v in measured['firstShownP90Ms'].items()))
     print(f'Not scored here: the stock-phrase review of new {PROFILES[gate['gate']]['name']} phrases, translation (pnpm eval:translation) and the field session.')
     verdict = 'FAIL' if failed else 'INCOMPLETE' if missing else 'PASS on the measured parts'
     print(f'Recognition parts: {verdict}')

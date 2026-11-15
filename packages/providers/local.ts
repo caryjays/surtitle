@@ -47,6 +47,8 @@ type Job = { id: string; requestId: string; kind: 'preview' | 'final' | 'roll' |
 type Row = { id: string; mode: Mode; begun: boolean; text: string; audioMs: number; language: Language | null; created: number;
   level: Level;
   decodes: number; forced: number; lags: number[]; firstTextMs?: number; quality?: RecognitionQuality; afterNoise?: boolean;
+  // When a display that shows text early first had text to show: agreed or locked, which may be agreed text later withdrawn.
+  firstShownMs?: number;
   // The last partial sent: locked text plus the unlocked tail, and how much of it was agreed.
   shown?: string; shownAgreed?: number;
   // Decodes outside the pair that locked nothing: in a row, and since the last decode in the pair. marked: this stretch
@@ -360,6 +362,7 @@ export class LocalTranscriber implements Transcriber {
       row.begun = true;
       this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: row.mode });
     }
+    row.firstShownMs ??= performance.now() - row.created;
     const text = row.afterNoise ? row.text : joinText(row.text, tailAfterAgreed(agreed, tail));
     const agreedLength = agreed ? joinText(row.text, agreed).length : row.text.length;
     if (text === row.shown && agreedLength === row.shownAgreed) return;
@@ -372,7 +375,7 @@ export class LocalTranscriber implements Transcriber {
     // A whole row of stock sign-off from long audio replaced real speech.
     const stock = row.audioMs >= ROLLING.stockMs && isStockPhrase(row.text);
     if (!row.begun) { row.begun = true; this.options.onEvent({ type: 'begin', id: row.id, sequence: this.sequence++, mode: row.mode }); }
-    if (row.text.trim()) row.firstTextMs ??= performance.now() - row.created;
+    if (row.text.trim()) { row.firstTextMs ??= performance.now() - row.created; row.firstShownMs ??= row.firstTextMs; }
     // A closing decode: the trailing quiet plus the decode. A length close: the lock that closed it.
     const speechEnd = extra.commitToFinalMs !== undefined ? (extra.trailingQuietMs ?? 0) + extra.commitToFinalMs : row.lags.at(-1);
     const lags = [...row.lags].sort((a, b) => a - b);
@@ -380,6 +383,7 @@ export class LocalTranscriber implements Transcriber {
     this.options.onTurnDiagnostic?.(row.id, { boundary, audioMs: Math.min(120_000, Math.round(row.audioMs)), ...levels(row.level), ...extra,
       decodes: row.decodes, forcedLocks: row.forced,
       ...(row.firstTextMs !== undefined ? { firstTextMs: Math.min(120_000, Math.round(row.firstTextMs)) } : {}),
+      ...(row.firstShownMs !== undefined ? { firstShownMs: Math.min(120_000, Math.round(row.firstShownMs)) } : {}),
       ...(lags.length ? { lockLagMs: Math.min(120_000, Math.round(lags[Math.floor((lags.length - 1) / 2)]!)) } : {}),
       ...(speechEnd !== undefined ? { speechEndToFinalMs: Math.min(120_000, Math.round(speechEnd)) } : {}),
       ...(quality ? { quality } : {}) });

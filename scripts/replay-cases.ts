@@ -51,7 +51,7 @@ if (values.calibrate && values['room-tone'] === 'silence') {
 }
 
 type Turn = { id: string; sequence: number; text: string; language?: string; rejected?: boolean; audioMs?: number; boundary?: string;
-  decodes?: number; forcedLocks?: number; firstTextMs?: number; lockLagMs?: number; beganAtMs?: number; finalAtMs?: number };
+  decodes?: number; forcedLocks?: number; firstTextMs?: number; firstShownMs?: number; lockLagMs?: number; beganAtMs?: number; finalAtMs?: number };
 const turns: Turn[] = [];
 let failed = false;
 const stream = new LocalTranscriber({
@@ -68,7 +68,8 @@ const stream = new LocalTranscriber({
   onTurnDiagnostic: (id, measurement) => {
     const turn = turns.find(t => t.id === id);
     if (turn) Object.assign(turn, { audioMs: measurement.audioMs ?? turn.audioMs, boundary: measurement.boundary ?? turn.boundary,
-      decodes: measurement.decodes, forcedLocks: measurement.forcedLocks, firstTextMs: measurement.firstTextMs, lockLagMs: measurement.lockLagMs });
+      decodes: measurement.decodes, forcedLocks: measurement.forcedLocks, firstTextMs: measurement.firstTextMs,
+      firstShownMs: measurement.firstShownMs, lockLagMs: measurement.lockLagMs });
   },
 });
 await stream.connect();
@@ -104,7 +105,7 @@ const cases = accepted.map((turn, index) => {
     // A max-duration boundary cuts this turn's end and the next turn's start.
     truncated: { start: accepted[index - 1]?.boundary === 'max-duration', end: turn.boundary === 'max-duration' },
     turn: { audioMs: turn.audioMs, boundary: turn.boundary,
-      ...(segmentation === 'rolling' ? { decodes: turn.decodes, forcedLocks: turn.forcedLocks, firstTextMs: turn.firstTextMs,
+      ...(segmentation === 'rolling' ? { decodes: turn.decodes, forcedLocks: turn.forcedLocks, firstTextMs: turn.firstTextMs, firstShownMs: turn.firstShownMs,
         lockLagMs: turn.lockLagMs, beganAtMs: turn.beganAtMs, finalAtMs: turn.finalAtMs } : {}) },
   };
 });

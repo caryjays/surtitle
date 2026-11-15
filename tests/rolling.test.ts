@@ -109,6 +109,8 @@ test('rolling locks agreed words, never retracts them, closes rows by length and
   assert(Math.abs(diagnostics[0]!.inputRms! - 0.183) < 0.002 && Math.abs(diagnostics[0]!.inputPeak! - 0.183) < 0.002);
   assert(diagnostics[1]!.inputRms! < diagnostics[0]!.inputRms! && diagnostics[1]!.inputRms! > 0.1);
   assert(diagnostics.every(d => d.decodes! > 0 && d.forcedLocks === 0 && d.firstTextMs !== undefined && d.lockLagMs !== undefined));
+  // Text shown early can only come sooner than locked text.
+  assert(diagnostics.every(d => d.firstShownMs !== undefined && d.firstShownMs <= d.firstTextMs!));
   // Locked audio is trimmed, so no request grows past a few seconds in agreeing speech.
   assert(Math.max(...f.requests) <= 3000);
   assert.equal(f.failures(), 0);
@@ -240,7 +242,10 @@ test('text three decodes agree on is reported before its segment locks, and a ro
   assert(partials.at(-1)!.text.length > agreed.at(-1)!.length, 'the newest word is in the tail, not agreed');
   f.quiet(); await f.stream.finish();
   assert(finals(f.events)[0]!.text.startsWith(words(0, 4)));
-  assert.equal(f.measurements.find(m => m.value.boundary)!.value.boundary, 'silence');
+  const measured = f.measurements.find(m => m.value.boundary)!.value;
+  assert.equal(measured.boundary, 'silence');
+  // The one segment locks only at the close; agreed text was there to show several decodes before.
+  assert(measured.firstShownMs! < measured.firstTextMs!, 'first shown text is timed from the agreed text');
 });
 test('before a row has locked text, agreed text from a low-confidence decode is not reported', async t => {
   const f = fixture('rolling-long-faint'); t.after(() => f.stream.close()); await f.stream.connect();
@@ -248,6 +253,9 @@ test('before a row has locked text, agreed text from a low-confidence decode is 
   assert.equal(f.events.length, 0);
   f.quiet(); await f.stream.finish();
   assert.deepEqual(f.events.map(e => e.type), ['begin', 'final']);
+  // Agreed text never reported is never counted as shown.
+  const measured = f.measurements.find(m => m.value.boundary)!.value;
+  assert.equal(measured.firstShownMs, measured.firstTextMs);
 });
 test('after a noise trim, two low-confidence decodes that agree do not lock, even in the closing decode', async t => {
   const f = fixture('rolling-after-noise-hallucination'); t.after(() => f.stream.close()); await f.stream.connect();
