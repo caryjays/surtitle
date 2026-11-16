@@ -1,6 +1,6 @@
 # Recognition timing reported; translation delay gated in every gate
 
-2026-11-15. A decision about the gates, made before any run it applies to. No measurements and no paid calls.
+2026-11-16. A decision about the gates, made before any run it applies to. No measurements and no paid calls.
 
 ## The decision
 
@@ -13,7 +13,7 @@ The reason it's this measure: a row is translated only once it closes. A lock or
 
 ## Effect on standing results
 
-The decision applies to runs made after it. Runs made before it, including [the Japanese run of today](2026-11-15-japanese-gate-shown-text.md), keep their results under the targets they were run against, which `--targets run` scores with: in that run English fails lock lag and first text. Rescored with the current files, a run prints those two as info lines instead. The decision was not drawn from that run. The maintainer gave the reason, and it would hold whatever the run had measured. Even so, the gates' rule is that targets change before a run, so the run's verdict stands as it was.
+The decision applies to runs made after it. Runs made before it, including [the Japanese run of 2026-11-15](2026-11-15-japanese-gate-shown-text.md), keep their results under the targets they were run against, which `--targets run` scores with: in that run English fails lock lag and first text. Rescored with the current files, a run prints those two as info lines instead. The decision was not drawn from that run. The maintainer gave the reason, and it would hold whatever the run had measured. Even so, the gates' rule is that targets change before a run, so the run's verdict stands as it was.
 
 Part 6 has been met once, for Japanese, on an idle machine; one clean repeat is owed. It has not been measured for Spanish, French, Italian or Portuguese.
 

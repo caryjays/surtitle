@@ -1,6 +1,6 @@
 # Roadmap
 
-Verified: 2026-11-15 · Sources: none
+Verified: 2026-11-16 · Sources: none
 
 Where the project is going and in what order. What is done and open right now lives in [status](status.md); the reasons are in [decisions](decisions.md).
 

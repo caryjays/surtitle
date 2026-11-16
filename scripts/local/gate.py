@@ -353,7 +353,7 @@ def score(args):
         measured.setdefault('stockOrRepetitiveRows', {})[language] = sum(
             repetitive(c['asr']) or stock_phrase(c['asr'], (c['turn'].get('audioMs') or 0) / 1000) for c, _ in entries)
         if meta['segmentation'] == 'rolling' and args.held_out:
-            # Recognition timing is reported, not gated, by the decision of 2026-11-15: the audience waits on the
+            # Recognition timing is reported, not gated, by the decision of 2026-11-16: the audience waits on the
             # translation, whose delay part 6 gates. On held-out speech; read sentences separated by silence are not lecture pacing.
             timed = [c for c, expected in entries if expected and not c['id'].startswith('public-')]
             for key, field in (('lockLagP90Ms', 'lockLagMs'), ('firstTextP90Ms', 'firstTextMs'), ('firstShownP90Ms', 'firstShownMs')):

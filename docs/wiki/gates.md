@@ -1,6 +1,6 @@
 # Language gates
 
-Verified: 2026-11-15 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
+Verified: 2026-11-16 · Sources: scripts/local/gate.py, scripts/local/review_export.py, scripts/local/prepare_gate_fixtures.py, scripts/local/scoring.py, scripts/replay-cases.ts, scripts/translation-eval.ts, profiles/languages.json, benchmarks/gate-ja.json, benchmarks/gate-es.json, benchmarks/gate-fr.json, benchmarks/gate-it.json, benchmarks/gate-pt.json, benchmarks/gate-fleurs.json, benchmarks/gate-nonspeech.json, benchmarks/gate-other.json, benchmarks/gate-other-es.json, benchmarks/translation-terms-es.json, scripts/local/prepare_held_out.py, benchmarks/gate-held-out.json, benchmarks/gate-held-out-es.json, benchmarks/gate-held-out-fr.json, benchmarks/gate-held-out-it.json, benchmarks/gate-held-out-pt.json, benchmarks/gate-fleurs-fr.json, benchmarks/gate-fleurs-it.json, benchmarks/gate-fleurs-pt.json
 
 A language ships when it passes a gate written before any gate measurement is taken. The [roadmap](roadmap.md) sets the parts; this page sets the numbers. Japanese is the first gate; Spanish is the pilot of the further gates, and French, Italian and Portuguese have gates in its shape. The tooling takes any gate: a gate is a file `benchmarks/gate-<language>.json` naming its languages, the pair replayed, its public manifest and its targets. Targets change only by a dated entry in [decisions](decisions.md) made before the run they would apply to, never after seeing its results. Results go in a dated log entry.
 
@@ -36,7 +36,7 @@ A language ships when it passes a gate written before any gate measurement is ta
 
 The public set is read speech with numbers and names that the scorer counts strictly, so its absolute targets are looser; the difference from the full-clip decode isolates what live segmentation loses. Held-out targets are differences only: on unscripted public speech the model's own one-pass decode sets the floor, so the gate measures what the live path adds to it. The absolute held-out error and deletion rates are reported, not gated. Mixed-language rows, such as Japanese with English loanword phrases, are reported but not gated, because no reference convention for them exists yet.
 
-Recognition timing is reported, not gated, by the maintainer's decision of 2026-11-15: lock lag p90, row start to first locked text p90 and row start to first shown text p90, in rolling, on held-out rows. The audience waits on the translation, and a row is translated only once it closes, so these times don't decide when it appears. Part 6 gates that delay. They still matter with translation off, where the original is all a viewer reads. Until 2026-11-15 the first two were targets of 3.0 s and 8.0 s.
+Recognition timing is reported, not gated, by the maintainer's decision of 2026-11-16: lock lag p90, row start to first locked text p90 and row start to first shown text p90, in rolling, on held-out rows. The audience waits on the translation, and a row is translated only once it closes, so these times don't decide when it appears. Part 6 gates that delay. They still matter with translation off, where the original is all a viewer reads. Until 2026-11-16 the first two were targets of 3.0 s and 8.0 s.
 
 ### 3. Stock phrases and repetition
 
@@ -75,7 +75,7 @@ Measured, not scored by `gate:score`: `pnpm replay:contention --translate local`
 | A row's last word to its first translated text, median | ≤ 3.0 s |
 | The same, p90 | ≤ 4.5 s |
 
-The delay from the middle of a row is reported, not targeted: about half a row of it is waiting for the sentence to end, which translating whole rows cannot remove. Set on 2026-11-11; see [translation latency](../log/2026-11-11-translation-latency.md). Since 2026-11-15 it applies to every gate, each on its own held-out talks with `--pair`, and it is the only target on how soon captions appear; part 4's latency target bounds the cloud translator's round trip alone.
+The delay from the middle of a row is reported, not targeted: about half a row of it is waiting for the sentence to end, which translating whole rows cannot remove. Set on 2026-11-11; see [translation latency](../log/2026-11-11-translation-latency.md). Since 2026-11-16 it applies to every gate, each on its own held-out talks with `--pair`, and it is the only target on how soon captions appear; part 4's latency target bounds the cloud translator's round trip alone.
 
 ## Spanish gate, pilot
 
