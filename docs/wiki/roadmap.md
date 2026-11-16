@@ -38,7 +38,7 @@ A language ships when it meets written criteria, measured through the real code 
 3. A stock-phrase and repetition sweep for that language.
 4. A translation eval run in both directions.
 5. For Japanese only: one field session with diagnostics and no capture failure, and the calibration warning shipped.
-6. For Japanese only: the delay from a row's last word to its first translated text in the offline profile.
+6. The delay from a row's last word to its first translated text in the offline profile. Recognition timing is reported, not gated, since this is what the audience waits on.
 
 Most of the cost of a new language is building its evaluation, so the Japanese eval tooling is built to be reused per language.
 

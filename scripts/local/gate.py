@@ -353,15 +353,14 @@ def score(args):
         measured.setdefault('stockOrRepetitiveRows', {})[language] = sum(
             repetitive(c['asr']) or stock_phrase(c['asr'], (c['turn'].get('audioMs') or 0) / 1000) for c, _ in entries)
         if meta['segmentation'] == 'rolling' and args.held_out:
-            # Timing is gated on held-out speech; read sentences separated by silence are not lecture pacing.
+            # Recognition timing is reported, not gated, by the decision of 2026-11-15: the audience waits on the
+            # translation, whose delay part 6 gates. On held-out speech; read sentences separated by silence are not lecture pacing.
             timed = [c for c, expected in entries if expected and not c['id'].startswith('public-')]
-            measured.setdefault('lockLagP90Ms', {})[language] = p90([c['turn']['lockLagMs'] for c in timed if 'lockLagMs' in c['turn']])
-            measured.setdefault('firstTextP90Ms', {})[language] = p90([c['turn']['firstTextMs'] for c in timed if 'firstTextMs' in c['turn']])
-            # Reported, not gated: the same from the first text a display that shows text early has, the overlay's default.
-            # Runs from before 2026-11-15 do not record it.
-            shown = [c['turn']['firstShownMs'] for c in timed if 'firstShownMs' in c['turn']]
-            if shown:
-                measured.setdefault('firstShownP90Ms', {})[language] = p90(shown)
+            for key, field in (('lockLagP90Ms', 'lockLagMs'), ('firstTextP90Ms', 'firstTextMs'), ('firstShownP90Ms', 'firstShownMs')):
+                # Runs from before 2026-11-15 do not record firstShownMs.
+                values = [c['turn'][field] for c in timed if field in c['turn']]
+                if values:
+                    measured.setdefault(key, {})[language] = p90(values)
 
     report, failed, missing = [], False, False
     for target in gate['targets']:
@@ -385,10 +384,12 @@ def score(args):
         print(f"{'info':14} {'thirdLanguageRows':27} {sum(third_rows.values())} rows, by row language "
               + (', '.join(f'{k} {v}' for k, v in sorted(third_rows.items())) or 'none'))
         info['thirdLanguageRows'] = third_rows
-    if 'firstShownP90Ms' in measured:
-        info['firstShownP90Ms'] = measured['firstShownP90Ms']
-        print(f"{'info':14} {'firstShownP90Ms':27} " + ', '.join(f'{k} {v / 1000:.2f} s' for k, v in measured['firstShownP90Ms'].items()))
-    print(f'Not scored here: the stock-phrase review of new {PROFILES[gate['gate']]['name']} phrases, translation (pnpm eval:translation) and the field session.')
+    for key in ('lockLagP90Ms', 'firstTextP90Ms', 'firstShownP90Ms'):
+        if key in measured:
+            info[key] = measured[key]
+            print(f"{'info':14} {key:27} " + ', '.join(f'{k} {v / 1000:.2f} s' for k, v in measured[key].items()))
+    print(f'Not scored here: the stock-phrase review of new {PROFILES[gate['gate']]['name']} phrases, translation (pnpm eval:translation), '
+          'translation delay (pnpm replay:contention) and the field session.')
     verdict = 'FAIL' if failed else 'INCOMPLETE' if missing else 'PASS on the measured parts'
     print(f'Recognition parts: {verdict}')
     (run_dir / 'score.json').write_text(json.dumps({'run': meta, 'heldOut': bool(args.held_out),

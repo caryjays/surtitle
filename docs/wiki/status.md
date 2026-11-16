@@ -22,13 +22,13 @@ The maintainer has rehearsed it in OBS with English, Japanese and off-pair speec
 | Part | Standing |
 | --- | --- |
 | 1. Public and non-speech material | Passes in rolling |
-| 2. Held-out material | English passes accuracy. Japanese fails on one talk with frequent pauses at low level, accepted as a known limit in [gates](gates.md). Lock lag and first text on locked text fail for English on continuous speech |
+| 2. Held-out material | English passes accuracy. Japanese fails on one talk with frequent pauses at low level, accepted as a known limit in [gates](gates.md). Lock lag and first text failed for English under the targets of the runs so far; since 2026-11-15 they are reported, not gated |
 | 3. Stock phrases | The rule is in. The review of new Japanese phrases is the maintainer's, since held-out rows sit under `.local/` |
 | 4. Translation | Not run. It is paid, and the maintainer has declined it for now. A read-through by one agent judge, reported and not gated, puts the offline profile under the part's targets in both directions; see below |
 | 5. Field session | Accepted as met by the maintainer, with two limits recorded in [gates](gates.md). The calibration warning is built and tested with synthetic levels only |
-| 6. Translation delay, offline | Met on four replay talks in the one round run on an idle machine with the closing decode; a second round on a loaded machine does not count. One clean repeat is owed |
+| 6. Translation delay, offline | Met on four replay talks in the one round run on an idle machine with the closing decode; a second round on a loaded machine does not count. One clean repeat is owed. Since 2026-11-15 the only target on how soon captions appear, in every gate |
 
-The latest runs are in [the entry of 2026-11-13](../log/2026-11-13-closing-decode-and-faint-sweep.md).
+The latest gate run is in [the entry of 2026-11-15](../log/2026-11-15-japanese-gate-shown-text.md), and the latest translation-delay rounds in [the entry of 2026-11-13](../log/2026-11-13-closing-decode-and-faint-sweep.md).
 
 ## Translation quality
 
@@ -36,11 +36,11 @@ The maintainer does not read the gate languages, so an agent session grades the 
 
 ## The Spanish pilot
 
-It has a profile, public and held-out sets, a gate file and one full gate run in rolling: every measured accuracy target passes for Spanish and English, and lock lag and first text miss narrowly, as English does in the Japanese gate. The share of held-out rows rated major or hallucinated is a target too and is not measured until the rows are rated. Open: a rating of held-out rows for recognition, a spot check of the references, which are unchecked, and a judged translation run. See [the pilot](../log/2026-11-11-spanish-pilot.md) and [its further steps](../log/2026-11-12-spanish-pilot-steps.md).
+It has a profile, public and held-out sets, a gate file and one full gate run in rolling: every measured accuracy target passes for Spanish and English; lock lag and first text missed narrowly under the run's targets, which are reported, not gated, since 2026-11-15. Translation delay, part 6, has not been measured in the pair. The share of held-out rows rated major or hallucinated is a target too and is not measured until the rows are rated. Open: a rating of held-out rows for recognition, a spot check of the references, which are unchecked, and a judged translation run. See [the pilot](../log/2026-11-11-spanish-pilot.md) and [its further steps](../log/2026-11-12-spanish-pilot-steps.md).
 
 ## French, Italian and Portuguese
 
-Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every measured accuracy target; the rated share of major rows is not measured in any of the three. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag misses in all three and first text in Italian. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-14-french-italian-portuguese.md).
+Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every measured accuracy target; the rated share of major rows is not measured in any of the three. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag missed in all three and first text in Italian under the runs' targets, now reported, not gated. Translation delay has not been measured in any of them. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-14-french-italian-portuguese.md).
 
 The two French talks have the shape of the Japanese talk with frequent pauses: nearly every row closed by a pause and many under two seconds. The Portuguese talk loses whole phrases in its first two minutes, where the speech gate rejects decodes at a normal level; the cause was not listened for. Whether to accept either as a limit is the maintainer's decision. The local translator returns valid replies in the right direction on every public clip of the three pairs, and the offline browser smoke passes in each. A read-through of Italian puts Italian to English at a mean of 4.4 of 5 on correctly recognized rows and English to Italian at 4.1, neither meeting part 4's targets. No microphone session has run in the three pairs. See [the trace and read-through](../log/2026-11-15-failing-talks-and-italian-read-through.md).
 
@@ -49,7 +49,6 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 - The held-out Japanese talk with frequent pauses. Its loss is fragmentation into short stretches, which rolling's short windows decode badly; nothing tested cut it by half. The closing decode makes it slightly worse in most runs.
 - A change of language inside a row without a pause: when the first language's decode of the second stays confident, the rest of the row shows the new speech as text in the old language. The maintainer decided not to build detection inside a row for now.
 - Overlapping talkers and far-field group speech are not supported. A microphone near the speaker is the supported setup.
-- The gate's lock lag and first text measure locked text, though the overlay shows agreed text sooner by default. Gate runs now record first shown text and report its p90 beside the target, not gated; in the one full run that has it, the Japanese gate's, both languages show their first text well inside the target. See [the run](../log/2026-11-15-japanese-gate-shown-text.md).
 
 ## Open problems, ranked
 
@@ -77,7 +76,7 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 ## Standing priorities
 
 - Local recognition stays a hard requirement. Cloud recognition is not a substitute.
-- Live defaults stay frozen until a controlled comparison shows a benefit. Recognition tuning is paused except for lock lag and first text on continuous speech.
+- Live defaults stay frozen until a controlled comparison shows a benefit. Recognition tuning is paused. Timing work is judged by speech to translated text, which part 6 gates.
 - No paid calls, audience recording, remote exposure or pushing to the public repository without explicit authorization.
 - The OBS presentation stack comes after the personal companion is reliable.
 
@@ -88,11 +87,10 @@ The work on French, Italian and Portuguese is committed on the local branch `fre
 ## Next session
 
 1. A microphone session in rolling with Japanese speech, diagnostics on: the first with rolling as the default, the closing decode and three-decode early text. Read input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
-2. Repeat the translation-delay replay on an idle Mac for gate part 6.
+2. Translation delay, part 6, on an idle Mac: the owed Japanese repeat, then each other pair's held-out talks with `pnpm replay:contention --pair <pair> --translate local`. It is the only target on how soon captions appear since [the decision of 2026-11-15](../log/2026-11-15-translation-delay-gated.md).
 3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one, recorded in [decisions](decisions.md) and under accepted limits in [gates](gates.md) if accepted. Then a translation read-through of each, as done for Italian: `review_export.py --gate fr`, about an hour of replay, and one grading session per direction.
-4. Decide whether the gate's first text target should measure shown text; it and lock lag miss in all five gates. A full Japanese gate run reports it inside the target in both languages, while English first text on locked text still misses; lock lag has no shown-text counterpart, since a segment's last words have usually locked by the time they are agreed. Changing the target is a dated decision made before the run it applies to. See [shown-text timing](../log/2026-11-15-shown-text-timing.md) and [the run](../log/2026-11-15-japanese-gate-shown-text.md).
-5. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
-6. Force a recognizer failure in a rehearsal and watch the restart.
-7. The maintainer's reading of the row-length review files and the pacing rates; see [row length](../log/2026-11-08-row-length.md) and [pacing](../log/2026-11-06-pacing.md).
+4. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
+5. Force a recognizer failure in a rehearsal and watch the restart.
+6. The maintainer's reading of the row-length review files and the pacing rates; see [row length](../log/2026-11-08-row-length.md) and [pacing](../log/2026-11-06-pacing.md).
 
 Parked: translation quality of the local model, with a larger model as the first thing to try; the judged translation eval; source profiles per [lanes](lanes.md); the vocabulary prompt; the faint-level sweep with a noise bed closer to a room's; the −0.5 noise-confirm threshold against faint far-field speech; two defective development-corpus picks.
