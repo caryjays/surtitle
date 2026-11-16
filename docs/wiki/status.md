@@ -49,7 +49,7 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 - The held-out Japanese talk with frequent pauses. Its loss is fragmentation into short stretches, which rolling's short windows decode badly; nothing tested cut it by half. The closing decode makes it slightly worse in most runs.
 - A change of language inside a row without a pause: when the first language's decode of the second stays confident, the rest of the row shows the new speech as text in the old language. The maintainer decided not to build detection inside a row for now.
 - Overlapping talkers and far-field group speech are not supported. A microphone near the speaker is the supported setup.
-- The gate's lock lag and first text measure locked text, though the overlay shows agreed text sooner by default. Gate runs now record first shown text and report its p90 beside the target, not gated; no full run has recorded it yet.
+- The gate's lock lag and first text measure locked text, though the overlay shows agreed text sooner by default. Gate runs now record first shown text and report its p90 beside the target, not gated; in the one full run that has it, the Japanese gate's, both languages show their first text well inside the target. See [the run](../log/2026-11-15-japanese-gate-shown-text.md).
 
 ## Open problems, ranked
 
@@ -90,7 +90,7 @@ The work on French, Italian and Portuguese is committed on the local branch `fre
 1. A microphone session in rolling with Japanese speech, diagnostics on: the first with rolling as the default, the closing decode and three-decode early text. Read input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
 2. Repeat the translation-delay replay on an idle Mac for gate part 6.
 3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one, recorded in [decisions](decisions.md) and under accepted limits in [gates](gates.md) if accepted. Then a translation read-through of each, as done for Italian: `review_export.py --gate fr`, about an hour of replay, and one grading session per direction.
-4. Decide whether the gate's first text target should measure shown text; it and lock lag miss in all five gates. Gate runs now report first shown text, so a full run of any gate gives the number; lock lag has no shown-text counterpart, since a segment's last words have usually locked by the time they are agreed. Changing the target is a dated decision made before the run it applies to. See [shown-text timing](../log/2026-11-15-shown-text-timing.md).
+4. Decide whether the gate's first text target should measure shown text; it and lock lag miss in all five gates. A full Japanese gate run reports it inside the target in both languages, while English first text on locked text still misses; lock lag has no shown-text counterpart, since a segment's last words have usually locked by the time they are agreed. Changing the target is a dated decision made before the run it applies to. See [shown-text timing](../log/2026-11-15-shown-text-timing.md) and [the run](../log/2026-11-15-japanese-gate-shown-text.md).
 5. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
 6. Force a recognizer failure in a rehearsal and watch the restart.
 7. The maintainer's reading of the row-length review files and the pacing rates; see [row length](../log/2026-11-08-row-length.md) and [pacing](../log/2026-11-06-pacing.md).

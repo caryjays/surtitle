@@ -60,6 +60,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-15-failing-talks-and-italian-read-through.md](2026-11-15-failing-talks-and-italian-read-through.md) | The failing French and Portuguese talks traced by counts, local translation and browser smoke in the three pairs, Italian translation read-through |
 | [2026-11-15-docs-corrections.md](2026-11-15-docs-corrections.md) | Dates set to the Mac's clock, an edited entry restored, unmeasured gate targets named, the `review/` folder cleared of experiment files |
 | [2026-11-15-shown-text-timing.md](2026-11-15-shown-text-timing.md) | Gate runs record and report first shown text, not gated; a smoke run's figures |
+| [2026-11-15-japanese-gate-shown-text.md](2026-11-15-japanese-gate-shown-text.md) | A full Japanese gate run in rolling with first shown text reported |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26
