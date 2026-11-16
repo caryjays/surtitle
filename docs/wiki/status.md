@@ -1,6 +1,6 @@
 # Status
 
-Verified: 2026-11-15 · Sources: none
+Verified: 2026-11-16 · Sources: none
 
 This is the handoff page. Rewrite it at the end of every session; `pnpm docs:check` warns when it is older than 14 days. Personal observations belong in `private/`, technical ones here. Measurements are in the linked log entries.
 
@@ -82,7 +82,7 @@ The two French talks have the shape of the Japanese talk with frequent pauses: n
 
 ## Housekeeping
 
-The work on French, Italian and Portuguese is committed on the local branch `french-italian-portuguese`, not pushed and not merged into `main`. Dates in the docs follow the Mac's clock; see [the corrections](../log/2026-11-15-docs-corrections.md). The repository is public on GitHub. Personal context lives in the ignored `private/` overlay, and the leak scan runs inside `pnpm check`. Dev dependencies `typescript`, `esbuild` and `@types/node` are behind by major versions; not urgent.
+The work on French, Italian and Portuguese is merged into `main` and pushed. Dates in the docs follow the Mac's clock; see [the corrections](../log/2026-11-15-docs-corrections.md). The repository is public on GitHub. Personal context lives in the ignored `private/` overlay, and the leak scan runs inside `pnpm check`. Dev dependencies `typescript`, `esbuild` and `@types/node` are behind by major versions; not urgent.
 
 ## Next session
 
