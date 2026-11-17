@@ -1,6 +1,6 @@
 # Status
 
-Verified: 2026-11-16 · Sources: none
+Verified: 2026-11-17 · Sources: none
 
 This is the handoff page. Rewrite it at the end of every session; `pnpm docs:check` warns when it is older than 14 days. Personal observations belong in `private/`, technical ones here. Measurements are in the linked log entries.
 
@@ -26,7 +26,7 @@ The maintainer has rehearsed it in OBS with English, Japanese and off-pair speec
 | 3. Stock phrases | The rule is in. The review of new Japanese phrases is the maintainer's, since held-out rows sit under `.local/` |
 | 4. Translation | Not run. It is paid, and the maintainer has declined it for now. A read-through by one agent judge, reported and not gated, puts the offline profile under the part's targets in both directions; see below |
 | 5. Field session | Accepted as met by the maintainer, with two limits recorded in [gates](gates.md). The calibration warning is built and tested with synthetic levels only |
-| 6. Translation delay, offline | Met on four replay talks in the one round run on an idle machine with the closing decode; a second round on a loaded machine does not count. One clean repeat is owed. Since 2026-11-16 the only target on how soon captions appear, in every gate |
+| 6. Translation delay, offline | Met on four replay talks in the one round run on an idle machine with the closing decode; a second round on a loaded machine does not count. One clean repeat is owed. Since 2026-11-16 the only target on how soon captions appear, in every gate. The first run in all five pairs, not a gate result, misses on most talks outside Japanese; see [the run](../log/2026-11-17-translation-delay-run.md) |
 
 The latest gate run is in [the entry of 2026-11-15](../log/2026-11-15-japanese-gate-shown-text.md), and the latest translation-delay rounds in [the entry of 2026-11-13](../log/2026-11-13-closing-decode-and-faint-sweep.md).
 
@@ -36,11 +36,11 @@ The maintainer does not read the gate languages, so an agent session grades the 
 
 ## The Spanish pilot
 
-It has a profile, public and held-out sets, a gate file and one full gate run in rolling: every measured accuracy target passes for Spanish and English; lock lag and first text missed narrowly under the run's targets, which are reported, not gated, since 2026-11-16. Translation delay, part 6, has not been measured in the pair. The share of held-out rows rated major or hallucinated is a target too and is not measured until the rows are rated. Open: a rating of held-out rows for recognition, a spot check of the references, which are unchecked, and a judged translation run. See [the pilot](../log/2026-11-11-spanish-pilot.md) and [its further steps](../log/2026-11-12-spanish-pilot-steps.md).
+It has a profile, public and held-out sets, a gate file and one full gate run in rolling: every measured accuracy target passes for Spanish and English; lock lag and first text missed narrowly under the run's targets, which are reported, not gated, since 2026-11-16. Translation delay, part 6, missed on most talks in one run that does not count as a gate result. The share of held-out rows rated major or hallucinated is a target too and is not measured until the rows are rated. Open: a rating of held-out rows for recognition, a spot check of the references, which are unchecked, and a judged translation run. See [the pilot](../log/2026-11-11-spanish-pilot.md) and [its further steps](../log/2026-11-12-spanish-pilot-steps.md).
 
 ## French, Italian and Portuguese
 
-Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every measured accuracy target; the rated share of major rows is not measured in any of the three. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag missed in all three and first text in Italian under the runs' targets, now reported, not gated. Translation delay has not been measured in any of them. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-14-french-italian-portuguese.md).
+Each has a profile, public and held-out sets, swept stock phrases, a gate file and one full gate run in rolling. Italian passes every measured accuracy target; the rated share of major rows is not measured in any of the three. French fails held-out error over one-pass, on two talks cut into many rows; Portuguese fails held-out deletions narrowly, on one talk. Lock lag missed in all three and first text in Italian under the runs' targets, now reported, not gated. Translation delay missed on most talks in all three in one run that does not count as a gate result; French missed on every talk. No neighbour language shows a row in any of the pairs. See [the entry](../log/2026-11-14-french-italian-portuguese.md).
 
 The two French talks have the shape of the Japanese talk with frequent pauses: nearly every row closed by a pause and many under two seconds. The Portuguese talk loses whole phrases in its first two minutes, where the speech gate rejects decodes at a normal level; the cause was not listened for. Whether to accept either as a limit is the maintainer's decision. The local translator returns valid replies in the right direction on every public clip of the three pairs, and the offline browser smoke passes in each. A read-through of Italian puts Italian to English at a mean of 4.4 of 5 on correctly recognized rows and English to Italian at 4.1, neither meeting part 4's targets. No microphone session has run in the three pairs. See [the trace and read-through](../log/2026-11-15-failing-talks-and-italian-read-through.md).
 
@@ -87,7 +87,7 @@ The work on French, Italian and Portuguese is merged into `main` and pushed. Dat
 ## Next session
 
 1. A microphone session in rolling with Japanese speech, diagnostics on: the first with rolling as the default, the closing decode and three-decode early text. Read input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
-2. Translation delay, part 6, on an idle Mac: the owed Japanese repeat, then each other pair's held-out talks with `pnpm replay:contention --pair <pair> --translate local`. It is the only target on how soon captions appear since [the decision of 2026-11-16](../log/2026-11-16-translation-delay-gated.md).
+2. Translation delay, part 6: find where the time goes in the Latin pairs, row close or translation, from the diagnostics of [the first full run](../log/2026-11-17-translation-delay-run.md), before changing anything. Then a repeat on a committed tree and an idle Mac on mains power with `pnpm gate:delay`, Japanese first for its owed repeat; about 3 hours and 10 minutes for all five pairs. See [the runner](../log/2026-11-17-translation-delay-runner.md). It is the only target on how soon captions appear since [the decision of 2026-11-16](../log/2026-11-16-translation-delay-gated.md).
 3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one, recorded in [decisions](decisions.md) and under accepted limits in [gates](gates.md) if accepted. Then a translation read-through of each, as done for Italian: `review_export.py --gate fr`, about an hour of replay, and one grading session per direction.
 4. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
 5. Force a recognizer failure in a rehearsal and watch the restart.
