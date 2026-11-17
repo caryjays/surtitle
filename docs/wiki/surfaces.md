@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-11-15 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-17 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/preview.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
@@ -23,7 +23,7 @@ Layout: a top bar with the capture state, the listening presets, the capture con
 | Segmentation | Session panel, when the recognizer offers the choice | `set-segmentation`: turns or rolling, only while capture is off, from the next Start |
 | Translate finalized text | Session panel, when a translator is configured; labeled on this Mac or paid cloud requests | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
 
-The transcript shows up to 60 rows with keyed DOM updates, Follow latest, Jump to latest, search across originals and translations, and a labeled fictional layout preview that is disabled while capturing. Text & spacing saves only validated display preferences under the local storage key `captions.reading.v1`: translation size 18 to 48 px, original size 12 to 32 px and at least 4 px smaller, spacing, width, the caption diagnostics toggle, and Pace text at reading speed, on by default.
+The transcript shows up to 60 rows with keyed DOM updates, Follow latest, Jump to latest, search across originals and translations, and a labeled fictional layout preview, disabled while capturing, whose conversation is in the session's pair: English with Japanese, Spanish, French, Italian or Portuguese, written for each in `apps/web/preview.ts`, and English with Japanese for a pair without one. Text & spacing saves only validated display preferences under the local storage key `captions.reading.v1`: translation size 18 to 48 px, original size 12 to 32 px and at least 4 px smaller, spacing, width, the caption diagnostics toggle, and Pace text at reading speed, on by default.
 
 The transcript shows every row's whole text: what the pacer has released in the normal style, and the rest in a lighter one, which includes text locked but not yet released and, in rolling mode, a partial row's unlocked tail. With pacing off, all locked text is released at once and only the tail stays lighter. Text already in the snapshot when the page connects is shown released.
 
