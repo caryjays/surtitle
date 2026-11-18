@@ -67,6 +67,21 @@ test('in Auto, the recognized language sets the direction the local model is ask
   const modes = sent.map(line => JSON.parse(JSON.parse(line).user).mode);
   assert.deepEqual(modes, ['ja-en', 'auto']);
 });
+test('a directed request gives the model its reply opening, unless replyOpening is false; Auto with no language does not', async t => {
+  const sent: string[] = [];
+  const make = (replyOpening?: boolean) => new LocalTranslator({ model: 'qwen3.5-4b-q4', ...(replyOpening === undefined ? {} : { replyOpening }), workerFactory: () => {
+    const child = spawn(process.execPath, ['tests/fixtures/fake-translate-worker.mjs', 'normal'], { stdio: ['pipe', 'pipe', 'pipe'], env: {} });
+    const write = child.stdin.write.bind(child.stdin);
+    child.stdin.write = ((chunk: string) => { sent.push(chunk); return write(chunk); }) as typeof child.stdin.write;
+    return child;
+  } });
+  const live = make(), generated = make(false);
+  t.after(() => { live.close(); generated.close(); });
+  await live.translate({ text: 'こんにちは', mode: 'auto', glossary: [], sourceLanguage: 'ja' }, new AbortController().signal);
+  await live.translate({ text: 'Hmm', mode: 'auto', glossary: [], sourceLanguage: 'unknown' }, new AbortController().signal);
+  await generated.translate({ text: 'こんにちは', mode: 'auto', glossary: [], sourceLanguage: 'ja' }, new AbortController().signal);
+  assert.deepEqual(sent.map(line => JSON.parse(line).opening), ['{"source":"ja","target":"en","text":"', undefined, undefined]);
+});
 test('in a pair of one script, context rows in the other language are not sent to the local model', async t => {
   const sent: string[] = [];
   const make = (pair: ['en', 'es'] | ['en', 'ja']) => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, workerFactory: () => {

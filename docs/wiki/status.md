@@ -1,6 +1,6 @@
 # Status
 
-Verified: 2026-11-17 · Sources: none
+Verified: 2026-11-18 · Sources: none
 
 This is the handoff page. Rewrite it at the end of every session; `pnpm docs:check` warns when it is older than 14 days. Personal observations belong in `private/`, technical ones here. Measurements are in the linked log entries.
 
@@ -87,7 +87,7 @@ The work on French, Italian and Portuguese is merged into `main` and pushed. Dat
 ## Next session
 
 1. A microphone session in rolling with Japanese speech, diagnostics on: the first with rolling as the default, the closing decode and three-decode early text. Read input levels, applied capture settings, the masked-speech warning and display pacing from the download; macOS Voice Isolation on and off is worth ten minutes of it.
-2. Translation delay, part 6: find where the time goes in the Latin pairs, row close or translation, from the diagnostics of [the first full run](../log/2026-11-17-translation-delay-run.md), before changing anything. Then a repeat on a committed tree and an idle Mac on mains power with `pnpm gate:delay`, Japanese first for its owed repeat; about 3 hours and 10 minutes for all five pairs. See [the runner](../log/2026-11-17-translation-delay-runner.md). It is the only target on how soon captions appear since [the decision of 2026-11-16](../log/2026-11-16-translation-delay-gated.md).
+2. Translation delay, part 6, measured under sustained load since 2026-11-17: reduce what recognition and the translator cost each other on the shared GPU. Holding rolling decodes while the translator starts gave no clear gain ([decode hold](../log/2026-11-17-decode-hold.md)); giving the model the known opening of its reply instead of generating it cut about 1 s in French under sustained load ([reply opening](../log/2026-11-17-reply-opening.md)), and is live since 2026-11-18 after a read over the same recognized text in French and Japanese ([made live](../log/2026-11-18-reply-opening-live.md)). Next: the full sustained `pnpm gate:delay` with it. The translator alone takes about 0.5 s to its first text, 1 to 2 s in a replay. Open: whether a gate run adds a presentation-like load such as OBS, and how many replays each talk needs, since one talk moves by about 1 s between replays. See [the breakdown](../log/2026-11-17-translation-delay-breakdown.md). That repeat runs on a committed tree on mains power, about 3 hours and 10 minutes for all five pairs. See [the runner](../log/2026-11-17-translation-delay-runner.md). It is the only target on how soon captions appear since [the decision of 2026-11-16](../log/2026-11-16-translation-delay-gated.md).
 3. French and Portuguese: the maintainer's decision on the failing talks, after listening to the opening of the Portuguese one, recorded in [decisions](decisions.md) and under accepted limits in [gates](gates.md) if accepted. Then a translation read-through of each, as done for Italian: `review_export.py --gate fr`, about an hour of replay, and one grading session per direction.
 4. Spanish: the maintainer rates a sample of held-out rows and spot-checks the references.
 5. Force a recognizer failure in a rehearsal and watch the restart.

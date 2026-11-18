@@ -28,6 +28,9 @@ export type LocalOptions = {
   cadence?: { intervalMs: number; settleMs: number };
   // Quiet before a rolling decode may serve as the closing one; null sends decodes on the interval only. Replays set it.
   pauseMs?: number | null;
+  // Replays only: asked when a rolling decode is due on the interval; true makes it wait for a later frame. The decode at
+  // the pause mark and closing decodes never wait. No audio is dropped: the next decode covers what built up.
+  holdRolls?: () => boolean;
   previewIntervalMs?: number; glossary?: Glossary; calibrationMs?: number;
   startupTimeoutMs?: number; inferenceTimeoutMs?: number;
   workerFactory?: () => ChildProcessWithoutNullStreams;
@@ -421,7 +424,7 @@ export class LocalTranscriber implements Transcriber {
     const due = stretch && (quiet === 0 ? stretch.sinceRequestMs >= this.cadence.intervalMs
       : quiet >= this.pauseMs! && stretch.sinceRequestMs > quiet - this.pauseMs!);
     if (stretch && due && stretch.windowMs >= ROLLING.minWindowMs
-      && !this.active && !this.queue.length && !this.preview) {
+      && !this.active && !this.queue.length && !this.preview && !(quiet === 0 && this.options.holdRolls?.())) {
       // Backpressure: a slow decode delays the next request rather than queueing more.
       stretch.sinceRequestMs = 0;
       this.preview = { id: stretch.row.id, requestId: randomUUID(), kind: 'roll', language: stretch.row.language,

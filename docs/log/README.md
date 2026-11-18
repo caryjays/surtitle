@@ -64,6 +64,10 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-16-translation-delay-gated.md](2026-11-16-translation-delay-gated.md) | Recognition lock lag and first text reported, not gated; translation delay, part 6, applies to every gate |
 | [2026-11-17-translation-delay-runner.md](2026-11-17-translation-delay-runner.md) | `pnpm gate:delay` runs and scores part 6 for every pair; the layout preview in the session's pair |
 | [2026-11-17-translation-delay-run.md](2026-11-17-translation-delay-run.md) | The first full part 6 run: 8 of 36 talks pass; not a gate result |
+| [2026-11-17-translation-delay-breakdown.md](2026-11-17-translation-delay-breakdown.md) | Part 6's delay split into row close and translator; the translator alone is fast; the same talk varies by about 1 s between replays |
+| [2026-11-17-decode-hold.md](2026-11-17-decode-hold.md) | Holding rolling decodes while the translator starts: about 0.3 s off the translator, part of it lost to the row's close; no clear gain, not adopted |
+| [2026-11-17-reply-opening.md](2026-11-17-reply-opening.md) | Giving the local model its reply's opening: about 1 s off last word to first translated text under sustained load in French; translations not yet checked |
+| [2026-11-18-reply-opening-live.md](2026-11-18-reply-opening-live.md) | The reply's opening checked over the same recognized text in French and Japanese: rows the model wrongly left unresolved now translated, other changes within numeric noise; made live |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

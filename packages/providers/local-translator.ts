@@ -23,6 +23,8 @@ export type LocalTranslatorOptions = {
   startupTimeoutMs?: number; workerFactory?: () => ChildProcessWithoutNullStreams;
   // Reuse the model state of the start that prompts share instead of computing it for every request. On unless false.
   promptCache?: boolean;
+  // When the direction is known, the reply's opening up to its text is given to the model, not generated. On unless false.
+  replyOpening?: boolean;
   // Per-request generation timing, for the eval and the service's diagnostics. Never text.
   onTiming?: (timing: { inferenceMs: number; promptTokens: number; generationTokens: number }) => void;
 };
@@ -119,7 +121,9 @@ export class LocalTranslator implements Translator {
         reject(new Error('cancelled'));
         if (this.worker === worker) worker.stdin.write(JSON.stringify({ cancel: id }) + '\n');
       }, { once: true });
-      worker.stdin.write(JSON.stringify({ id, system, user, maxTokens: this.options.maxTokens ?? 512 }) + '\n');
+      const direction = /^([a-z]{2,3})-([a-z]{2,3})$/.exec(input.mode);
+      const opening = this.options.replyOpening !== false && direction ? { opening: `{"source":"${direction[1]}","target":"${direction[2]}","text":"` } : {};
+      worker.stdin.write(JSON.stringify({ id, system, user, maxTokens: this.options.maxTokens ?? 512, ...opening }) + '\n');
     });
     this.options.onTiming?.({ inferenceMs: result.inferenceMs, promptTokens: result.promptTokens, generationTokens: result.generationTokens });
     if (result.finish === 'length') { diagnostic?.({ response: 'incomplete', outputTokenLimitReached: true }); throw new Error('incomplete translation'); }

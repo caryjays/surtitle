@@ -289,6 +289,19 @@ test('a decode sent in the closing pause becomes the closing decode; without the
   assert.equal(g.requests.length, earlier + 1); assert.equal(g.requests.at(-1)! % 1000, 700);
   assert.deepEqual(finals(f.events).map(r => r.text), finals(g.events).map(r => r.text));
 });
+test('a held interval decode waits for the hold to end; the decode at the pause mark is never held', async t => {
+  let hold = false;
+  const f = fixture('rolling', { holdRolls: () => hold }); t.after(() => f.stream.close()); await f.stream.connect();
+  await f.speak(2); const before = f.requests.length;
+  hold = true; await f.speak(2);
+  assert.equal(f.requests.length, before);
+  hold = false; await f.speak(1);
+  // Sent on the first frame after the hold, over the audio that built up while it lasted.
+  assert.equal(f.requests.length, before + 1); assert.ok(f.requests.at(-1)! >= 2000);
+  hold = true; f.quiet(); await f.stream.finish();
+  assert.equal(f.requests.length, before + 2); assert.equal(f.requests.at(-1)! % 1000, 300);
+  assert.equal(finals(f.events).length, 1);
+});
 test('no decode is sent in a short pause, and one follows as soon as speech resumes', async t => {
   const f = fixture('rolling'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(1); const before = f.requests.length;

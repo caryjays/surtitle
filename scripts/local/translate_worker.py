@@ -1,6 +1,8 @@
 """Private stdio RPC for local translation: stdout is protocol only; no transcript diagnostic logs.
 
-Requests are JSON lines {id, system, user, maxTokens}, or {cancel: id} to stop a queued or running request.
+Requests are JSON lines {id, system, user, maxTokens} with an optional opening, or {cancel: id} to stop a queued or running
+request. An opening is the known start of the reply: it ends the prompt instead of being generated, and the reply and its
+partials include it.
 While a request generates, {type: 'partial', id, text} carries its reply so far, at most every PARTIAL_S.
 Each request then gets exactly one reply, {type: 'result', ...} or {type: 'cancelled', id}.
 
@@ -34,7 +36,9 @@ def send(message):
 
 
 def valid(request):
-    return (set(request) == {'id', 'system', 'user', 'maxTokens'} and isinstance(request['id'], str) and len(request['id']) <= 100
+    keys = {'id', 'system', 'user', 'maxTokens'}
+    return ((set(request) == keys or (set(request) == keys | {'opening'} and isinstance(request['opening'], str)
+                                      and len(request['opening']) <= 200)) and isinstance(request['id'], str) and len(request['id']) <= 100
             and isinstance(request['system'], str) and len(request['system']) <= 20_000
             and isinstance(request['user'], str) and len(request['user']) <= 40_000
             and isinstance(request['maxTokens'], int) and 1 <= request['maxTokens'] <= 2048)
@@ -65,12 +69,12 @@ def main():
             return prompt, None
         return prompt[length:], copy.deepcopy(states[key])
 
-    def generate(system, user, max_tokens, stop=lambda: False, progress=lambda text: None):
+    def generate(system, user, max_tokens, stop=lambda: False, progress=lambda text: None, opening=''):
         # Thinking off: a caption needs the answer, not a reasoning preamble.
         prompt = tokenizer.encode(tokenizer.apply_chat_template(
             [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            tokenize=False, add_generation_prompt=True, enable_thinking=False), add_special_tokens=False)
-        text, last, sent = '', None, time.perf_counter()
+            tokenize=False, add_generation_prompt=True, enable_thinking=False) + opening, add_special_tokens=False)
+        text, last, sent = opening, None, time.perf_counter()
         total = len(prompt)
         prompt, state = state_for(prompt)
         for last in stream_generate(model, tokenizer, prompt, max_tokens=max_tokens, sampler=sampler,
@@ -111,7 +115,7 @@ def main():
             continue
         start = time.perf_counter()
         text, last = generate(request['system'], request['user'], request['maxTokens'], lambda: request['id'] in cancelled,
-                              lambda text: send({'type': 'partial', 'id': request['id'], 'text': text}))
+                              lambda text: send({'type': 'partial', 'id': request['id'], 'text': text}), request.get('opening', ''))
         if text is None:
             cancelled.discard(request['id'])
             send({'type': 'cancelled', 'id': request['id']})
