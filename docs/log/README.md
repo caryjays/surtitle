@@ -68,6 +68,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-17-decode-hold.md](2026-11-17-decode-hold.md) | Holding rolling decodes while the translator starts: about 0.3 s off the translator, part of it lost to the row's close; no clear gain, not adopted |
 | [2026-11-17-reply-opening.md](2026-11-17-reply-opening.md) | Giving the local model its reply's opening: about 1 s off last word to first translated text under sustained load in French; translations not yet checked |
 | [2026-11-18-reply-opening-live.md](2026-11-18-reply-opening-live.md) | The reply's opening checked over the same recognized text in French and Japanese: rows the model wrongly left unresolved now translated, other changes within numeric noise; made live |
+| [2026-11-18-translation-delay-opening-run.md](2026-11-18-translation-delay-opening-run.md) | The full part 6 run with the reply's opening, under sustained load: 33 of 36 talks pass; Japanese, French and Portuguese meet part 6 |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26
