@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-17 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-19 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -46,6 +46,33 @@ Keep the tab open and the Mac awake and powered. With `dev:listen`, paid request
 5. Disconnect the overlay to confirm captions disappear within 6 s.
 
 For an in-person event use an extended display with the fullscreen projector and keep `/control` off the projected screen. OBS Virtual Camera carries video only; pick the microphone separately in a call. The maintainer has rehearsed the overlay in OBS with English, Japanese and off-pair speech; steps 4 and 5 are covered by the browser checks and were not part of that rehearsal. See [status](status.md).
+
+## Rehearsal under load
+
+A rehearsal checks the live path that replays cannot: a real microphone and room, with the Mac under presentation load. It takes about an hour. Results go in a dated log entry as aggregate numbers; personal notes go in `private/`.
+
+Before:
+
+1. Mains power, other heavy work closed, and the microphone you would use on the day, near the speaker. `pnpm preflight:offline` passes.
+2. `pnpm dev:offline`, then `/control` in Chrome. Under Diagnostic log click Start diagnostics; the status says "turn details available". Under Text & spacing enable Show caption diagnostics.
+3. In OBS, the overlay as in [OBS](#obs) above a slide deck, and the deck presented. Keep OBS running throughout; the load is part of the test.
+4. Pick the microphone, Start, and keep the room quiet through calibration. Check the Actual input line.
+
+During, with Mark problem now at any wrong, late or missing caption:
+
+1. Japanese pair, Auto: ten minutes of talk-like speech in English and Japanese, sentences of every length, with natural pauses, and at least one switch of language at a pause. Watch for rows that show English text in Japanese or the reverse, and for any row that shows its original with no translation.
+2. Ten minutes with macOS Voice Isolation on, if Control Center offers a Mic Mode for Chrome, then ten with it off, the same kind of speech.
+3. Pause. Switch the pair to `en-fr` (or another Latin pair) in the Session panel, Start, and speak five minutes of English with some French or the pair language.
+4. Two minutes from across the room at a normal level, and one minute quieter, to see the masked-speech warning if it comes.
+5. Reload the OBS source once and switch scenes once; captions continue.
+
+After:
+
+1. Download diagnostics JSON before closing anything; a reload loses the buffer.
+2. `pnpm diag:latency <file>` reports speech to translated text and to display for each Start.
+3. Note the load the Mac was under, and anything the log cannot hold: what was said where a mark was made, and how the captions read.
+
+The log tells: last word to first translated text against part 6's targets of a 3.0 s median and 4.5 s p90, rows rejected and why, input levels against the gate, the capture settings Chrome applied, and any automatic recognizer restart. It cannot tell whether a caption was right.
 
 ## Failure ladder
 
