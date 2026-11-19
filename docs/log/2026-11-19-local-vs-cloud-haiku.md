@@ -54,3 +54,7 @@ Read `review/<gate>/cloud/` for each gate, by the rules in `AGENTS.md`: untruste
 1. The grading session.
 2. Direct the Anthropic request by the recognized language, as the local adapter does, and re-run the cloud half outside real time on the same rows: about $0.40.
 3. Streaming from Haiku, if the cloud profile should compete on speed.
+
+## Maintainer's decision
+
+The same day the maintainer parked the cloud profile: Haiku cannot compete on speed, and their own sessions find the local translations good enough. The steps above other than grading are not pursued, and the grading session grades only the `local` translations, for the first read-through of French and Portuguese. See [decisions](../wiki/decisions.md).
