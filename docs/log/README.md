@@ -70,6 +70,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-18-reply-opening-live.md](2026-11-18-reply-opening-live.md) | The reply's opening checked over the same recognized text in French and Japanese: rows the model wrongly left unresolved now translated, other changes within numeric noise; made live |
 | [2026-11-18-translation-delay-opening-run.md](2026-11-18-translation-delay-opening-run.md) | The full part 6 run with the reply's opening, under sustained load: 33 of 36 talks pass; Japanese, French and Portuguese meet part 6 |
 | [2026-11-19-local-vs-cloud-haiku.md](2026-11-19-local-vs-cloud-haiku.md) | Local translation against Claude Haiku 5.5 on every gate's held-out talks: Haiku slower to first text and losing up to a fifth of English rows in the Latin pairs; transcripts kept for grading |
+| [2026-11-19-rehearsal-under-load.md](2026-11-19-rehearsal-under-load.md) | First rehearsal under load with OBS: Japanese passes part 6, French slows by a step partway through and fails |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26
