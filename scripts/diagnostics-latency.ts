@@ -4,7 +4,10 @@ import { readFileSync } from 'node:fs';
 
 type Event = { type: string; atMs: number; command?: { type: string }; turn?: Record<string, unknown> & { sequence: number; outcome: string };
   row?: { sequence: number; final: boolean; state: string; originalChars: number; translationChars: number };
-  sequence?: number; stage?: string; paced?: boolean; settings?: Record<string, unknown> };
+  sequence?: number; stage?: string; paced?: boolean; settings?: Record<string, unknown>; health?: { host?: Host | null } };
+type Host = { gpu: Record<'ours' | 'obs' | 'browser' | 'windowServer' | 'other', number> | null;
+  thermal: string | null; power: string | null; lowPower: boolean | null };
+const THERMAL = ['nominal', 'fair', 'serious', 'critical'];
 const path = process.argv[2];
 if (!path) { console.error('Usage: pnpm diag:latency <captions-diagnostics.json>'); process.exit(2); }
 const events = (JSON.parse(readFileSync(path, 'utf8')) as { events: Event[] }).events;
@@ -21,6 +24,30 @@ function line(name: string, values: (number | undefined)[], unit: 'ms' | 'n' = '
 }
 const tally = (values: unknown[]) => Object.entries(values.reduce<Record<string, number>>((m, v) => (m[String(v)] = (m[String(v)] ?? 0) + 1, m), {}))
   .map(([k, v]) => `${k} ${v}`).join(', ');
+
+// Per minute of the Start: translation requests begun in it beside what used the GPU and the Mac's thermal state, from the
+// host probe's samples on health events. A step in request time with OBS or other use rising points outside the
+// application; with thermal above nominal, at throttling; with neither, at the application.
+function hostTimeline(within: Event[], startAt: number, rows: Record<string, unknown>[]) {
+  const samples = within.filter(e => e.health?.host).map(e => ({ at: e.atMs, host: e.health!.host! }));
+  if (!samples.length) { console.log('  Host load: not recorded (service without the host probe)'); return; }
+  const minute = (at: number) => Math.floor((at - startAt) / 60_000);
+  const last = Math.max(...samples.map(s => minute(s.at)), ...rows.map(t => minute((t['at:translating'] as number | undefined) ?? startAt)));
+  const mean = (values: number[]) => values.length ? values.reduce((a, b) => a + b, 0) / values.length : undefined;
+  const pct = (value: number | undefined) => value === undefined ? '–' : `${Math.round(value * 100)}%`;
+  console.log('  Host load by minute: translation requests begun, their median; GPU busy share by group, mean of samples; worst thermal state');
+  console.log(`  ${'min'.padStart(4)} ${'rows'.padStart(4)} ${'request'.padStart(7)} ${'ours'.padStart(5)} ${'OBS'.padStart(5)} ${'browser'.padStart(7)} ${'display'.padStart(7)} ${'other'.padStart(5)}  thermal, power`);
+  for (let m = 0; m <= last; m++) {
+    const inMinute = samples.filter(s => minute(s.at) === m).map(s => s.host);
+    const begun = rows.filter(t => t['at:translating'] !== undefined && minute(t['at:translating'] as number) === m);
+    const gpu = (key: keyof NonNullable<Host['gpu']>) => pct(mean(inMinute.flatMap(h => h.gpu ? [h.gpu[key]] : [])));
+    const worst = inMinute.map(h => h.thermal).filter((t): t is string => t !== null).sort((a, b) => THERMAL.indexOf(b) - THERMAL.indexOf(a))[0] ?? '–';
+    const power = [...new Set(inMinute.map(h => h.power).filter(Boolean))].join('/') || '–';
+    const lowPower = inMinute.some(h => h.lowPower) ? ', Low Power Mode' : '';
+    console.log(`  ${String(m).padStart(4)} ${String(begun.length).padStart(4)} ${s(percentile(begun.map(t => t.translationMs as number | undefined), 0.5)).padStart(7)} `
+      + `${gpu('ours').padStart(5)} ${gpu('obs').padStart(5)} ${gpu('browser').padStart(7)} ${gpu('windowServer').padStart(7)} ${gpu('other').padStart(5)}  ${worst}, ${power}${lowPower}`);
+  }
+}
 
 // Collection switched on after Start records no start command; the whole file is then one session from its first event.
 const commands = events.filter(e => e.command?.type === 'start');
@@ -126,6 +153,7 @@ starts.forEach((start, i) => {
     line('middle of the row to mid-release', rows.map(t => seen(t, 0.5, mid(t))));
     line('first word to first released text', rows.map(t => seen(t, 1, shown(t, 'translation-first'))));
   }
+  hostTimeline(within, start.atMs, rows);
   const pieced = rows.filter(t => Array.isArray(t.pieces) && (t.pieces as unknown[]).length);
   if (!pieced.length) {
     console.log('  Speech to first translated text (rolling; the same as above unless the translator streams)');

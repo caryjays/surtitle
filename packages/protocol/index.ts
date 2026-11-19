@@ -70,6 +70,17 @@ export const AudioGate = z.object({
   masked: z.literal(true).optional(),
 }).strict();
 export type AudioGate = z.infer<typeof AudioGate>;
+// What else was using the Mac over the probe's last interval; see scripts/local/host_probe.py. Content-free: shares,
+// states and fixed group names only, never a process name or ID. gpu: each group's GPU busy time as a share of the
+// interval; groups overlap, so the sum can exceed 1. null: not readable.
+const share = z.number().finite().min(0).max(8);
+export const HostLoad = z.object({
+  intervalMs: z.number().int().min(0).max(60_000),
+  gpu: z.object({ ours: share, obs: share, browser: share, windowServer: share, other: share }).strict().nullable(),
+  thermal: z.enum(['nominal', 'fair', 'serious', 'critical']).nullable(),
+  lowPower: z.boolean().nullable(), power: z.enum(['ac', 'battery']).nullable(),
+}).strict();
+export type HostLoad = z.infer<typeof HostLoad>;
 export const Snapshot = z.object({
   type: z.literal('snapshot'), sessionId: z.string().uuid(), generation: z.number().int().nonnegative(),
   revision: z.number().int().nonnegative(), pair: Pair, mode: Mode,
@@ -89,6 +100,8 @@ export const Snapshot = z.object({
   translation: z.object({ available: z.boolean(), enabled: z.boolean() }).strict().default({ available: false, enabled: false }),
   // Automatic recognizer restarts since Start, and whether one is under way now.
   restarts: z.number().int().nonnegative().max(10_000).default(0), restarting: z.literal(true).optional(),
+  // The latest host load sample, or null without a probe or when its last sample is stale.
+  host: HostLoad.nullable().default(null),
 });
 export type Snapshot = z.infer<typeof Snapshot>;
 export const SAMPLE_RATE = 24000;

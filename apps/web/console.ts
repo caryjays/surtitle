@@ -67,6 +67,16 @@ function median(values: (number | undefined)[]) {
   return sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)]! : undefined;
 }
 const seconds = (ms: number | undefined) => ms === undefined ? '–' : `${(ms / 1000).toFixed(1)} s`;
+// GPU busy share by group over the probe's last interval, and the Mac's thermal state and power. Omitted without a probe.
+export function describeHost(host: Snapshot['host']): [string, string][] {
+  if (!host) return [];
+  const percent = (share: number) => `${Math.round(share * 100)}%`;
+  const gpu = host.gpu ? `captions ${percent(host.gpu.ours)} · OBS ${percent(host.gpu.obs)} · browser ${percent(host.gpu.browser)} · `
+    + `display ${percent(host.gpu.windowServer)} · other ${percent(host.gpu.other)}` : 'not readable';
+  const mac = [`thermal ${host.thermal ?? 'not readable'}`, host.power === 'battery' ? 'on battery' : host.power === 'ac' ? 'on power' : null,
+    host.lowPower ? 'Low Power Mode' : null].filter(Boolean).join(' · ');
+  return [['GPU use', gpu], ['Mac', mac]];
+}
 // Content-free health from the snapshot: configuration, queues and recent row timings.
 export function renderHealth(state: Snapshot | undefined, connected: boolean) {
   const list = element('health');
@@ -84,6 +94,7 @@ export function renderHealth(state: Snapshot | undefined, connected: boolean) {
       : [['Commit to final', seconds(median(recent.map(t => t.commitToFinalMs)))]] as [string, string][]),
     ['Translation request', seconds(median(recent.map(t => t.translationMs)))],
     ['Failed or skipped', String(recent.filter(t => ['failed', 'skipped', 'capture-failed'].includes(t.outcome)).length)],
+    ...describeHost(state.host),
   ];
   const text = rows.map(([k, v]) => `${k}\u0000${v}`).join('\n');
   if (list.dataset.text === text) return;

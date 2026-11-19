@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-19 · Sources: package.json, apps/service/main.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-19 · Sources: package.json, apps/service/main.ts, scripts/diagnostics-latency.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -72,7 +72,7 @@ After:
 2. `pnpm diag:latency <file>` reports speech to translated text and to display for each Start.
 3. Note the load the Mac was under, and anything the log cannot hold: what was said where a mark was made, and how the captions read.
 
-The log tells: last word to first translated text against part 6's targets of a 3.0 s median and 4.5 s p90, rows rejected and why, input levels against the gate, the capture settings Chrome applied, and any automatic recognizer restart. It cannot tell whether a caption was right.
+The log tells: last word to first translated text against part 6's targets of a 3.0 s median and 4.5 s p90, rows rejected and why, input levels against the gate, the capture settings Chrome applied, any automatic recognizer restart, and per minute what used the GPU (the captions workers, OBS, the browser, the display server, the rest) and the thermal state, so a slowdown partway through can be put down to OBS, another app, throttling or the application. The Health panel shows the same GPU line live. It cannot tell whether a caption was right.
 
 ## Failure ladder
 

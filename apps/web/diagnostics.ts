@@ -30,7 +30,7 @@ export function describeCapture(settings: CaptureSettings) {
     flag('automatic gain', settings.autoGainControl), ...(settings.sampleRate ? [`${settings.sampleRate} Hz`] : [])].join(' · ');
 }
 
-type Health = Pick<Snapshot, 'capture' | 'processing' | 'pair' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate' | 'restarts'>;
+type Health = Pick<Snapshot, 'capture' | 'processing' | 'pair' | 'mode' | 'error' | 'queue' | 'running' | 'rejected' | 'gate' | 'restarts' | 'host'>;
 type Row = Pick<Segment, 'sequence' | 'final' | 'state' | 'source' | 'target' | 'translationMs'> & {
   originalChars: number; translationChars: number; scriptLetters: { latin: number; kana: number; han: number; other: number };
 };
@@ -156,8 +156,12 @@ export class DiagnosticLog {
     const health: Health = { capture: snapshot.capture, processing: snapshot.processing, pair: [...snapshot.pair], mode: snapshot.mode,
       error: snapshot.error, queue: snapshot.queue, running: snapshot.running, rejected: snapshot.rejected, restarts: snapshot.restarts,
       gate: snapshot.gate ? { state: snapshot.gate.state, level: snapshot.gate.level,
-        threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs, ...(snapshot.gate.masked ? { masked: true as const } : {}) } : null };
-    const signature = JSON.stringify({ ...health, gate: health.gate ? [health.gate.state, health.gate.masked ?? false] : null });
+        threshold: snapshot.gate.threshold, remainingMs: snapshot.gate.remainingMs, ...(snapshot.gate.masked ? { masked: true as const } : {}) } : null,
+      // HostLoad is a strict schema of shares, states and fixed group names: no process names or IDs.
+      host: snapshot.host ? structuredClone(snapshot.host) : null };
+    // Host load rides on the 2 s samples; only a change of thermal state or power source adds a sample.
+    const signature = JSON.stringify({ ...health, gate: health.gate ? [health.gate.state, health.gate.masked ?? false] : null,
+      host: health.host ? [health.host.thermal, health.host.power, health.host.lowPower] : null });
     if (signature !== this.lastHealth || atMs - this.lastSample >= SAMPLE_MS) {
       this.add({ type: 'health', atMs, session: this.session, generation: snapshot.generation, health });
       this.lastHealth = signature; this.lastSample = atMs;

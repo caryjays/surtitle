@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-19 · Sources: packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-19 · Sources: packages/providers/host-probe.ts, packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one request per finalized turn: HTTPS to a cloud provider, or stdio to a second Python child running a local model.
 
@@ -15,6 +15,7 @@ Node service 127.0.0.1:4317                                  server.ts (HTTP + W
   openai.ts ───── HTTPS ───────▶ OpenAI Responses            (listen profile only)
   anthropic.ts ── HTTPS ───────▶ Anthropic Messages          (TRANSLATION_PROVIDER=anthropic)
   local-translator.ts ─ stdio ─▶ scripts/local/translate_worker.py  (offline profile: MLX Qwen3.5-4B)
+  host-probe.ts ─ stdout ──────▶ scripts/local/host_probe.py        (GPU use by group, thermal, power)
                                                                        │
 OBS Browser Source /overlay   ◀── snapshots ───────────────────────────┘
 ```
@@ -47,6 +48,7 @@ A session pairs two languages. `LANGUAGE_PAIR` (default `en-ja`) sets the pair t
 | `packages/providers/chat.ts` | Chat-completions translator for local servers, used only by the translation eval; its message building and parsing serve the local translator too |
 | `packages/providers/local-translator.ts` | Local translator: a stdio worker running a pinned MLX model, selected by the offline profile |
 | `packages/providers/quality.ts` | Language-independent repetition rejection |
+| `packages/providers/host-probe.ts`, `scripts/local/host_probe.py` | Best-effort host load sampler: GPU use by fixed group, thermal state and power, every 2 s, for the snapshot; see [diagnostics](diagnostics.md#host-load) |
 | `scripts/local/*.py` | Worker RPC, engine, speech gate, decoder output filters |
 
 ## One turn, end to end

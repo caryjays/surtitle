@@ -6,6 +6,7 @@ import { AnthropicTranslator } from '../../packages/providers/anthropic.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator } from '../../packages/providers/local-translator.ts';
 import { Controller } from './controller.ts';
 import { localTranscriberFactory } from '../../packages/providers/local.ts';
+import { HostProbe } from '../../packages/providers/host-probe.ts';
 import { createCaptionServer } from './server.ts';
 import { EXAMPLE_GLOSSARY, PRIVATE_GLOSSARY, loadGlossary, resolveGlossaryPath } from './glossary.ts';
 
@@ -80,7 +81,11 @@ async function main() {
     console.log('Loading the local translation model…');
     try { await localTranslator.start(); } catch { console.error('Local translation model unavailable. Run pnpm local:setup-translator, then restart.'); process.exitCode = 1; return; }
   }
+  // Local recognition already needs the Python venv; the probe is best-effort and never blocks captions.
+  const hostProbe = local && process.platform === 'darwin' ? new HostProbe() : undefined;
+  hostProbe?.start();
   const controller = new Controller({
+    ...(hostProbe ? { host: () => hostProbe.latest() } : {}),
     transcriber: local ? localTranscriberFactory({ model: config.LOCAL_MODEL, maxTurnMs: config.LOCAL_MAX_TURN_MS,
       segmentation: config.LOCAL_SEGMENTATION,
       // Previews apply to turns only; rolling replaces them with its own locked partials.
@@ -104,7 +109,7 @@ async function main() {
   if (localTranslation) console.log('Local text translation enabled: text stays on this Mac; no network requests.');
   if (translate) console.log('Cloud text translation enabled: paid requests begin after microphone Start. Audio stays local when using the local recognizer.');
   if (!configured) console.log('Provider credential missing; configure .env before starting capture.');
-  for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { localTranslator?.close(); void app.close().then(() => process.exit(0)); });
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { localTranslator?.close(); hostProbe?.close(); void app.close().then(() => process.exit(0)); });
 }
 void main().catch(() => {
   console.error('Startup failed. Check local configuration, glossary JSON, build output, and port availability. Details suppressed to protect secrets.');

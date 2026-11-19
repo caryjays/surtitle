@@ -104,7 +104,7 @@ Material, each chosen by the Spanish gate's rules before any recognition:
 - Held-out: `benchmarks/gate-held-out-<language>.json` from `pnpm gate:held-out-fixtures --language <language>`, excerpts of six talks from the language's test split of Multilingual TEDx, with the first gate's English excerpts unchanged. Its references have not been hand-checked, and its excerpts carry digital silence between segments.
 - Stock phrases: each profile's list comes from a sweep with `scripts/local/stock_sweep.py`.
 
-`pnpm eval:translation-cases --gate <language>` freezes each gate's cases. Not built for these three: required terms for a translation eval, and no judged run exists. Italian has had one [read-through](#translation-read-through); French and Portuguese have had none. Part 5 applies to Japanese only; part 6 applies to each.
+`pnpm eval:translation-cases --gate <language>` freezes each gate's cases. Not built for these three: required terms for a translation eval, and no judged run exists. Each of the three has had one [read-through](#translation-read-through) of the offline profile. Part 5 applies to Japanese only; part 6 applies to each.
 
 ## Translation read-through
 

@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-11-17 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/preview.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-19 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/preview.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
@@ -32,7 +32,7 @@ Sidebar panels:
 - Audience view: what the overlay shows now, rendered by the overlay's own code on a 1920 × 1080 stage scaled to the panel, with the overlay settings below. It is computed in this page and opens no overlay socket.
 - Input and Session: the controls in the table above, and the noise gate's state, level and threshold. A notice appears when sound that rises and falls like speech has stayed under the gate for 10 s, the sign of a calibration that left the threshold above the speech.
 - Overlay for OBS: caption window lines, pacing and Show text early, saved as validated settings under `captions.overlay.v1`, and the Browser Source URL that carries them, with Copy and Open.
-- Health: connection, capture, recognizer and segmentation, translation, queue, filtered rows, and medians over the last 10 rows of decode time, first text and lock lag in rolling mode or commit to final in turns mode, translation request time, and failed or skipped rows. No speech text.
+- Health: connection, capture, recognizer and segmentation, translation, queue, filtered rows, and medians over the last 10 rows of decode time, first text and lock lag in rolling mode or commit to final in turns mode, translation request time, and failed or skipped rows; with the host probe, GPU use over the last 2 s for the captions workers, OBS, the browser, the display server and the rest, and the Mac's thermal state, power source and Low Power Mode. No speech text.
 - Diagnostic log: the opt-in content-free log; see [diagnostics](diagnostics.md).
 - Help & notes.
 

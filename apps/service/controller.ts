@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
-import type { AudioGate, Failure, Glossary, Mode, Segment, Segmentation, Snapshot } from '../../packages/protocol/index.ts';
+import type { AudioGate, Failure, Glossary, HostLoad, Mode, Segment, Segmentation, Snapshot } from '../../packages/protocol/index.ts';
 import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, profile, type Pair, type Source, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext, type TranslationInput } from '../../packages/protocol/index.ts';
 import { TranslationFailure, type PartialTranslation, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
@@ -69,6 +69,8 @@ export class Controller {
     segmentation?: Segmentation;
     // What one translation request covers: a closed row, or locked pieces of a row before it closes. Replay only for now.
     translationUnit?: 'row' | 'piece';
+    // The latest host load sample for the snapshot; see packages/providers/host-probe.ts.
+    host?: () => HostLoad | null;
   }) {
     this.pair = options.pair ?? DEFAULT_PAIR;
     const same = (a: Pair, b: Pair) => a[0] === b[0] && a[1] === b[1];
@@ -88,7 +90,7 @@ export class Controller {
       pair: [...this.pair], pairs: this.pairs.map(pair => [...pair] as Pair), mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
       processing: this.processing(), segmentation: this.segmentation,
       translation: { available: Boolean(this.options.translator), enabled: this.translating },
-      restarts: this.restarts, ...(this.restarting ? { restarting: true as const } : {}),
+      restarts: this.restarts, ...(this.restarting ? { restarting: true as const } : {}), host: this.options.host?.() ?? null,
       queue: this.queue.length, running: this.running.size, gate: this.gate, rejected: this.rejected, segments: this.rows.map(r => ({ ...r })), sentAt: Date.now(), turns: structuredClone(this.traces), turnTelemetryVersion: 2 };
   }
   private processing(): Snapshot['processing'] {
