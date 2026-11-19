@@ -35,3 +35,7 @@ As a gate result for part 6, on a committed tree under sustained load: Japanese,
 ## Next
 
 The three missing talks: whether a single replay decides them, given the spread between replays, is open. Part 6 does not say how many replays a talk gets.
+
+## Maintainer's decision
+
+The same day, the maintainer accepted part 6 as met in Spanish and Italian on this run: close enough to passing, after significant measured improvement in every pair. The targets are unchanged. See [decisions](../wiki/decisions.md).
