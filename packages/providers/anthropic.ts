@@ -30,7 +30,9 @@ export function anthropicTranslationRequest(model: string, effort: AnthropicEffo
 
 export class AnthropicTranslator implements Translator {
   private client: Anthropic;
-  constructor(private options: { key: string; model: string; effort: AnthropicEffort; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {
+  // onUsage: token counts per request, for replays and evals that report cost. Never text.
+  constructor(private options: { key: string; model: string; effort: AnthropicEffort; pair?: Pair; instructions?: string; fetch?: typeof fetch;
+    onUsage?: (usage: { inputTokens: number; outputTokens: number }) => void }) {
     // Nothing is retried, matching the Responses translator; the controller owns timeouts.
     this.client = new Anthropic({ apiKey: options.key, maxRetries: 0, fetch: options.fetch });
   }
@@ -53,6 +55,7 @@ export class AnthropicTranslator implements Translator {
       if (status === 429) throw new TranslationFailure('translation-rate-limit');
       throw new Error('translation unavailable');
     }
+    this.options.onUsage?.({ inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens });
     try {
       if (message.stop_reason === 'refusal') { report({ response: 'refused' }); throw new Error('refused translation'); }
       if (message.stop_reason !== 'end_turn') {

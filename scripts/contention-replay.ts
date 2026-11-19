@@ -4,15 +4,18 @@ import { parseArgs } from 'node:util';
 import { Controller } from '../apps/service/controller.ts';
 import { localTranscriberFactory } from '../packages/providers/local.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
+import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
 import { FRAME_BYTES, parsePair, type Pair } from '../packages/protocol/index.ts';
 
 // Replays recordings in real time through the live controller with rolling recognition, with the local translator or
 // without it, and writes a diagnostics file in the control page's format for `pnpm diag:latency`. It measures what
-// translation on the shared GPU costs recognition, and what row rules cost or save. Offline: no .env, no network. The
+// translation on the shared GPU costs recognition, and what row rules cost or save. Offline unless --translate anthropic,
+// which is paid: it needs --paid and ANTHROPIC_API_KEY in the environment, run with node --env-file, never printed. The
 // diagnostics file holds timings and counts only; --review writes each row's text, for a person to read, so keep it ignored.
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
-  translate: { type: 'string', default: 'local' }, model: { type: 'string', default: 'qwen3.5-4b-q4' }, out: { type: 'string' },
+  // local, off, or anthropic: Claude as the live translator, as the dev:listen profile with TRANSLATION_PROVIDER=anthropic.
+  translate: { type: 'string', default: 'local' }, model: { type: 'string' }, out: { type: 'string' }, paid: { type: 'boolean', default: false },
   // sentence,max,clause in ms, clause 'off' for none; the live rules are 3000,8000,off.
   rows: { type: 'string', default: '3000,8000,off' }, review: { type: 'string' },
   // interval,settle in ms; the live cadence is 1000,500.
@@ -35,13 +38,18 @@ const [intervalMs, settleMs] = values.cadence!.split(',').map(Number);
 const cadence = { intervalMs: intervalMs!, settleMs: settleMs! };
 const pauseMs = values.pause === 'off' ? null : Number(values.pause);
 const holdMs = values.hold === 'off' ? null : Number(values.hold);
-if (!values.out || !positionals.length || !['local', 'off'].includes(values.translate!)
-  || !(LOCAL_TRANSLATION_MODELS as readonly string[]).includes(values.model!)
+const cloud = values.translate === 'anthropic';
+const model = values.model ?? (cloud ? 'claude-haiku-5-5' : 'qwen3.5-4b-q4');
+if (cloud && (!values.paid || !process.env.ANTHROPIC_API_KEY?.trim())) {
+  console.error('--translate anthropic is paid: pass --paid, with ANTHROPIC_API_KEY set through node --env-file. The key is never printed.'); process.exit(2);
+}
+if (!values.out || !positionals.length || !['local', 'off', 'anthropic'].includes(values.translate!)
+  || !(cloud ? /^claude-[a-z0-9-]{1,60}$/.test(model) : (LOCAL_TRANSLATION_MODELS as readonly string[]).includes(model))
   || ![rows.sentenceMs, rows.maxMs, rows.clauseMs ?? 1000].every(ms => Number.isInteger(ms) && ms >= 1000 && ms <= 20_000)
   || ![cadence.intervalMs, cadence.settleMs].every(ms => Number.isInteger(ms) && ms >= 300 && ms <= 3000)
   || !['row', 'piece'].includes(values.units!) || !(pauseMs === null || (Number.isInteger(pauseMs) && pauseMs >= 100 && pauseMs <= 650))
   || !(holdMs === null || (Number.isInteger(holdMs) && holdMs >= 100 && holdMs <= 3000)) || (holdMs !== null && values.translate !== 'local')) {
-  console.error('Usage: --translate local|off [--model <local translation model>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--pause ms|off] [--hold ms|off] [--no-opening] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
+  console.error('Usage: --translate local|off|anthropic [--paid] [--model <local model, or claude-* for anthropic>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--pause ms|off] [--hold ms|off] [--no-opening] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
 let pair: Pair;
@@ -61,9 +69,12 @@ const holdRolls = () => {
   if (waiting.size) holds.frames++;
   return waiting.size > 0;
 };
-const translator = values.translate === 'local' ? new (holdMs === null ? LocalTranslator : HoldingTranslator)({ model: values.model as LocalTranslationModel, promptCache: !values['no-prompt-cache'], pair, replyOpening: !values['no-opening'] }) : null;
-await translator?.start();
-const controller = new Controller({ pair, backend: 'replay', processing: translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
+const usage = { requests: 0, inputTokens: 0, outputTokens: 0 };
+const translator = values.translate === 'local' ? new (holdMs === null ? LocalTranslator : HoldingTranslator)({ model: model as LocalTranslationModel, promptCache: !values['no-prompt-cache'], pair, replyOpening: !values['no-opening'] })
+  : cloud ? new AnthropicTranslator({ key: process.env.ANTHROPIC_API_KEY!.trim(), model, effort: 'none', pair,
+    onUsage: u => { usage.requests++; usage.inputTokens += u.inputTokens; usage.outputTokens += u.outputTokens; } }) : null;
+if (translator instanceof LocalTranslator) await translator.start();
+const controller = new Controller({ pair, backend: 'replay', processing: cloud ? 'local-audio-cloud-text' : translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
   transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence, pauseMs,
     ...(holdMs === null ? {} : { holdRolls }) }) });
@@ -116,8 +127,9 @@ for (const audio of positionals) {
   await new Promise(r => setTimeout(r, translator ? 15_000 : 1000));
   console.log(`Replayed ${positionals.indexOf(audio) + 1} of ${positionals.length}.`);
 }
-controller.dispose(); translator?.close();
+controller.dispose(); if (translator instanceof LocalTranslator) translator.close();
+if (cloud) console.error(`Paid requests ${usage.requests}: ${usage.inputTokens} input and ${usage.outputTokens} output tokens.`);
 if (holdMs !== null) console.log(`Held interval decodes for about ${(holds.frames * 50 / 1000).toFixed(0)} s in all, over ${holds.translations} translations, at most ${holdMs} ms each.`);
 await writeFile(values.out, `${JSON.stringify({ version: 2, events })}\n`);
-if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, cadence: values.cadence, units: values.units, model: translator ? values.model : null, review: [...review.values()] }, null, 2)}\n`);
+if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, cadence: values.cadence, units: values.units, model: translator ? model : null, review: [...review.values()] }, null, 2)}\n`);
 console.log(`Wrote ${events.length} events: ${values.out}`);

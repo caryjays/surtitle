@@ -152,6 +152,13 @@ for (const [status, category] of [[401, 'translation-auth'], [403, 'translation-
       error => error instanceof TranslationFailure && error.category === category && !error.message.includes('private-provider-body'));
   });
 }
+test('anthropic translation reports token counts per request, never text', async () => {
+  const counts: unknown[] = [];
+  const provider = new AnthropicTranslator({ key: 'fake', model: 'model', effort: 'none', onUsage: u => counts.push(u),
+    fetch: async () => Response.json({ ...message('end_turn', [{ type: 'text', text: JSON.stringify(ja) }]), usage: { input_tokens: 120, output_tokens: 9 } }) });
+  await provider.translate({ text: 'hello', mode: 'auto', glossary: [] }, new AbortController().signal);
+  assert.deepEqual(counts, [{ inputTokens: 120, outputTokens: 9 }]);
+});
 test('anthropic translation network failure and server errors are not retried', async () => {
   let calls = 0;
   const down = new AnthropicTranslator({ key: 'fake', model: 'model', effort: 'none', fetch: async () => { calls++; throw new TypeError('offline'); } });
