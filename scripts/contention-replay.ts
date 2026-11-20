@@ -6,6 +6,7 @@ import { localTranscriberFactory } from '../packages/providers/local.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
+import { HostProbe } from '../packages/providers/host-probe.ts';
 import { FRAME_BYTES, parsePair, type Pair } from '../packages/protocol/index.ts';
 
 // Replays recordings in real time through the live controller with rolling recognition, with the local translator or
@@ -87,6 +88,14 @@ let recording = 0;
 type Event = Record<string, unknown> & { type: string; atMs: number };
 const events: Event[] = []; const origin = Date.now();
 const seen = new Map<string, string>();
+// Host load beside the replay, as the console's health events carry it, so diag:latency can show it per minute. Its
+// "ours" group is this process's children: the recognizer and translator workers.
+const hostProbe = process.platform === 'darwin' ? new HostProbe() : undefined;
+hostProbe?.start();
+const hostSamples = setInterval(() => {
+  const host = hostProbe?.latest();
+  if (host) events.push({ type: 'health', atMs: Date.now() - origin, health: { host } });
+}, 2000);
 controller.subscribe(() => {
   const snapshot = controller.snapshot(); const atMs = Date.now() - origin;
   for (const turn of snapshot.turns) {
@@ -127,6 +136,7 @@ for (const audio of positionals) {
   await new Promise(r => setTimeout(r, translator ? 15_000 : 1000));
   console.log(`Replayed ${positionals.indexOf(audio) + 1} of ${positionals.length}.`);
 }
+clearInterval(hostSamples); hostProbe?.close();
 controller.dispose(); if (translator instanceof LocalTranslator) translator.close();
 if (cloud) console.error(`Paid requests ${usage.requests}: ${usage.inputTokens} input and ${usage.outputTokens} output tokens.`);
 if (holdMs !== null) console.log(`Held interval decodes for about ${(holds.frames * 50 / 1000).toFixed(0)} s in all, over ${holds.translations} translations, at most ${holdMs} ms each.`);

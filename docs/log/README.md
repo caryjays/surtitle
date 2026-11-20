@@ -71,6 +71,8 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-18-translation-delay-opening-run.md](2026-11-18-translation-delay-opening-run.md) | The full part 6 run with the reply's opening, under sustained load: 33 of 36 talks pass; Japanese, French and Portuguese meet part 6 |
 | [2026-11-19-local-vs-cloud-haiku.md](2026-11-19-local-vs-cloud-haiku.md) | Local translation against Claude Haiku 5.5 on every gate's held-out talks: Haiku slower to first text and losing up to a fifth of English rows in the Latin pairs; transcripts kept for grading |
 | [2026-11-19-rehearsal-under-load.md](2026-11-19-rehearsal-under-load.md) | First rehearsal under load with OBS: Japanese passes part 6, French slows by a step partway through and fails |
+| [2026-11-19-host-probe-and-read-throughs.md](2026-11-19-host-probe-and-read-throughs.md) | A host load probe for GPU use by group and thermal state; French and Portuguese read-throughs of the offline profile |
+| [2026-11-19-translation-delay-host-probe-run.md](2026-11-19-translation-delay-host-probe-run.md) | Part 6 again with the probe beside the replay: 35 of 36 talks pass; thermal fair throughout with no request-time step; about 1 s of p90 spread between replays |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26
