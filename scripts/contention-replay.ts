@@ -30,6 +30,9 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   pause: { type: 'string', default: '300' },
   // Hold rolling interval decodes while a translation waits for its first text, at most this many ms; off, as live.
   hold: { type: 'string', default: 'off' },
+  // A row that the newest decode's settled text takes to the length limit closes on that text, without waiting for the
+  // next decode to agree on it; off, as live.
+  'fresh-length': { type: 'boolean', default: false },
   // Make the local model generate its reply's opening, as before 2026-11-18; live gives it when the direction is known.
   'no-opening': { type: 'boolean', default: false },
 } });
@@ -50,7 +53,7 @@ if (!values.out || !positionals.length || !['local', 'off', 'anthropic'].include
   || ![cadence.intervalMs, cadence.settleMs].every(ms => Number.isInteger(ms) && ms >= 300 && ms <= 3000)
   || !['row', 'piece'].includes(values.units!) || !(pauseMs === null || (Number.isInteger(pauseMs) && pauseMs >= 100 && pauseMs <= 650))
   || !(holdMs === null || (Number.isInteger(holdMs) && holdMs >= 100 && holdMs <= 3000)) || (holdMs !== null && values.translate !== 'local')) {
-  console.error('Usage: --translate local|off|anthropic [--paid] [--model <local model, or claude-* for anthropic>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--pause ms|off] [--hold ms|off] [--no-opening] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
+  console.error('Usage: --translate local|off|anthropic [--paid] [--model <local model, or claude-* for anthropic>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--pause ms|off] [--hold ms|off] [--fresh-length] [--no-opening] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
 let pair: Pair;
@@ -78,7 +81,7 @@ if (translator instanceof LocalTranslator) await translator.start();
 const controller = new Controller({ pair, backend: 'replay', processing: cloud ? 'local-audio-cloud-text' : translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
   transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence, pauseMs,
-    ...(holdMs === null ? {} : { holdRolls }) }) });
+    ...(holdMs === null ? {} : { holdRolls }), ...(values['fresh-length'] ? { freshLengthClose: true } : {}) }) });
 // Collected as rows change: a snapshot holds only the latest rows. Keyed by recording and sequence.
 // heard: the recognizer's language when the row closed, before an unresolved reply sets the row's source to unknown.
 const review = new Map<string, { recording: number; sequence: number; original: string; translation: string | null; state: string;
@@ -141,5 +144,5 @@ controller.dispose(); if (translator instanceof LocalTranslator) translator.clos
 if (cloud) console.error(`Paid requests ${usage.requests}: ${usage.inputTokens} input and ${usage.outputTokens} output tokens.`);
 if (holdMs !== null) console.log(`Held interval decodes for about ${(holds.frames * 50 / 1000).toFixed(0)} s in all, over ${holds.translations} translations, at most ${holdMs} ms each.`);
 await writeFile(values.out, `${JSON.stringify({ version: 2, events })}\n`);
-if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, cadence: values.cadence, units: values.units, model: translator ? model : null, review: [...review.values()] }, null, 2)}\n`);
+if (values.review) await writeFile(values.review, `${JSON.stringify({ rows: values.rows, cadence: values.cadence, freshLength: values['fresh-length'], units: values.units, model: translator ? model : null, review: [...review.values()] }, null, 2)}\n`);
 console.log(`Wrote ${events.length} events: ${values.out}`);

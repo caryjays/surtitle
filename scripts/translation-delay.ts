@@ -21,6 +21,8 @@ const { values } = parseArgs({ options: {
   score: { type: 'string' },
   // An experiment, never a gate result unless the hold goes live: replay:contention --hold <ms>.
   hold: { type: 'string' },
+  // An experiment, never a gate result unless it goes live: replay:contention --fresh-length.
+  'fresh-length': { type: 'boolean', default: false },
 } });
 
 const ids = (file: string, language: string) =>
@@ -69,7 +71,7 @@ if (values.score) {
 const gates = values.gates!.split(',') as Gate[];
 const limit = values.talks === undefined ? null : Number(values.talks);
 if (!gates.length || gates.some(g => !GATES.includes(g)) || (limit !== null && !(Number.isInteger(limit) && limit >= 1))) {
-  console.error('Usage: pnpm gate:delay [--gates ja,es,fr,it,pt] [--talks <n per language, smoke only>] [--hold <ms>, experiment] | --score <run folder>'); process.exit(2);
+  console.error('Usage: pnpm gate:delay [--gates ja,es,fr,it,pt] [--talks <n per language, smoke only>] [--hold <ms>, experiment] [--fresh-length, experiment] | --score <run folder>'); process.exit(2);
 }
 const plan = gates.map(gate => ({ gate, talks: talks(gate, limit) }));
 const missing = plan.flatMap(p => p.talks).filter(id => !existsSync(join(AUDIO, `${id}.wav`)));
@@ -80,13 +82,13 @@ if (missing.length) {
 // Local time, as gate:run names its folders.
 const now = new Date(); const pad = (n: number) => String(n).padStart(2, '0');
 const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}T${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-const out = join('benchmarks/results', `delay-${limit === null ? '' : 'smoke-'}${values.hold ? `hold${values.hold}-` : ''}${stamp}`);
+const out = join('benchmarks/results', `delay-${limit === null ? '' : 'smoke-'}${values.hold ? `hold${values.hold}-` : ''}${values['fresh-length'] ? 'fresh-' : ''}${stamp}`);
 mkdirSync(out, { recursive: true });
 // Keeps the Mac from idle sleep while this process lives: a sleeping Mac ends a replay with an inference backlog.
 spawn('caffeinate', ['-i', '-w', String(process.pid)], { stdio: 'ignore', detached: true }).unref();
 const power = spawnSync('pmset', ['-g', 'batt'], { encoding: 'utf8' }).stdout.includes("'AC Power'") ? 'mains' : 'battery or unknown';
 if (power !== 'mains') console.error('Warning: not on mains power. A gate run needs it.');
-const run = { smoke: limit !== null, ...(values.hold ? { hold: values.hold } : {}), commit: git('rev-parse', '--short', 'HEAD'), uncommittedChanges: git('status', '--porcelain') !== '',
+const run = { smoke: limit !== null, ...(values.hold ? { hold: values.hold } : {}), ...(values['fresh-length'] ? { freshLength: true } : {}), commit: git('rev-parse', '--short', 'HEAD'), uncommittedChanges: git('status', '--porcelain') !== '',
   started: new Date().toISOString(), power, pairs: [] as { gate: Gate; pair: string; talks: string[]; loadBefore: number[]; loadAfter?: number[]; exit?: number | null }[] };
 const save = () => writeFileSync(join(out, 'run.json'), JSON.stringify(run, null, 2) + '\n');
 
@@ -95,7 +97,7 @@ for (const { gate, talks: list } of plan) {
   run.pairs.push(entry); save();
   console.log(`Replaying en-${gate}: ${list.length} talks, about ${list.length * 6} min in real time; load ${entry.loadBefore.join(' ')}`);
   const replay = spawnSync('npx', ['tsx', 'scripts/contention-replay.ts', '--pair', `en-${gate}`, '--translate', 'local',
-    '--out', join(out, `${gate}.json`), ...(values.hold ? ['--hold', values.hold] : []), ...list.map(id => join(AUDIO, `${id}.wav`))], { stdio: 'inherit' });
+    '--out', join(out, `${gate}.json`), ...(values.hold ? ['--hold', values.hold] : []), ...(values['fresh-length'] ? ['--fresh-length'] : []), ...list.map(id => join(AUDIO, `${id}.wav`))], { stdio: 'inherit' });
   entry.loadAfter = load(); entry.exit = replay.status; save();
   if (replay.status !== 0) console.error(`en-${gate} replay failed; going on with the next pair.`);
 }

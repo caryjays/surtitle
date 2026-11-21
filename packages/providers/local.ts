@@ -31,6 +31,9 @@ export type LocalOptions = {
   // Replays only: asked when a rolling decode is due on the interval; true makes it wait for a later frame. The decode at
   // the pause mark and closing decodes never wait. No audio is dropped: the next decode covers what built up.
   holdRolls?: () => boolean;
+  // Replays only, off as live: a rolling decode whose settled segments would take the row to rows.maxMs locks them all and
+  // closes the row on them, without waiting for the next decode to agree on them.
+  freshLengthClose?: boolean;
   previewIntervalMs?: number; glossary?: Glossary; calibrationMs?: number;
   startupTimeoutMs?: number; inferenceTimeoutMs?: number;
   workerFactory?: () => ChildProcessWithoutNullStreams;
@@ -292,7 +295,12 @@ export class LocalTranscriber implements Transcriber {
     const before = stretch!.previous;
     // Before a row has locked text, agreed text may show only from a decode as confident as one that locks after noise.
     const confident = (message.measurement?.quality?.logprobMin ?? -Infinity) >= ROLLING.noiseConfirmLogprob;
-    const { count, forced } = unconfirmed ? { count: 0, forced: false } : locks;
+    // freshLengthClose: whole segments of this decode alone that have settled, if they reach the row's length limit.
+    const fresh = this.options.freshLengthClose && !unconfirmed && segments.length
+      ? lockCount(segments, hypothesis(segments), windowMs, false, this.cadence.settleMs) : undefined;
+    const freshCloses = fresh !== undefined && fresh.count > locks.count && !fresh.forced
+      && row.audioMs + segments[fresh.count - 1]!.endMs >= this.rows.maxMs;
+    const { count, forced } = unconfirmed ? { count: 0, forced: false } : freshCloses ? fresh : locks;
     if (count) {
       settle();
       row.afterNoise = false;

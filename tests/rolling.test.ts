@@ -133,6 +133,41 @@ test('rolling rows can close at a clause or a shorter length, and report speech 
   await live.speak(6); live.quiet(); await live.stream.finish();
   assert.equal(finals(live.events).length, 1);
 });
+test('a length close waits for a lock, or with freshLengthClose takes the settled text of the decode that reaches the limit', async t => {
+  const closing = (f: ReturnType<typeof fixture>) => finals(f.events).map(r => ({ text: r.text,
+    ...f.measurements.find(m => m.id === r.id && m.value.boundary)!.value }));
+  // Agreeing speech whose newest word has settled when it first appears: the same text either way, closed one decode
+  // sooner with the option, which does not wait for the next decode to agree on that word.
+  const live = fixture('rolling-late'); t.after(() => live.stream.close()); await live.stream.connect();
+  const fresh = fixture('rolling-late', { freshLengthClose: true }); t.after(() => fresh.stream.close()); await fresh.stream.connect();
+  let liveAt = 0; let freshAt = 0;
+  for (let s = 1; s <= 12 && !(liveAt && freshAt); s++) {
+    await live.speak(1); await fresh.speak(1);
+    if (!liveAt && finals(live.events).length) liveAt = s;
+    if (!freshAt && finals(fresh.events).length) freshAt = s;
+  }
+  assert(liveAt > 0 && freshAt > 0 && freshAt < liveAt, `${freshAt} ${liveAt}`);
+  for (const f of [live, fresh]) {
+    const [row] = closing(f);
+    assert.deepEqual([row!.text, row!.boundary, row!.audioMs], [words(0, 8), 'length', 8000]);
+    assert(row!.speechEndToFinalMs !== undefined);
+    f.quiet(); await f.stream.finish();
+    assert.deepEqual(closing(f).map(r => r.boundary), ['length', 'silence']);
+  }
+  assert.equal(finals(fresh.events)[1]!.text, finals(live.events)[1]!.text);
+  // Speech no two decodes agree on: without the option nothing locks before the forced lock at 25 s; with it a row closes at
+  // the limit on one decode's settled words, and the unsettled rest goes on in the next row.
+  const unstable = fixture('rolling-unstable'); t.after(() => unstable.stream.close()); await unstable.stream.connect();
+  await unstable.speak(12); assert.equal(finals(unstable.events).length, 0);
+  const taken = fixture('rolling-unstable', { freshLengthClose: true }); t.after(() => taken.stream.close()); await taken.stream.connect();
+  await taken.speak(12);
+  const rows = closing(taken);
+  assert(rows.length >= 1 && rows.every(r => r.boundary === 'length' && r.audioMs! >= 8000 && r.forcedLocks === 0));
+  assert.match(rows[0]!.text, /^w0x\d+ w20x\d+ .* w140x\d+$/);
+  taken.quiet(); await taken.stream.finish();
+  assert.equal(closing(taken).at(-1)!.boundary, 'silence');
+  assert.equal(taken.failures() + unstable.failures() + live.failures() + fresh.failures(), 0);
+});
 test('rolling forces a lock rather than let an unagreeing window approach Whisper input', async t => {
   const f = fixture('rolling-unstable'); t.after(() => f.stream.close()); await f.stream.connect();
   await f.speak(27); f.quiet(); await f.stream.finish();

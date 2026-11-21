@@ -77,11 +77,14 @@ function rolling(request) {
   // third: Auto detection always picks a language outside the pair, with text that would otherwise lock.
   // third-opening: only the first 2.5 s of a row are detected outside the pair, then the speech is Japanese.
   const other = !request.language && (behavior === 'rolling-third' || (behavior === 'rolling-third-opening' && ms < 2500));
+  // late: a word is returned only once a further second of speech follows it, or the speech has ended, so a decode's
+  // newest word has settled and the decode before did not have it yet.
+  const late = behavior === 'rolling-late' && ms * 48 + 2400 > pcm.length ? 1000 : 0;
   if (behavior !== 'rolling-noise' && !misheard) {
-    for (let k = 0; (k + 1) * 1000 <= ms; k++) {
+    for (let k = 0; (k + 1) * 1000 + late <= ms; k++) {
       segments.push({ endMs: (k + 1) * 1000, text: ` w${start + 20 * k}${behavior === 'rolling-unstable' ? `x${decodes}` : ''}${behavior === 'rolling-clauses' && (start / 20 + k) % 2 ? '、' : ''}` });
     }
-    if (ms % 1000) segments.push({ endMs: Math.floor(ms), text: ` t${decodes}` });
+    if (ms % 1000 && !late) segments.push({ endMs: Math.floor(ms), text: ` t${decodes}` });
   }
   return { type: 'final', id: request.id, text: segments.map(s => s.text).join('').trim(), language: misheard ? 'en' : other ? 'ko' : request.language ?? 'ja',
     inferenceMs: 1, rejected: !segments.length, segments,
