@@ -1,6 +1,6 @@
 # Decisions
 
-Verified: 2026-11-19 · Sources: none
+Verified: 2026-11-20 · Sources: none
 
 Append-only, newest last. To reverse a decision, add a new entry and mark the old one superseded.
 
@@ -102,3 +102,4 @@ Append-only, newest last. To reverse a decision, add a new entry and mark the ol
 | 2026-11-18 | The local translator gives the model its reply's opening whenever the direction is known, live | A controlled comparison under sustained load cut last word to first translated text by about 1 s in French with no cost to recognition. Read over the same recognized text, it translates rows the model wrongly left unresolved, and its other changes are within the noise of a change that leaves meaning alone; Japanese leans slightly against it, within chance, and is to be looked at again. See [the entry](../log/2026-11-18-reply-opening-live.md) |
 | 2026-11-18 | Part 6 is accepted as met in Spanish and Italian on the run of 2026-11-18, with three talks missing: two Spanish by 0.1 s, one Italian by 0.4 s at the median and 0.4 s at p90 | The maintainer's call: close enough to passing, after significant measured improvement in every pair. Two of the misses are smaller than the spread between two replays of one talk. The targets stay as they are; a later run reports against them. See [the run of 2026-11-18](../log/2026-11-18-translation-delay-opening-run.md) |
 | 2026-11-19 | Work on the cloud translation profile is parked; the offline profile's local translator stays the one developed | The maintainer's call. Claude Haiku 5.5 is slower to first translated text on 35 of 36 part 6 talks and loses up to a fifth of English rows in the Latin pairs, and the maintainer's own sessions find the local translations good enough. The cloud profile still runs as it is. See [the comparison](../log/2026-11-19-local-vs-cloud-haiku.md) |
+| 2026-11-20 | The rehearsal's slowdown in French is put down to what the presenter runs beside the captions, not OBS itself; no further runs to isolate it | The maintainer's call. OBS showing its preview on a lit screen and left alone did not slow translation, and the one step came while the Mac was in use. More complex browser tabs and OBS recording add GPU load, and that needs no separate capture to understand. The host probe still records the load in any rehearsal. See [OBS on the live path](../log/2026-11-20-obs-live-path-and-fresh-length.md). |
