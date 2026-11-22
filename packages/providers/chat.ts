@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DEFAULT_PAIR, Translation, TranslationInput, type Pair, type TranslationDiagnostic } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Translation, TranslationInput, type Pair, type Script, type TranslationDiagnostic } from '../protocol/index.ts';
 import { TranslationFailure, type Translator } from './types.ts';
 import { translationInstructionsFor, translationSchemaFor } from './translation.ts';
 
@@ -14,17 +14,17 @@ function shape(pair: Pair) {
 export const CONTINUES_INSTRUCTION = 'continues true: the sentence goes on after text, and the next text will be appended to your translation. Translate text so it can be continued: never complete, close or summarise it.';
 
 // System and user messages for a chat model; the local worker uses them too.
-export function chatMessages(input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
+export function chatMessages(input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR, script?: Script | null) {
   input = TranslationInput.parse(input);
   const continues = input.continues ? ` ${CONTINUES_INSTRUCTION}` : '';
   // The text to translate goes last, after the context and glossary: with it first, the 4B model sometimes
   // translated the context too, most often for a row of a few characters.
   const { text, ...rest } = input;
-  return { system: `${instructions ?? translationInstructionsFor(pair)}${continues} ${shape(pair)}`, user: JSON.stringify({ ...rest, text }) };
+  return { system: `${instructions ?? translationInstructionsFor(pair, script)}${continues} ${shape(pair)}`, user: JSON.stringify({ ...rest, text }) };
 }
 
-export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR) {
-  const { system, user } = chatMessages(input, instructions, pair);
+export function chatTranslationRequest(model: string, input: TranslationInput, instructions?: string, pair = DEFAULT_PAIR, script?: Script | null) {
+  const { system, user } = chatMessages(input, instructions, pair, script);
   return {
     model, max_tokens: 2048, stream: false,
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
@@ -72,7 +72,7 @@ const Completion = z.object({
 // OpenAI-compatible chat completions, for local or private-network servers. Not wired into the live service.
 export class ChatCompletionsTranslator implements Translator {
   private endpoint: string;
-  constructor(private options: { baseUrl: string; model: string; key?: string; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {
+  constructor(private options: { baseUrl: string; model: string; key?: string; pair?: Pair; script?: Script | null; instructions?: string; fetch?: typeof fetch }) {
     this.endpoint = `${new URL(options.baseUrl).href.replace(/\/$/, '')}/chat/completions`;
   }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
@@ -81,7 +81,7 @@ export class ChatCompletionsTranslator implements Translator {
     let response: Response;
     try {
       response = await (this.options.fetch ?? fetch)(this.endpoint, {
-        method: 'POST', signal, body: JSON.stringify(chatTranslationRequest(this.options.model, input, this.options.instructions, this.options.pair)),
+        method: 'POST', signal, body: JSON.stringify(chatTranslationRequest(this.options.model, input, this.options.instructions, this.options.pair, this.options.script)),
         headers: { 'Content-Type': 'application/json', ...(this.options.key ? { Authorization: `Bearer ${this.options.key}` } : {}) },
       });
     } catch { report({ response: 'network-error' }); throw new TranslationFailure('translation-network'); }

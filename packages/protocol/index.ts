@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TurnTrace } from './diagnostics.ts';
-import { Mode, Pair, Source } from './languages.ts';
+import { Mode, Pair, PairTag, Script, Source } from './languages.ts';
 export { Boundary, RecognitionQuality, TurnMeasurement, TranslationDiagnostic, TurnTrace, endsInEllipsis } from './diagnostics.ts';
 export * from './languages.ts';
 
@@ -20,8 +20,9 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('capture-failed') }).strict(),
   z.object({ type: z.literal('set-segmentation'), segmentation: Segmentation }).strict(),
   z.object({ type: z.literal('set-translation'), enabled: z.boolean() }).strict(),
-  // Applies only while capture is off, and starts a new session in that pair.
-  z.object({ type: z.literal('set-pair'), pair: Pair }).strict(),
+  // Applies only while capture is off, and starts a new session in that pair. Without a script, a pair whose language has
+  // scripts takes the first.
+  z.object({ type: z.literal('set-pair'), pair: Pair, script: Script.nullable().optional() }).strict(),
 ]);
 export const Failure = z.enum(['credentials', 'transcription', 'translation', 'translation-auth', 'translation-rate-limit', 'translation-network', 'capture', 'overload', 'protocol', 'session-limit']);
 export type Failure = z.infer<typeof Failure>;
@@ -84,8 +85,11 @@ export type HostLoad = z.infer<typeof HostLoad>;
 export const Snapshot = z.object({
   type: z.literal('snapshot'), sessionId: z.string().uuid(), generation: z.number().int().nonnegative(),
   revision: z.number().int().nonnegative(), pair: Pair, mode: Mode,
-  // The pairs the operator may switch to while capture is off; one or none means the pair is fixed.
-  pairs: z.array(Pair).max(32).default([]),
+  // The script the pair's text is shown in, when a language of it has more than one.
+  script: Script.nullable().default(null),
+  // The pairs the operator may switch to while capture is off, as tags such as en-ja or en-zh-Hant; one or none means the
+  // pair is fixed.
+  pairs: z.array(PairTag).max(32).default([]),
   capture: z.enum(['paused', 'connecting', 'active', 'stopping', 'failed']),
   error: Failure.nullable(), backend: z.string().max(160),
   processing: z.enum(['local-only', 'local-audio-local-text', 'local-audio-cloud-text', 'cloud-audio-and-text', 'cloud-audio-only']),

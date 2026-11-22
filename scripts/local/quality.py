@@ -21,6 +21,8 @@ def repetitive(text):
 # from a long turn they replaced whatever was spoken. Compared after compacting. Every profile's
 # phrases apply, since a hallucination need not be in the session's languages.
 STOCK_PHRASES = tuple(phrase for profile in PROFILES.values() for phrase in profile['stockPhrases'])
+# Sign-offs that vary, such as a subtitle credit with any name; each matches the whole compacted text.
+STOCK_PATTERNS = tuple(re.compile(pattern) for profile in PROFILES.values() for pattern in profile.get('stockPatterns', ()))
 STOCK_MIN_SECONDS = 6.0
 
 
@@ -33,6 +35,8 @@ def stock_phrase(text, audio_seconds):
     compact = _compact(text)
     if not compact or audio_seconds is None or audio_seconds < STOCK_MIN_SECONDS:
         return False
+    if any(pattern.fullmatch(compact) for pattern in STOCK_PATTERNS):
+        return True
     for phrase in STOCK_PHRASES:
         compact = compact.replace(_compact(phrase), '')
     return not compact

@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { DEFAULT_PAIR, Translation, TranslationInput, direction, profile, type Glossary, type Mode, type Pair, type TranslationDiagnostic } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Translation, TranslationInput, direction, profile, type Glossary, type Mode, type Pair, type Script, type TranslationDiagnostic } from '../protocol/index.ts';
 import { TranslationFailure, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from './types.ts';
 import { TurnDetector } from './turns.ts';
 import { translationInstructions, translationInstructionsFor, translationSchema, translationSchemaFor } from './translation.ts';
@@ -181,14 +181,14 @@ const ResponseEnvelope = z.object({
   output: z.array(z.object({ type: z.string(), content: z.array(z.object({ type: z.string(), text: z.string().optional() })).optional() })),
 });
 export class OpenAITranslator implements Translator {
-  constructor(private options: { key: string; model: string; effort: string; pair?: Pair; instructions?: string; fetch?: typeof fetch }) {}
-  setPair(pair: Pair) { this.options = { ...this.options, pair }; }
+  constructor(private options: { key: string; model: string; effort: string; pair?: Pair; script?: Script | null; instructions?: string; fetch?: typeof fetch }) {}
+  setPair(pair: Pair, script?: Script | null) { this.options = { ...this.options, pair, script: script ?? null }; }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
     let reported = false;
     const report = (value: TranslationDiagnostic) => { reported = true; diagnostic?.(value); };
     const pair = this.options.pair ?? DEFAULT_PAIR;
     const body = JSON.stringify(translationRequest(this.options.model, this.options.effort, input,
-      this.options.instructions ?? translationInstructionsFor(pair), translationSchemaFor(pair)));
+      this.options.instructions ?? translationInstructionsFor(pair, this.options.script), translationSchemaFor(pair)));
     let response: Response;
     try {
       response = await (this.options.fetch ?? fetch)('https://api.openai.com/v1/responses', {

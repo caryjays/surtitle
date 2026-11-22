@@ -1,6 +1,6 @@
 # Content-free diagnostics
 
-Verified: 2026-11-20 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, packages/protocol/index.ts, apps/service/controller.ts, packages/providers/local.ts, packages/providers/host-probe.ts, scripts/local/host_probe.py, scripts/diagnostics-latency.ts, scripts/contention-replay.ts
+Verified: 2026-11-21 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, packages/protocol/index.ts, apps/service/controller.ts, packages/providers/local.ts, packages/providers/host-probe.ts, scripts/local/host_probe.py, scripts/diagnostics-latency.ts, scripts/contention-replay.ts
 
 Diagnostics answer what the pipeline did with each turn without storing what anyone said. The service keeps up to 60 recent turn traces in memory; the browser records them only after the operator opts in.
 

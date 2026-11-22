@@ -3,7 +3,7 @@ import { setupHistory } from './history.ts';
 import { captureSettings, describeCapture, setupDiagnostics, type CaptureSettings } from './diagnostics.ts';
 import { setupReadingControls } from './reading.ts';
 import { renderHealth, setupAudience, setupSession, setupShortcuts } from './console.ts';
-import { HEARTBEAT_TIMEOUT_MS, Mode, PROFILES, direction, type Pair, type Snapshot } from '../../packages/protocol/index.ts';
+import { HEARTBEAT_TIMEOUT_MS, Mode, PROFILES, direction, pairTag, parsePairTag, profile, type Pair, type Script, type Snapshot } from '../../packages/protocol/index.ts';
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const device = element<HTMLSelectElement>('device');
 const mode = element<HTMLSelectElement>('mode');
@@ -39,11 +39,12 @@ let selectedMode = Mode.parse(mode.value);
 // The page ships labelled for en-ja; the first snapshot relabels it for the service's pair.
 // The pair lists English first, so Lecture reads the other language into English.
 let pair: Pair = ['en', 'ja'];
-const name = (code: string) => PROFILES[code]?.name ?? code.toUpperCase();
+let script: Script | null = null;
+const name = (code: string, shown: Script | null = script) => PROFILES[code] ? profile(code, shown).name : code.toUpperCase();
 const lectureMode = () => `${pair[1]}-${pair[0]}`;
-function labelPair(next: Pair) {
-  if (next[0] === pair[0] && next[1] === pair[1]) return;
-  pair = next;
+function labelPair(next: Pair, nextScript: Script | null) {
+  if (next[0] === pair[0] && next[1] === pair[1] && nextScript === script) return;
+  pair = next; script = nextScript;
   const [a, b] = pair.map(code => code.toUpperCase()) as [string, string];
   conversation.textContent = `Conversation · ${a} ↔ ${b}`;
   lecture.textContent = `Lecture · ${name(pair[1])} → ${name(pair[0])}`;
@@ -57,9 +58,12 @@ function labelPair(next: Pair) {
 }
 // The pairs the service offers; hidden when it offers only the one in use.
 function offerPairs(snapshot: Snapshot) {
-  const offered = snapshot.pairs.map(p => p.join('-')), current = snapshot.pair.join('-');
+  const offered = snapshot.pairs, current = pairTag({ pair: snapshot.pair, script: snapshot.script });
   if ([...pairSelect.options].map(option => option.value).join() !== offered.join()) {
-    pairSelect.replaceChildren(...snapshot.pairs.map(p => new Option(`${name(p[0])} ↔ ${name(p[1])}`, p.join('-'))));
+    pairSelect.replaceChildren(...offered.map(tag => {
+      const { pair: [a, b], script: shown } = parsePairTag(tag);
+      return new Option(`${name(a, shown)} ↔ ${name(b, shown)}`, tag);
+    }));
   }
   pairSelect.value = current;
   element('pair-row').hidden = element('pair-note').hidden = offered.length < 2;
@@ -133,7 +137,7 @@ function renderConsole(snapshot: Snapshot | undefined) {
   renderSession(snapshot, connected); renderHealth(snapshot, connected);
 }
 const connection = connect('control', snapshot => {
-  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair); offerPairs(snapshot);
+  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair, snapshot.script); offerPairs(snapshot);
   element('active-direction').textContent = `Direction: ${describe(snapshot.mode, false)}`;
   // Paused selection remains local until Start; active changes are acknowledged by snapshots.
   if (['active', 'connecting', 'stopping'].includes(snapshot.capture)) {
@@ -178,8 +182,8 @@ void fetch('/health').then(response => response.json()).then((health: unknown) =
   }
 }).catch(() => { /* WebSocket status remains authoritative for connection health. */ });
 pairSelect.onchange = () => {
-  const next = pairSelect.value.split('-');
-  if (next.length === 2 && !pairSelect.disabled) send({ type: 'set-pair', pair: [next[0]!, next[1]!] });
+  if (pairSelect.disabled) return;
+  try { const next = parsePairTag(pairSelect.value); send({ type: 'set-pair', ...next }); } catch { /* not an offered pair */ }
 };
 function changeMode(value: string) {
   selectedMode = Mode.parse(value); mode.value = selectedMode;

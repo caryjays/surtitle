@@ -1,4 +1,4 @@
-import type { AudioGate, Mode, Pair, Segmentation, Source, Uncaptioned, TranslationInput, Translation, TurnMeasurement, TranslationDiagnostic } from '../protocol/index.ts';
+import type { AudioGate, Mode, Pair, Script, Segmentation, Source, Uncaptioned, TranslationInput, Translation, TurnMeasurement, TranslationDiagnostic } from '../protocol/index.ts';
 
 export type TranscriptEvent =
   | { type: 'begin'; id: string; sequence: number; mode?: Mode }
@@ -22,7 +22,8 @@ export interface Transcriber {
   close(): void;
 }
 export type TranscriberFactory = (options: {
-  mode: Mode; pair?: Pair; segmentation?: Segmentation; onEvent: (event: TranscriptEvent) => void; onFailure: () => void;
+  // script: the session's script, when a pair language has more than one; recognized text in that language is shown in it.
+  mode: Mode; pair?: Pair; script?: Script | null; segmentation?: Segmentation; onEvent: (event: TranscriptEvent) => void; onFailure: () => void;
   onGate?: (gate: AudioGate) => void;
   // The noise gate of the stream this one replaces after an automatic restart; a calibrating recognizer starts from it.
   gateThreshold?: number;
@@ -39,6 +40,7 @@ export interface Translator {
   // partial: translators that stream report the text so far; the returned translation is still the only validated one.
   translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void,
     partial?: (value: PartialTranslation) => void): Promise<Translation>;
-  // The session's pair changed; later requests are for it. A translator without this keeps the pair it was built with.
-  setPair?(pair: Pair): void;
+  // The session's pair or script changed; later requests are for it. A translator without this keeps the pair it was built
+  // with.
+  setPair?(pair: Pair, script?: Script | null): void;
 }

@@ -74,6 +74,8 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-19-host-probe-and-read-throughs.md](2026-11-19-host-probe-and-read-throughs.md) | A host load probe for GPU use by group and thermal state; French and Portuguese read-throughs of the offline profile |
 | [2026-11-19-translation-delay-host-probe-run.md](2026-11-19-translation-delay-host-probe-run.md) | Part 6 again with the probe beside the replay: 35 of 36 talks pass; thermal fair throughout with no request-time step; about 1 s of p90 spread between replays |
 | [2026-11-20-obs-live-path-and-fresh-length.md](2026-11-20-obs-live-path-and-fresh-length.md) | French through Chrome's capture into the live service, with and without OBS: a step in request time only with OBS just launched and the Mac in use, none with its preview lit and left alone; closing long rows on one decode, an experiment, lower p90 on 6 of 8 Italian talks, not yet shown |
+| [2026-11-21-chinese-scripts.md](2026-11-21-chinese-scripts.md) | Chinese profile with Simplified and Traditional (Taiwan) scripts, the script as a pair subtag, OpenCC conversion of recognized text and translations; fake providers only |
+| [2026-11-21-mandarin-gate.md](2026-11-21-mandarin-gate.md) | Mandarin public and held-out sets, stock sweep, gate file and first rolling run: fails held-out error over one-pass narrowly; Cantonese shown as Chinese |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

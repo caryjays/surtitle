@@ -50,7 +50,7 @@ export function audienceView(window: HTMLElement, roll: HTMLElement) {
     render(state: Snapshot | undefined, receivedAt: number, now: number) {
       const paced = pacer.update(state, now);
       const rows = visibleSegments(state, receivedAt, now, paced.filter(row => shownRow(row, false)), 6);
-      renderSegments(roll, rows, false, [], state?.pair);
+      renderSegments(roll, rows, false, [], state?.pair, state?.script);
       const articles = [...roll.children] as HTMLElement[];
       const bottom = (element: HTMLElement) => roll.offsetHeight - element.offsetTop - element.offsetHeight;
       const reading = readingRow(rows);

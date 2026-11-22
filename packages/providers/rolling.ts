@@ -66,10 +66,12 @@ export function endsSentence(text: string, ends: string) {
 // Sign-offs Whisper emits in place of ordinary speech, from every language profile, since a hallucination
 // need not be in the session's languages. scripts/local/quality.py reads the same profiles.
 const STOCK_PHRASES = Object.values(PROFILES).flatMap(profile => profile.stockPhrases);
+const STOCK_PATTERNS = Object.values(PROFILES).flatMap(profile => profile.stockPatterns ?? []).map(source => new RegExp(`^(?:${source})$`, 'u'));
 const compact = (text: string) => text.normalize('NFKC').toLowerCase().replace(/[\p{P}\p{Z}\p{S}\s]/gu, '');
 export function isStockPhrase(text: string) {
   let rest = compact(text);
   if (!rest) return false;
+  if (STOCK_PATTERNS.some(pattern => pattern.test(rest))) return true;
   for (const phrase of STOCK_PHRASES) rest = rest.replaceAll(compact(phrase), '');
   return !rest;
 }

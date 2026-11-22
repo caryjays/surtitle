@@ -1,6 +1,6 @@
 import { access } from 'node:fs/promises';
 import { z } from 'zod';
-import { offeredPairs, parsePair, type Glossary } from '../../packages/protocol/index.ts';
+import { offeredPairs, pairTag, parsePairTag, type Glossary } from '../../packages/protocol/index.ts';
 import { OpenAITranslator, openAITranscriberFactory } from '../../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../../packages/providers/anthropic.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator } from '../../packages/providers/local-translator.ts';
@@ -26,9 +26,10 @@ async function main() {
     LOCAL_PREVIEWS: z.enum(['on', 'off']).default(listen ? 'on' : 'off'),
     // rolling, the default, decodes about once a second and locks agreed text; turns decodes each turn once at its end.
     LOCAL_SEGMENTATION: z.enum(['turns', 'rolling']).default('rolling'),
-    // English and one other language; each needs a profile in profiles/languages.json.
+    // English and one other language; each needs a profile in profiles/languages.json. A language with scripts takes a
+    // script subtag, such as en-zh-Hant; without one it shows in its first.
     LANGUAGE_PAIR: z.string().default('en-ja').transform((value, ctx) => {
-      try { return parsePair(value); } catch { ctx.addIssue({ code: 'custom', message: 'LANGUAGE_PAIR needs two distinct languages with profiles' }); return z.NEVER; }
+      try { return parsePairTag(value); } catch { ctx.addIssue({ code: 'custom', message: 'LANGUAGE_PAIR needs two distinct languages with profiles, and a script subtag only for a language with scripts' }); return z.NEVER; }
     }),
     PORT: z.coerce.number().int().min(1024).max(65535).default(4317),
     TRANSCRIPTION_MODEL: z.string().min(1).max(80).default('gpt-live-transcribe'),
@@ -71,12 +72,12 @@ async function main() {
     }
     let speechDetector = true;
     try { await access('.local/models/silero-vad/model.jit'); } catch { speechDetector = false; }
-    console.log(`Preflight: credential ${configured ? 'configured' : 'missing'}; local model files ${modelFiles ? 'present' : 'missing'}; speech detector ${speechDetector ? 'present' : 'missing'};${localTranslation ? ` translation model files ${translatorFiles ? 'present' : 'missing'};` : ''} Python ${python ? 'present' : 'missing'}; glossary valid (${glossarySource}); language pair ${config.LANGUAGE_PAIR.join('-')}.`);
+    console.log(`Preflight: credential ${configured ? 'configured' : 'missing'}; local model files ${modelFiles ? 'present' : 'missing'}; speech detector ${speechDetector ? 'present' : 'missing'};${localTranslation ? ` translation model files ${translatorFiles ? 'present' : 'missing'};` : ''} Python ${python ? 'present' : 'missing'}; glossary valid (${glossarySource}); language pair ${pairTag(config.LANGUAGE_PAIR)}.`);
     console.log('No provider calls made. Model access, billing, network, microphone and translation quality are NOT verified.');
     if (!configured || !modelFiles || !python || !speechDetector || !translatorFiles) process.exitCode = 1;
     return;
   }
-  const localTranslator = localTranslation ? new LocalTranslator({ model: config.LOCAL_TRANSLATION_MODEL, pair: config.LANGUAGE_PAIR }) : undefined;
+  const localTranslator = localTranslation ? new LocalTranslator({ model: config.LOCAL_TRANSLATION_MODEL, ...config.LANGUAGE_PAIR }) : undefined;
   if (localTranslator) {
     console.log('Loading the local translation model…');
     try { await localTranslator.start(); } catch { console.error('Local translation model unavailable. Run pnpm local:setup-translator, then restart.'); process.exitCode = 1; return; }
@@ -93,9 +94,9 @@ async function main() {
       calibrationMs: listen ? 1500 : undefined })
       : openAITranscriberFactory(config.OPENAI_API_KEY, config.TRANSCRIPTION_MODEL, glossary),
     translator: localTranslation ? localTranslator! : !translate ? null : anthropic
-      ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR })
-      : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, pair: config.LANGUAGE_PAIR }),
-    pair: config.LANGUAGE_PAIR,
+      ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, ...config.LANGUAGE_PAIR })
+      : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, ...config.LANGUAGE_PAIR }),
+    ...config.LANGUAGE_PAIR,
     // The operator page can switch among English with each profiled language while capture is off.
     pairs: offeredPairs(),
     // The starting segmentation; the operator page can switch it while capture is off.

@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import type { AudioGate, Failure, Glossary, HostLoad, Mode, Segment, Segmentation, Snapshot } from '../../packages/protocol/index.ts';
-import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, profile, type Pair, type Source, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext, type TranslationInput } from '../../packages/protocol/index.ts';
+import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, pairTag, parsePairTag, profile, type Pair, type PairChoice, type Script, type Source, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext, type TranslationInput } from '../../packages/protocol/index.ts';
 import { TranslationFailure, type PartialTranslation, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
 import { endsSentence } from '../../packages/providers/rolling.ts';
+import { inScript } from '../../packages/providers/script.ts';
 
 // Automatic recognizer restarts: at most this many within the window, then capture fails and waits for the operator.
 const RESTART = { max: 2, windowMs: 5 * 60_000 };
@@ -53,7 +54,10 @@ export class Controller {
   private listeners = new Set<() => void>();
   private clock: ReturnType<typeof setInterval>;
   pair: Pair;
-  private readonly pairs: Pair[];
+  // The script the pair's text is shown in, when a language of it has more than one.
+  script: Script | null;
+  // Offered pairs as tags, such as en-ja or en-zh-Hant.
+  private readonly pairs: string[];
   private segmentation: Segmentation | null;
   // Translation can be switched off for a session; it can only be switched on when a translator was configured.
   private translating: boolean;
@@ -62,9 +66,10 @@ export class Controller {
     backend: string; processing?: Snapshot['processing']; translationTimeoutMs?: number; queueTtlMs?: number;
     // Local inference has no upstream session lifetime. Cloud ASR keeps its conservative cap.
     sessionLimitMs?: number | null;
-    pair?: Pair;
-    // Pairs the operator may switch to while capture is off; default only the session's own.
-    pairs?: Pair[];
+    pair?: Pair; script?: Script | null;
+    // Pairs the operator may switch to while capture is off; default only the session's own. A bare pair whose language
+    // has scripts stands for its first.
+    pairs?: (Pair | PairChoice)[];
     // The recognizer's segmentation when it can be switched while capture is off.
     segmentation?: Segmentation;
     // What one translation request covers: a closed row, or locked pieces of a row before it closes. Replay only for now.
@@ -72,9 +77,9 @@ export class Controller {
     // The latest host load sample for the snapshot; see packages/providers/host-probe.ts.
     host?: () => HostLoad | null;
   }) {
-    this.pair = options.pair ?? DEFAULT_PAIR;
-    const same = (a: Pair, b: Pair) => a[0] === b[0] && a[1] === b[1];
-    this.pairs = [...(options.pairs ?? []).filter(pair => !same(pair, this.pair)), this.pair].sort((a, b) => a.join().localeCompare(b.join()));
+    ({ pair: this.pair, script: this.script } = choice(options.pair ?? DEFAULT_PAIR, options.script));
+    const tags = (options.pairs ?? []).map(offered => pairTag(Array.isArray(offered) ? choice(offered) : offered));
+    this.pairs = [...new Set([...tags, this.tag()])].sort();
     this.segmentation = options.segmentation ?? null;
     this.translating = Boolean(options.translator);
     this.clock = setInterval(() => {
@@ -87,7 +92,7 @@ export class Controller {
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   snapshot(): Snapshot {
     return { type: 'snapshot', sessionId: this.sessionId, generation: this.generation, revision: this.revision,
-      pair: [...this.pair], pairs: this.pairs.map(pair => [...pair] as Pair), mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
+      pair: [...this.pair], script: this.script, pairs: [...this.pairs], mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
       processing: this.processing(), segmentation: this.segmentation,
       translation: { available: Boolean(this.options.translator), enabled: this.translating },
       restarts: this.restarts, ...(this.restarting ? { restarting: true as const } : {}), host: this.options.host?.() ?? null,
@@ -99,15 +104,20 @@ export class Controller {
     return configured === 'local-audio-cloud-text' ? 'local-only' : configured === 'cloud-audio-and-text' ? 'cloud-audio-only' : configured;
   }
   // Takes effect at the next Start, so a row never mixes two segmentations.
-  offers(pair: Pair) { return this.pairs.some(offered => offered[0] === pair[0] && offered[1] === pair[1]); }
-  // Only while capture is off: a new session in the other pair, in Auto, with nothing of the old pair left on screen or in
-  // translation context. A request while capturing is ignored; the page disables the control then.
-  setPair(pair: Pair) {
-    if (!this.offers(pair) || (pair[0] === this.pair[0] && pair[1] === this.pair[1])) return;
-    if (['active', 'connecting', 'stopping'].includes(this.capture)) return;
+  private tag() { return pairTag({ pair: this.pair, script: this.script }); }
+  // Without a script, a pair whose language has scripts stands for its first.
+  offers(pair: Pair, script?: Script | null) {
+    try { return this.pairs.includes(pairTag(choice(pair, script))); } catch { return false; }
+  }
+  // Only while capture is off: a new session in the other pair or script, in Auto, with nothing of the old one left on
+  // screen or in translation context. A request while capturing is ignored; the page disables the control then.
+  setPair(pair: Pair, script?: Script | null) {
+    if (!this.offers(pair, script)) return;
+    const next = choice(pair, script);
+    if (pairTag(next) === this.tag() || ['active', 'connecting', 'stopping'].includes(this.capture)) return;
     this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.capture = 'paused';
-    this.pair = [...pair] as Pair; this.mode = 'auto';
-    this.options.translator?.setPair?.(this.pair);
+    this.pair = [...next.pair] as Pair; this.script = next.script; this.mode = 'auto';
+    this.options.translator?.setPair?.(this.pair, this.script);
     this.changed();
   }
   setSegmentation(value: Segmentation) {
@@ -163,7 +173,7 @@ export class Controller {
     const restarting = this.restarting;
     this.capture = 'connecting'; this.changed();
     try {
-      const stream = this.options.transcriber({ mode: this.mode, pair: this.pair, ...(this.segmentation ? { segmentation: this.segmentation } : {}),
+      const stream = this.options.transcriber({ mode: this.mode, pair: this.pair, script: this.script, ...(this.segmentation ? { segmentation: this.segmentation } : {}),
         onEvent: event => { if (token === this.streamToken) this.transcript(event); },
         onFailure: () => { if (token === this.streamToken) this.interrupted(); },
         ...(gateThreshold !== undefined ? { gateThreshold } : {}),
@@ -420,7 +430,9 @@ export class Controller {
       abort.signal.addEventListener('abort', () => reject(new Error('cancelled')), { once: true });
       setTimer(setTimeout(() => abort.abort(), this.options.translationTimeoutMs ?? 12_000));
     });
-    return Translation.parse(await Promise.race([
+    // Translations into a language with scripts are shown in the session's script, whatever the translator wrote.
+    const shown = <T extends { target: Source; text: string }>(value: T): T => ({ ...value, text: inScript(value.target, this.script, value.text) });
+    return shown(Translation.parse(await Promise.race([
       this.options.translator!.translate(input, abort.signal, value => {
         const diagnostic = TranslationDiagnostic.safeParse(value);
         if (!trace || abort.signal.aborted || job.epoch !== this.epoch || !this.traces.includes(trace) || !diagnostic.success) return;
@@ -430,9 +442,9 @@ export class Controller {
         // Streamed text shows while the request runs, once its direction is valid; the result replaces it and a failure clears it.
         if (abort.signal.aborted || job.epoch !== this.epoch || !this.rows.includes(job.row)
           || partial.source === 'unknown' || !this.directed(input.mode, partial)) return;
-        show(partial);
+        show(shown(partial));
       }), cancelled,
-    ]));
+    ])));
   }
   // A piece: the locked text since the last cut, or when last, the rest of the closed row. Its translation is appended.
   // A failed or unresolved piece before the last is withdrawn and its text goes to the next piece.
@@ -518,4 +530,8 @@ export class Controller {
       : result.source === 'unknown' || (inPair(this.pair, result.source) && inPair(this.pair, result.target));
   }
   dispose() { clearInterval(this.clock); this.closeStream(); this.invalidate(); this.listeners.clear(); }
+}
+// A pair with its script: the one given, or the first of its language that has scripts.
+function choice(pair: Pair, script?: Script | null): PairChoice {
+  return parsePairTag(pairTag({ pair, script: script ?? null }));
 }

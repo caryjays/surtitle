@@ -41,7 +41,7 @@ export function setupHistory(preservePosition: (update: () => void) => void) {
   const pacer = new Pacer();
   function render() {
     const pair = latest?.pair ?? DEFAULT_PAIR;
-    const source = showingPreview ? previewSegments(pair) : rows;
+    const source = showingPreview ? previewSegments(pair, latest?.script) : rows;
     const visible = filterHistory(source, search.value);
     let shown: Parameters<typeof renderSegments>[1] = visible;
     if (!showingPreview) {
@@ -49,7 +49,7 @@ export function setupHistory(preservePosition: (update: () => void) => void) {
       const ids = new Set(visible.map(row => row.id));
       shown = pacer.update(latest, Date.now()).filter(row => ids.has(row.id));
     }
-    preservePosition(() => renderSegments(captions, shown, true, showingPreview ? [] : turns, latest?.pair));
+    preservePosition(() => renderSegments(captions, shown, true, showingPreview ? [] : turns, latest?.pair, latest?.script));
     const empty = search.value.trim() ? 'No matching recent text. Clear search to see all turns.' : 'Original speech and translations will appear here.';
     if (captions.dataset.emptyMessage !== empty) captions.dataset.emptyMessage = empty;
     document.getElementById('history-count')!.textContent = `${visible.length} / ${source.filter(row => row.original).length} turns · ${showingPreview ? 'fictional preview' : 'recent 60 · memory only'}`;

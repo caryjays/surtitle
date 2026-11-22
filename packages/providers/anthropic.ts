@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { DEFAULT_PAIR, Translation, TranslationInput, type Pair, type TranslationDiagnostic } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Translation, TranslationInput, type Pair, type Script, type TranslationDiagnostic } from '../protocol/index.ts';
 import { TranslationFailure, type Translator } from './types.ts';
 import { translationInstructions, translationInstructionsFor, translationSchema, translationSchemaFor } from './translation.ts';
 
@@ -31,18 +31,18 @@ export function anthropicTranslationRequest(model: string, effort: AnthropicEffo
 export class AnthropicTranslator implements Translator {
   private client: Anthropic;
   // onUsage: token counts per request, for replays and evals that report cost. Never text.
-  constructor(private options: { key: string; model: string; effort: AnthropicEffort; pair?: Pair; instructions?: string; fetch?: typeof fetch;
+  constructor(private options: { key: string; model: string; effort: AnthropicEffort; pair?: Pair; script?: Script | null; instructions?: string; fetch?: typeof fetch;
     onUsage?: (usage: { inputTokens: number; outputTokens: number }) => void }) {
     // Nothing is retried, matching the Responses translator; the controller owns timeouts.
     this.client = new Anthropic({ apiKey: options.key, maxRetries: 0, fetch: options.fetch });
   }
-  setPair(pair: Pair) { this.options = { ...this.options, pair }; }
+  setPair(pair: Pair, script?: Script | null) { this.options = { ...this.options, pair, script: script ?? null }; }
   async translate(input: TranslationInput, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void) {
     let reported = false;
     const report = (value: TranslationDiagnostic) => { reported = true; diagnostic?.(value); };
     const pair = this.options.pair ?? DEFAULT_PAIR;
     const body = anthropicTranslationRequest(this.options.model, this.options.effort, input,
-      this.options.instructions ?? translationInstructionsFor(pair), translationSchemaFor(pair));
+      this.options.instructions ?? translationInstructionsFor(pair, this.options.script), translationSchemaFor(pair));
     let message: Anthropic.Message;
     try {
       message = await this.client.messages.create(body, { signal });

@@ -1,7 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { DEFAULT_PAIR, Source, Translation, inPair, type Pair, type TranslationDiagnostic, type TranslationInput } from '../protocol/index.ts';
+import { DEFAULT_PAIR, Source, Translation, inPair, type Pair, type Script, type TranslationDiagnostic, type TranslationInput } from '../protocol/index.ts';
 import { profile } from '../protocol/languages.ts';
 import type { PartialTranslation, Translator } from './types.ts';
 import { chatMessages, extractObject, partialObject } from './chat.ts';
@@ -19,7 +19,7 @@ type Result = Extract<z.infer<typeof Reply>, { type: 'result' }>;
 export const LOCAL_TRANSLATION_MODELS = ['qwen3.5-4b-q4', 'qwen3.5-2b-q4'] as const;
 export type LocalTranslationModel = typeof LOCAL_TRANSLATION_MODELS[number];
 export type LocalTranslatorOptions = {
-  model: LocalTranslationModel; python?: string; pair?: Pair; instructions?: string; maxTokens?: number;
+  model: LocalTranslationModel; python?: string; pair?: Pair; script?: Script | null; instructions?: string; maxTokens?: number;
   startupTimeoutMs?: number; workerFactory?: () => ChildProcessWithoutNullStreams;
   // Reuse the model state of the start that prompts share instead of computing it for every request. On unless false.
   promptCache?: boolean;
@@ -103,7 +103,7 @@ export class LocalTranslator implements Translator {
   }
   private async ask(input: TranslationInput, pair: Pair, signal: AbortSignal, diagnostic?: (value: TranslationDiagnostic) => void,
     partial?: (value: PartialTranslation) => void) {
-    const { system, user } = chatMessages(input, this.options.instructions, pair);
+    const { system, user } = chatMessages(input, this.options.instructions, pair, this.options.script);
     const id = randomUUID(); const worker = this.worker!;
     let shown = '';
     const progress = (reply: string) => {
@@ -136,7 +136,7 @@ export class LocalTranslator implements Translator {
       throw new Error('translation response unavailable');
     }
   }
-  setPair(pair: Pair) { this.options = { ...this.options, pair }; }
+  setPair(pair: Pair, script?: Script | null) { this.options = { ...this.options, pair, script: script ?? null }; }
   close() {
     const worker = this.worker; this.worker = undefined; this.starting = undefined;
     for (const job of this.pending.values()) job.reject(new Error('closed'));

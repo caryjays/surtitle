@@ -1,0 +1,37 @@
+{
+  "datasets": {
+    "NTU ML2021 lectures, long form": {
+      "revision": "b670ea58e0973b0a364e92ef1e7cf23a74db7092",
+      "source": "https://huggingface.co/datasets/generative-fusion-decoding/ml-lecture-2021-long",
+      "derivedFrom": "https://huggingface.co/datasets/ky552/ML2021_ASR_ST",
+      "license": "MIT, as stated in the metadata of the source dataset card; the long-form card states none"
+    }
+  },
+  "scope": "Held-out set of the Mandarin gate. Mandarin: whole lectures of the long-form NTU ML2021 test set in file order, until at least 1800 s; one lecturer, Taiwan Mandarin with English terms; each recording is the lecture's test clips joined, with no pause of a second or more; references in Traditional characters, unpunctuated, with the spaces between characters removed. English: the excerpts of gate-held-out.json, unchanged. Chosen before recognition.",
+  "fixtures": [
+    {
+      "id": "held-zh-week10_1",
+      "language": "zh",
+      "source": "https://huggingface.co/datasets/generative-fusion-decoding/ml-lecture-2021-long/resolve/b670ea58e0973b0a364e92ef1e7cf23a74db7092/data/test-00000-of-00014.parquet",
+      "sourceSha256": "0bddaa9918765ac1ef962781928fa660b668fa4bef373bc2b70112bfd68e7fd1",
+      "lecture": "week10_1",
+      "startSeconds": 0,
+      "endSeconds": 997.96,
+      "seconds": 997.96,
+      "audioSha256": "e30562908cd24f87a0b0d0c176ed861137080d52aa51460ae11e1d15f9749361",
+      "referenceSha256": "fc7fbcb1242508d25f7887b3686cc406e5d33bef4716bf11b94d35421046cd6a"
+    },
+    {
+      "id": "held-zh-week10_2",
+      "language": "zh",
+      "source": "https://huggingface.co/datasets/generative-fusion-decoding/ml-lecture-2021-long/resolve/b670ea58e0973b0a364e92ef1e7cf23a74db7092/data/test-00001-of-00014.parquet",
+      "sourceSha256": "025d5b053244a0892fa745d38a53eb1e6cf778bd50fe1bde7ec6d0957684b340",
+      "lecture": "week10_2",
+      "startSeconds": 0,
+      "endSeconds": 1078.82,
+      "seconds": 1078.82,
+      "audioSha256": "28da047251f27323eeb4b0db72abdb0ecd52d366fe077424cda8e9947e1f30ae",
+      "referenceSha256": "5de9c279dec87c21c84cacb362d4e12de26871a88c79466fd69fd6cdb10ebcfc"
+    }
+  ]
+}

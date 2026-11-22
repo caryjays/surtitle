@@ -116,7 +116,8 @@ def replay(audio, out, segmentation, prefix, pair):
 
 
 def inside(path, folder):
-    return path.resolve().is_relative_to((ROOT / folder).resolve())
+    # Lexically as well as resolved: a worktree's ignored folders may link to the main checkout's.
+    return any(Path(os.path.abspath(p)).is_relative_to(os.path.abspath(ROOT / folder)) for p in (path, path.resolve()))
 
 
 def held_out(manifest_path, languages=()):
@@ -147,6 +148,9 @@ def run(args):
     gate = load_gate(args.gate)
     languages = gate['languages']
     started = implementation()
+    # Checked before the public replays, which take an hour.
+    if args.held_out:
+        folder, entries = held_out(args.held_out, languages)
     nonspeech = json.loads((ROOT / 'benchmarks/gate-nonspeech.json').read_text())['fixtures']
     other = json.loads((ROOT / 'benchmarks/gate-other.json').read_text())['fixtures']
     if gate.get('other'):  # the gate's own further third languages
@@ -169,7 +173,6 @@ def run(args):
         stream, gains[name] = write_stream(name, clips)
         replay(stream, out / f'{name}.json', args.segmentation, name, gate['pair'])
     if args.held_out:
-        folder, entries = held_out(args.held_out, languages)
         results = folder / f'results-{args.segmentation}-{stamp}'
         results.mkdir()
         for entry in entries:
@@ -182,7 +185,7 @@ def run(args):
     engine = Engine('turbo-q4')
     if args.held_out:
         offline_decodes(folder, entries, results, engine)
-        print(f'Held-out results: {results.relative_to(ROOT)}')
+        print(f'Held-out results: {results.parent.name}/{results.name} beside the manifest')
     full = [{'id': f['id'], 'language': f['language'], 'text': engine.transcribe(level(pcm(CACHE / f"{f['id']}.wav"))[0], None)['text']}
             for f in fleurs]
     (out / 'full-clip.json').write_text(json.dumps(full, ensure_ascii=False, indent=2) + '\n')

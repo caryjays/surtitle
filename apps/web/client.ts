@@ -1,4 +1,4 @@
-import { DEFAULT_PAIR, PROFILES, Snapshot, type Pair } from '../../packages/protocol/index.ts';
+import { DEFAULT_PAIR, PROFILES, Snapshot, profile, type Pair, type Script } from '../../packages/protocol/index.ts';
 export function connect(role: 'control' | 'overlay', onState: (state: Snapshot) => void, onConnection: (connected: boolean) => void) {
   let socket: WebSocket;
   function open() {
@@ -32,14 +32,20 @@ function fill(element: HTMLElement, shown: string, rest: string) {
 }
 type Row = Snapshot['segments'][number] & { originalRest?: string; translationRest?: string };
 // A marker row, speech heard but not captioned, reads the same in both languages whatever the reason or the speech's language.
-export function uncaptionedLabel(pair: Pair) {
-  return `[ ${pair.map(language => PROFILES[language]?.uncaptioned ?? language).join(' · ')} ]`;
+export function uncaptionedLabel(pair: Pair, script: Script | null = null) {
+  return `[ ${pair.map(language => PROFILES[language] ? profile(language, script).uncaptioned : language).join(' · ')} ]`;
+}
+// The lang attribute of text in a language: with its script for a language that has scripts, so the browser picks the
+// script's glyphs, such as zh-Hant.
+export function languageTag(language: string, script: Script | null) {
+  return language === 'unknown' ? '' : script && PROFILES[language]?.scripts?.[script] ? `${language}-${script}` : language;
 }
 // The audience sees markers for speech outside the pair; the operator also sees speech the recognition filters rejected.
 export function shownRow(row: Row, operator: boolean) {
   return Boolean(row.original || (operator && row.originalRest) || (row.uncaptioned && (operator || row.uncaptioned === 'language')));
 }
-export function renderSegments(container: HTMLElement, rows: Row[], operator = false, turns: Snapshot['turns'] = [], pair: Pair = DEFAULT_PAIR) {
+export function renderSegments(container: HTMLElement, rows: Row[], operator = false, turns: Snapshot['turns'] = [], pair: Pair = DEFAULT_PAIR,
+  script: Script | null = null) {
   const existing = new Map([...container.children].map(node => [(node as HTMLElement).dataset.id, node as HTMLElement]));
   const keep = new Set<string>();
   let position = 0;
@@ -59,8 +65,8 @@ export function renderSegments(container: HTMLElement, rows: Row[], operator = f
     const marker = row.uncaptioned && !row.original ? row.uncaptioned : undefined;
     if (article.dataset.uncaptioned !== marker) { if (marker) article.dataset.uncaptioned = marker; else delete article.dataset.uncaptioned; }
     const original = article.querySelector<HTMLElement>('.original')!;
-    fill(original, marker ? uncaptionedLabel(pair) : row.original, marker || !operator ? '' : row.originalRest ?? '');
-    const sourceLanguage = row.source === 'unknown' ? '' : row.source;
+    fill(original, marker ? uncaptionedLabel(pair, script) : row.original, marker || !operator ? '' : row.originalRest ?? '');
+    const sourceLanguage = languageTag(row.source, script);
     if (original.lang !== sourceLanguage) original.lang = sourceLanguage;
     const info = article.querySelector('small')!;
     let translated = article.querySelector<HTMLElement>('.translation');
@@ -71,7 +77,7 @@ export function renderSegments(container: HTMLElement, rows: Row[], operator = f
         article.insertBefore(translated, info);
       }
       fill(translated, row.translation ?? '', translationRest);
-      const targetLanguage = row.target === 'unknown' ? '' : row.target;
+      const targetLanguage = languageTag(row.target, script);
       if (translated.lang !== targetLanguage) translated.lang = targetLanguage;
     } else translated?.remove();
     if (info.hidden !== !operator) info.hidden = !operator;

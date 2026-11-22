@@ -1,6 +1,6 @@
 # Decisions
 
-Verified: 2026-11-20 · Sources: none
+Verified: 2026-11-21 · Sources: none
 
 Append-only, newest last. To reverse a decision, add a new entry and mark the old one superseded.
 
@@ -103,3 +103,4 @@ Append-only, newest last. To reverse a decision, add a new entry and mark the ol
 | 2026-11-18 | Part 6 is accepted as met in Spanish and Italian on the run of 2026-11-18, with three talks missing: two Spanish by 0.1 s, one Italian by 0.4 s at the median and 0.4 s at p90 | The maintainer's call: close enough to passing, after significant measured improvement in every pair. Two of the misses are smaller than the spread between two replays of one talk. The targets stay as they are; a later run reports against them. See [the run of 2026-11-18](../log/2026-11-18-translation-delay-opening-run.md) |
 | 2026-11-19 | Work on the cloud translation profile is parked; the offline profile's local translator stays the one developed | The maintainer's call. Claude Haiku 5.5 is slower to first translated text on 35 of 36 part 6 talks and loses up to a fifth of English rows in the Latin pairs, and the maintainer's own sessions find the local translations good enough. The cloud profile still runs as it is. See [the comparison](../log/2026-11-19-local-vs-cloud-haiku.md) |
 | 2026-11-20 | The rehearsal's slowdown in French is put down to what the presenter runs beside the captions, not OBS itself; no further runs to isolate it | The maintainer's call. OBS showing its preview on a lit screen and left alone did not slow translation, and the one step came while the Mac was in use. More complex browser tabs and OBS recording add GPU load, and that needs no separate capture to understand. The host probe still records the load in any rehearsal. See [OBS on the live path](../log/2026-11-20-obs-live-path-and-fresh-length.md). |
+| 2026-11-21 | Chinese is one language, `zh`, shown in a script chosen per session: Simplified, or Traditional in Taiwan's character forms. The script is a subtag on the pair, `en-zh-Hant`; recognized text and translations into Chinese are converted to it with OpenCC in the service | Whisper reports one code for Mandarin in either script and switches script between decodes, so the script cannot come from recognition; converting before rolling compares decodes keeps agreement working. Taiwan was the maintainer's choice of Traditional standard. Character forms only: regional vocabulary is left to the glossary and context, as the roadmap set |

@@ -7,7 +7,7 @@ import { LOCAL_TRANSLATION_MODELS, LocalTranslator, type LocalTranslationModel }
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
 import { HostProbe } from '../packages/providers/host-probe.ts';
-import { FRAME_BYTES, parsePair, type Pair } from '../packages/protocol/index.ts';
+import { FRAME_BYTES, parsePairTag, type Pair, type Script } from '../packages/protocol/index.ts';
 
 // Replays recordings in real time through the live controller with rolling recognition, with the local translator or
 // without it, and writes a diagnostics file in the control page's format for `pnpm diag:latency`. It measures what
@@ -56,8 +56,8 @@ if (!values.out || !positionals.length || !['local', 'off', 'anthropic'].include
   console.error('Usage: --translate local|off|anthropic [--paid] [--model <local model, or claude-* for anthropic>] [--rows sentence,max,clause|off] [--cadence interval,settle] [--pause ms|off] [--hold ms|off] [--fresh-length] [--no-opening] [--units row|piece] [--no-prompt-cache] [--review <file>] --out <diagnostics.json> <audio>...'); process.exit(2);
 }
 const CALIBRATION_MS = 1500;
-let pair: Pair;
-try { pair = parsePair(values.pair!); } catch { console.error('--pair must be two profiled languages, such as en-ja.'); process.exit(1); }
+let pair: Pair; let script: Script | null;
+try { ({ pair, script } = parsePairTag(values.pair!)); } catch { console.error('--pair must be two profiled languages, such as en-ja or en-zh-Hant.'); process.exit(1); }
 // Translations waiting for their first text, by when they were asked. Requests past the cap stop holding.
 const waiting = new Map<symbol, number>(); const holds = { frames: 0, translations: 0 };
 class HoldingTranslator extends LocalTranslator {
@@ -74,11 +74,11 @@ const holdRolls = () => {
   return waiting.size > 0;
 };
 const usage = { requests: 0, inputTokens: 0, outputTokens: 0 };
-const translator = values.translate === 'local' ? new (holdMs === null ? LocalTranslator : HoldingTranslator)({ model: model as LocalTranslationModel, promptCache: !values['no-prompt-cache'], pair, replyOpening: !values['no-opening'] })
-  : cloud ? new AnthropicTranslator({ key: process.env.ANTHROPIC_API_KEY!.trim(), model, effort: 'none', pair,
+const translator = values.translate === 'local' ? new (holdMs === null ? LocalTranslator : HoldingTranslator)({ model: model as LocalTranslationModel, promptCache: !values['no-prompt-cache'], pair, script, replyOpening: !values['no-opening'] })
+  : cloud ? new AnthropicTranslator({ key: process.env.ANTHROPIC_API_KEY!.trim(), model, effort: 'none', pair, script,
     onUsage: u => { usage.requests++; usage.inputTokens += u.inputTokens; usage.outputTokens += u.outputTokens; } }) : null;
 if (translator instanceof LocalTranslator) await translator.start();
-const controller = new Controller({ pair, backend: 'replay', processing: cloud ? 'local-audio-cloud-text' : translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
+const controller = new Controller({ pair, script, backend: 'replay', processing: cloud ? 'local-audio-cloud-text' : translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
   glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
   transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence, pauseMs,
     ...(holdMs === null ? {} : { holdRolls }), ...(values['fresh-length'] ? { freshLengthClose: true } : {}) }) });

@@ -9,7 +9,8 @@ Needs ffmpeg and yt-dlp. No model, API or .env use. References are untrusted fix
 --language es, fr, it or pt prepares a further gate's held-out set instead: talk excerpts in that language from the test
 split of Multilingual TEDx, read from one file of a pinned Hugging Face mirror, with the first gate's English excerpts
 unchanged. It writes benchmarks/gate-held-out-<language>.json and the cache's held-out-<language>.json, and needs pyarrow
-in the Python that runs it.
+in the Python that runs it. --language zh does the same with whole Mandarin lectures of the 2021 NTU machine learning
+course, Taiwan Mandarin with English terms, from the long-form test set of a pinned Hugging Face dataset.
 """
 import argparse
 import csv
@@ -44,6 +45,12 @@ MTEDX_SHA256 = {'es': 'f5d18149f697afa74726138117a5bfdb74195c8e9cfadf6d38c389eac
 MTEDX_NAMES = {'es': 'Spanish', 'fr': 'French', 'it': 'Italian', 'pt': 'Portuguese'}
 MTEDX_LIMIT = 300 * 1024 * 1024
 ES_EXCERPT, ES_START, ES_MIN_TALK = 300, 60, 480
+# NTU ML2021 lectures (ky552/ML2021_ASR_ST, MIT by its card's metadata, as the uploader states it). The long-form dataset
+# joins each lecture's test-split clips into one recording, so pauses between clips are as the clips left them.
+NTU_REPO = 'generative-fusion-decoding/ml-lecture-2021-long'
+NTU_REVISION = 'b670ea58e0973b0a364e92ef1e7cf23a74db7092'
+NTU_FILES = 14
+NTU_LIMIT = 160 * 1024 * 1024
 
 
 def mtedx(language):
@@ -293,9 +300,46 @@ def select_mtedx(work, language):
     return fixtures
 
 
+def clean_ntu(text):
+    """The references space every character; spaces stay only between Latin words."""
+    text = re.sub(r'\s+', ' ', text).strip()
+    return re.sub(r'(?<![A-Za-z0-9]) | (?![A-Za-z0-9])', '', text)
+
+
+def select_ntu(work):
+    """Whole lectures in file order until at least TOTAL. Each file is checked against the checksum the pinned revision lists."""
+    import pyarrow.parquet as pq
+    import wave
+    listed = {f['path']: f['lfs']['oid'] for f in json.loads(fetch(f'https://huggingface.co/api/datasets/{NTU_REPO}/tree/{NTU_REVISION}/data'))}
+    fixtures, total = [], 0.0
+    for index in range(NTU_FILES):
+        if total >= TOTAL:
+            break
+        path = f'data/test-{index:05d}-of-{NTU_FILES:05d}.parquet'
+        source = f'https://huggingface.co/datasets/{NTU_REPO}/resolve/{NTU_REVISION}/{path}'
+        data = fetch(source, NTU_LIMIT)
+        if digest(data) != listed[path]:
+            raise ValueError('Lecture file changed')
+        row = pq.read_table(io.BytesIO(data)).to_pylist()[0]
+        pcm = subprocess.run(['ffmpeg', '-v', 'error', '-i', 'pipe:0', '-f', 's16le', '-ac', '1', '-ar', str(RATE), 'pipe:1'],
+                             input=row['audio']['bytes'], capture_output=True, check=True).stdout
+        out = work / 'lecture.wav'
+        with wave.open(str(out), 'wb') as file:
+            file.setnchannels(1); file.setsampwidth(2); file.setframerate(RATE); file.writeframes(pcm)
+        lecture = Path(row['file']).stem
+        fixture = {'id': f'held-zh-{lecture}', 'language': 'zh', 'source': source, 'sourceSha256': listed[path], 'lecture': lecture,
+                   'startSeconds': 0, 'endSeconds': round(len(pcm) / 2 / RATE, 3)}
+        store(fixture, out.read_bytes(), clean_ntu(row['transcription']))
+        fixtures.append(fixture)
+        total += fixture['seconds']
+    if total < TOTAL:
+        raise ValueError('Insufficient lectures')
+    return fixtures
+
+
 def further(language):
     """A further gate's held-out set: its own manifest, and a gate manifest beside the first gate's in the cache."""
-    name, tracked = MTEDX_NAMES[language], ROOT / f'benchmarks/gate-held-out-{language}.json'
+    tracked = ROOT / f'benchmarks/gate-held-out-{language}.json'
     english = [f for f in json.loads(MANIFEST.read_text())['fixtures'] if f['language'] == 'en']
     if any(not cached(f) for f in english):
         raise ValueError('English held-out cache missing; run without --language first')
@@ -304,17 +348,28 @@ def further(language):
         if any(not cached(f) for f in manifest['fixtures']):
             raise ValueError('Held-out cache missing or changed; selection was not repeated')
     else:
+        unchanged = 'English: the excerpts of gate-held-out.json, unchanged. Chosen before recognition.'
         with tempfile.TemporaryDirectory() as folder:
-            fixtures = select_mtedx(Path(folder), language)
-        manifest = {
-            'datasets': {'Multilingual TEDx': {'revision': MTEDX_REVISION, 'license': 'CC BY-NC-ND 4.0', 'source': 'https://www.openslr.org/100',
-                                               'mirror': 'https://huggingface.co/datasets/deepdml/mtedx', 'mirrorSha256': MTEDX_SHA256[language]}},
-            'scope': (f'Held-out set of the {name} gate. {name}: talks of the Multilingual TEDx {name} test split in talk-ID order whose '
-                      f'segments span at least {ES_MIN_TALK} s; whole segments from the first starting at or after {ES_START} s, until at '
-                      f'least {ES_EXCERPT} s; each excerpt is its segment clips at their own times over digital silence; transcripts '
-                      f'without bracketed sound annotations. At least {TOTAL} s. English: the excerpts of gate-held-out.json, unchanged. '
-                      f'Chosen before recognition.'),
-            'fixtures': fixtures}
+            if language == 'zh':
+                fixtures = select_ntu(Path(folder))
+                datasets = {'NTU ML2021 lectures, long form': {
+                    'revision': NTU_REVISION, 'source': f'https://huggingface.co/datasets/{NTU_REPO}',
+                    'derivedFrom': 'https://huggingface.co/datasets/ky552/ML2021_ASR_ST',
+                    'license': 'MIT, as stated in the metadata of the source dataset card; the long-form card states none'}}
+                scope = (f'Held-out set of the Mandarin gate. Mandarin: whole lectures of the long-form NTU ML2021 test set in file '
+                         f'order, until at least {TOTAL} s; one lecturer, Taiwan Mandarin with English terms; each recording is the '
+                         f"lecture's test clips joined, with no pause of a second or more; references in Traditional characters, "
+                         f'unpunctuated, with the spaces between characters removed. {unchanged}')
+            else:
+                name = MTEDX_NAMES[language]
+                fixtures = select_mtedx(Path(folder), language)
+                datasets = {'Multilingual TEDx': {'revision': MTEDX_REVISION, 'license': 'CC BY-NC-ND 4.0', 'source': 'https://www.openslr.org/100',
+                                                  'mirror': 'https://huggingface.co/datasets/deepdml/mtedx', 'mirrorSha256': MTEDX_SHA256[language]}}
+                scope = (f'Held-out set of the {name} gate. {name}: talks of the Multilingual TEDx {name} test split in talk-ID order whose '
+                         f'segments span at least {ES_MIN_TALK} s; whole segments from the first starting at or after {ES_START} s, until at '
+                         f'least {ES_EXCERPT} s; each excerpt is its segment clips at their own times over digital silence; transcripts '
+                         f'without bracketed sound annotations. At least {TOTAL} s. {unchanged}')
+        manifest = {'datasets': datasets, 'scope': scope, 'fixtures': fixtures}
         tracked.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     entries = [{'id': f['id'], 'audio': f"{f['id']}.wav", 'language': f['language'], 'reference': f"{f['id']}.txt"}
                for f in english + manifest['fixtures']]
@@ -345,7 +400,7 @@ def gate_manifest(fixtures):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--language', choices=sorted(MTEDX_SHA256))
+    parser.add_argument('--language', choices=sorted([*MTEDX_SHA256, 'zh']))
     CACHE.mkdir(parents=True, exist_ok=True)
     language = parser.parse_args().language
     if language:

@@ -2,9 +2,10 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import { DEFAULT_PAIR, Source, TurnMeasurement, RecognitionQuality as Quality, direction, inPair, profile, type Boundary, type Language, type Mode, type Glossary } from '../protocol/index.ts';
+import { DEFAULT_PAIR, PROFILES, Source, TurnMeasurement, RecognitionQuality as Quality, direction, inPair, profile, type Boundary, type Language, type Mode, type Glossary } from '../protocol/index.ts';
 import type { Transcriber, TranscriberFactory } from './types.ts';
 import { TurnDetector } from './turns.ts';
+import { inScript } from './script.ts';
 import { isRepetitiveTranscript } from './quality.ts';
 import { ROLLING, agreedRest, agreedTail, endsSentence, hypothesis, isStockPhrase, joinText, lockCount, stablePrefix, tailAfterAgreed, type WorkerSegment } from './rolling.ts';
 
@@ -211,6 +212,12 @@ export class LocalTranscriber implements Transcriber {
     if (!job || message.id !== job.requestId) throw new Error('Unexpected local result');
     clearTimeout(this.deadline); this.active = undefined;
     if (job.dropped) { this.pump(); return; }
+    // Text in a language with scripts is shown in the session's script before decodes are compared: Whisper can write
+    // the same audio in either script from one decode to the next.
+    const language = message.language;
+    const shown = (text: string) => inScript(language, this.options.script, text);
+    if (PROFILES[language]?.scripts) message = { ...message, text: shown(message.text),
+      ...(message.segments ? { segments: message.segments.map(segment => ({ ...segment, text: shown(segment.text) })) } : {}) };
     const repeated = !message.rejected && isRepetitiveTranscript(message.text);
     const rejected = message.rejected || repeated;
     const text = rejected ? '' : message.text;

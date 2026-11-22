@@ -3,13 +3,14 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import Anthropic from '@anthropic-ai/sdk';
-import { inPair, parsePair, type Pair, type TranslationDiagnostic } from '../packages/protocol/index.ts';
+import { inPair, parsePairTag, type Pair, type Script, type TranslationDiagnostic } from '../packages/protocol/index.ts';
 import { OpenAITranslator } from '../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
 import { ChatCompletionsTranslator } from '../packages/providers/chat.ts';
 import { LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { TranslationFailure, type Translator } from '../packages/providers/types.ts';
 import { translationInstructionsFor } from '../packages/providers/translation.ts';
+import { inScript } from '../packages/providers/script.ts';
 import {
   CaseFile, JudgeResult, TermFile, VariantFile, applyVariant, blindJobs, direction, isPaid, judgeInstructionsFor, judgeSchema, parseCandidate, summarize, table, termScore, usageFrom,
   type Candidate, type EvalCase, type Variant, type Judgment, type Price, type Run, type Usage,
@@ -39,9 +40,9 @@ const repeats = Number(values.repeats), timeoutMs = Number(values['timeout-ms'])
 if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10) fail('--repeats must be 1 to 10.');
 if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 60_000) fail('--timeout-ms must be 1000 to 60000.');
 if (values.mode !== 'auto' && values.mode !== 'forced') fail('--mode must be auto or forced.');
-let pair: Pair = ['en', 'ja'];
-try { pair = parsePair(values.pair); } catch { fail('--pair must be two profiled languages, such as en-ja.'); }
-const translationInstructions = translationInstructionsFor(pair), judgeInstructions = judgeInstructionsFor(pair);
+let pair: Pair = ['en', 'ja']; let script: Script | null = null;
+try { ({ pair, script } = parsePairTag(values.pair)); } catch { fail('--pair must be two profiled languages, such as en-ja or en-zh-Hant.'); }
+const translationInstructions = translationInstructionsFor(pair, script), judgeInstructions = judgeInstructionsFor(pair);
 if (!values.candidate.length) fail('Name at least one --candidate, for example --candidate openai:gpt-5.6-terra --candidate anthropic:claude-haiku-5-5.');
 let candidates: Candidate[] = [];
 try { candidates = values.candidate.map(parseCandidate); } catch (error) { fail((error as Error).message); }
@@ -115,7 +116,9 @@ async function call(entry: typeof pool[number], item: EvalCase, repeat: number):
   const signal = AbortSignal.timeout(timeoutMs);
   const start = performance.now();
   try {
-    const translation = await entry.translator.translate(inputFor(item, entry.c), signal, value => { diagnostic = value; });
+    // Shown in the session's script, as the controller shows it.
+    const raw = await entry.translator.translate(inputFor(item, entry.c), signal, value => { diagnostic = value; });
+    const translation = { ...raw, text: inScript(raw.target, script, raw.text) };
     const ms = Math.round(performance.now() - start);
     const groups = item.terms ?? terms[item.referenceId];
     return { candidate: entry.c.label, caseId: item.id, repeat, ms, outcome: 'completed', translation,

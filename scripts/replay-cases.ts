@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { basename } from 'node:path';
 import { parseArgs } from 'node:util';
 import { LocalTranscriber } from '../packages/providers/local.ts';
-import { FRAME_BYTES, inPair, parsePair, profile, type Pair, type TranslationContext } from '../packages/protocol/index.ts';
+import { FRAME_BYTES, inPair, parsePairTag, profile, type Pair, type Script, type TranslationContext } from '../packages/protocol/index.ts';
 
 // Replays one recording in real time through the live local recognizer and writes draft eval cases:
 // one per finalized turn, with up to four preceding originals as context, as the controller sends them.
@@ -28,8 +28,8 @@ if (!Number.isInteger(maxTurnMs) || maxTurnMs < 1000 || maxTurnMs > 12_000) { co
 const segmentation = values.segmentation;
 if (segmentation !== 'turns' && segmentation !== 'rolling') { console.error('--segmentation must be turns or rolling.'); process.exit(1); }
 
-let pair: Pair;
-try { pair = parsePair(values.pair); } catch { console.error('--pair must be two profiled languages, such as en-ja.'); process.exit(1); }
+let pair: Pair; let script: Script | null;
+try { ({ pair, script } = parsePairTag(values.pair)); } catch { console.error('--pair must be two profiled languages, such as en-ja or en-zh-Hant.'); process.exit(1); }
 
 const converted = spawnSync('ffmpeg', ['-v', 'error', '-i', values.audio, '-f', 's16le', '-ar', '24000', '-ac', '1', 'pipe:1'], { maxBuffer: 200_000_000 });
 if (converted.status !== 0) { console.error('Audio conversion failed.'); process.exit(1); }
@@ -55,7 +55,7 @@ type Turn = { id: string; sequence: number; text: string; language?: string; rej
 const turns: Turn[] = [];
 let failed = false;
 const stream = new LocalTranscriber({
-  model, mode: 'auto', pair, maxTurnMs, segmentation, calibrationMs: values.calibrate ? CALIBRATION_MS : undefined, onFailure: () => { failed = true; },
+  model, mode: 'auto', pair, script, maxTurnMs, segmentation, calibrationMs: values.calibrate ? CALIBRATION_MS : undefined, onFailure: () => { failed = true; },
   onEvent: event => {
     // Times are audio-clock milliseconds since replay start, excluding calibration.
     const at = Math.round(performance.now() - started) - (values.calibrate ? CALIBRATION_MS : 0);

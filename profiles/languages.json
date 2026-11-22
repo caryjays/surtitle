@@ -58,5 +58,21 @@
     "stockPhrases": ["legendas pela comunidade amara.org", "obrigado por assistir", "obrigada por assistir", "obrigado", "obrigada", "e aí"],
     "reading": { "floor": 8, "ceiling": 25 },
     "uncaptioned": "sem legendas"
+  },
+  "zh": {
+    "name": "Chinese",
+    "scoring": "character",
+    "latinWords": true,
+    "spaced": false,
+    "sentenceEnd": "。！？",
+    "clauseEnd": "，、；：",
+    "stockPhrases": ["优优独播剧场——yoyo television series exclusive", "優優獨播劇場——yoyo television series exclusive"],
+    "stockPatterns": ["(中文)?字幕志[愿願]者[一-鿿]{0,4}"],
+    "reading": { "floor": 3, "ceiling": 10 },
+    "uncaptioned": "无字幕",
+    "scripts": {
+      "Hans": { "name": "Simplified Chinese", "uncaptioned": "无字幕", "convert": "cn" },
+      "Hant": { "name": "Traditional Chinese (Taiwan)", "uncaptioned": "無字幕", "convert": "tw" }
+    }
   }
 }

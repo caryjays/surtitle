@@ -14,7 +14,7 @@ import numpy as np
 from scipy.signal import resample_poly
 from engine import Engine
 from gate import STREAMS, pcm
-from quality import PROFILES, _compact, accepted_segments
+from quality import PROFILES, STOCK_PATTERNS, _compact, accepted_segments
 
 RATE = 24_000
 
@@ -47,6 +47,8 @@ def main():
 
     def covered(text):
         compact = _compact(text)
+        if any(pattern.fullmatch(compact) for pattern in STOCK_PATTERNS):
+            return True
         for phrase in known:
             compact = compact.replace(phrase, '')
         return not compact

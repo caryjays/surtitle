@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-20 · Sources: package.json, apps/service/main.ts, scripts/diagnostics-latency.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-21 · Sources: package.json, apps/service/main.ts, scripts/diagnostics-latency.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -21,7 +21,7 @@ Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Ch
 | `LOCAL_MODEL=small-q4 pnpm dev:local` | try the smaller model |
 | `LOCAL_PREVIEWS=off pnpm dev:listen` | disable source previews |
 | `LOCAL_SEGMENTATION=turns pnpm dev:local` | start in turns recognition instead of rolling; the console's Session panel also switches it while paused |
-| `LANGUAGE_PAIR=en-es pnpm dev:offline` | start in the Spanish pilot pair, or `en-fr`, `en-it`, `en-pt`; the console's Session panel also switches the pair while paused |
+| `LANGUAGE_PAIR=en-es pnpm dev:offline` | start in the Spanish pilot pair, or `en-fr`, `en-it`, `en-pt`, or Chinese as `en-zh-Hans` or `en-zh-Hant`, which has no gate yet; the console's Session panel also switches the pair while paused |
 
 After editing source, stop the service, run the `dev:*` command again and reload `/control`. A build alone changes nothing that is running.
 

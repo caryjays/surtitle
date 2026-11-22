@@ -26,7 +26,9 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = ROOT / '.local/fixtures/held-out'
 GATES = {'ja': ('gate-held-out.json', 'held-out.json', 'en-ja'),
-         **{language: (f'gate-held-out-{language}.json', f'held-out-{language}.json', f'en-{language}') for language in ('es', 'fr', 'it', 'pt')}}
+         **{language: (f'gate-held-out-{language}.json', f'held-out-{language}.json', f'en-{language}') for language in ('es', 'fr', 'it', 'pt')},
+         # Taiwan Mandarin lectures, shown in Traditional as a Taiwan audience would read them.
+         'zh': ('gate-held-out-zh.json', 'held-out-zh.json', 'en-zh-Hant')}
 
 
 def sha256(path):

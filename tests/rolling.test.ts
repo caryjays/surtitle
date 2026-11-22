@@ -37,6 +37,9 @@ test('stock sign-offs match only when they are the whole text', () => {
   assert(isStockPhrase('ご視聴ありがとうございました。'));
   assert(isStockPhrase('Thank you for watching!'));
   assert(!isStockPhrase('皆さんお疲れ様でした、次の話題です'));
+  // A subtitle credit with any name, by pattern, in either script; the name is a placeholder.
+  assert(isStockPhrase('字幕志愿者 王小明') && isStockPhrase('中文字幕志願者 王小明') && isStockPhrase('优优独播剧场——YoYo Television Series Exclusive'));
+  assert(!isStockPhrase('我们感谢字幕志愿者王小明的帮助'));
   assert(!isStockPhrase(''));
 });
 
@@ -474,4 +477,34 @@ test('a rolling row begins with the mode it was heard in, and recalibration ends
   calibration(); await f.speak(3); f.quiet(); await f.stream.finish();
   assert.deepEqual(f.events.slice(2).filter(e => e.type !== 'partial').map(e => [e.type, e.type === 'begin' ? e.mode : null]), [['begin', 'en-ja'], ['final', null]]);
   assert.equal(f.failures(), 0);
+});
+test('Chinese decodes that switch script still agree and lock, shown in the session script', async t => {
+  for (const [script, text] of [['Hant', '發展這裡後來發展'], ['Hans', '发展这里后来发展']] as const) {
+    const f = fixture('rolling-scripts', { mode: 'zh-en', pair: ['en', 'zh'], script }); t.after(() => f.stream.close());
+    await f.stream.connect(); await f.speak(4);
+    // Locked before the end: consecutive decodes in different scripts agreed once both were converted.
+    assert(f.events.some(e => e.type === 'partial' && e.stable! > 0), script);
+    f.quiet(); await f.stream.finish();
+    assert.deepEqual(finals(f.events).map(r => [r.text, r.language]), [[text, 'zh']], script);
+  }
+});
+test('a Traditional session passes its script from the controller to the recognizer, and translates the shown text', async t => {
+  const inputs: string[] = [];
+  const controller = new Controller({ glossary: [], backend: 'Fake providers', pair: ['en', 'zh'], script: 'Hant',
+    transcriber: localTranscriberFactory({ model: 'small-q4', segmentation: 'rolling',
+      workerFactory: () => spawn(process.execPath, ['tests/fixtures/fake-local-worker.mjs', 'rolling-scripts'], { stdio: ['pipe', 'pipe', 'pipe'], env: {} }) }),
+    translator: { async translate(input) { inputs.push(input.text); return { source: 'zh', target: 'en', text: 'T' }; } } });
+  t.after(() => controller.dispose());
+  await controller.start('zh-en');
+  for (let s = 0; s < 3; s++) {
+    for (let i = 0; i < 20; i++) {
+      const pcm = Buffer.alloc(2400); for (let j = 0; j < 2400; j += 2) pcm.writeInt16LE(6000, j);
+      pcm.writeInt16LE(20 * s + i, 0); controller.audio(pcm);
+    }
+    await new Promise(r => setTimeout(r, 40));
+  }
+  for (let i = 0; i < 30; i++) controller.audio(Buffer.alloc(2400));
+  await controller.pause(); await new Promise(r => setTimeout(r, 20));
+  assert.deepEqual(Snapshot.parse(controller.snapshot()).segments.map(row => row.original), ['發展這裡後來']);
+  assert.deepEqual(inputs, ['發展這裡後來']);
 });

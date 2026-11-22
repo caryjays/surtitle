@@ -2,8 +2,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { LocalTranslator } from '../packages/providers/local-translator.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
+import { inScript } from '../packages/providers/script.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
-import { parsePair, type Source, type TranslationContext } from '../packages/protocol/index.ts';
+import { parsePairTag, type Source, type TranslationContext } from '../packages/protocol/index.ts';
 import type { Translator } from '../packages/providers/types.ts';
 
 // Called by scripts/local/review_export.py, never on its own: re-translates a replay's rows in order, outside real time,
@@ -22,7 +23,7 @@ const cloud = values.compare === 'cloud';
 if (cloud && (!values.paid || !process.env.ANTHROPIC_API_KEY?.trim())) {
   console.error('--compare cloud is paid: pass --paid, with ANTHROPIC_API_KEY set through node --env-file.'); process.exit(2);
 }
-const pair = parsePair(values.pair);
+const { pair, script } = parsePairTag(values.pair);
 type Row = { recording: number; sequence: number; original: string; translation: string | null; state: string; heard: string | null; uncaptioned: boolean };
 const rows: Row[] = JSON.parse(await readFile(values.in, 'utf8')).review;
 const glossary = await loadGlossary(EXAMPLE_GLOSSARY);
@@ -30,11 +31,11 @@ type Outcome = { translation: string | null; state: 'ready' | 'unresolved' | 'fa
 const usage = { requests: 0, inputTokens: 0, outputTokens: 0 };
 
 const make: Record<string, () => Translator & { close?: () => void; start?: () => Promise<void> }> = cloud
-  ? { local: () => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair }),
-      cloud: () => new AnthropicTranslator({ key: process.env.ANTHROPIC_API_KEY!.trim(), model: 'claude-haiku-5-5', effort: 'none', pair,
+  ? { local: () => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, script }),
+      cloud: () => new AnthropicTranslator({ key: process.env.ANTHROPIC_API_KEY!.trim(), model: 'claude-haiku-5-5', effort: 'none', pair, script,
         onUsage: u => { usage.requests++; usage.inputTokens += u.inputTokens; usage.outputTokens += u.outputTokens; } }) }
-  : { withoutOpening: () => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, replyOpening: false }),
-      withOpening: () => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair }) };
+  : { withoutOpening: () => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, script, replyOpening: false }),
+      withOpening: () => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, script }) };
 
 async function variant(name: string) {
   const translator = make[name]!();
@@ -50,7 +51,7 @@ async function variant(name: string) {
         const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 12_000);
         try {
           const result = await translator.translate({ text: row.original, mode: 'auto', glossary, sourceLanguage: source, context }, abort.signal);
-          outcome = { translation: result.text || null, state: result.source === 'unknown' ? 'unresolved' : 'ready', ms: Math.round(performance.now() - started) };
+          outcome = { translation: inScript(result.target, script, result.text) || null, state: result.source === 'unknown' ? 'unresolved' : 'ready', ms: Math.round(performance.now() - started) };
           source = result.source;
         } catch { outcome = { translation: null, state: 'failed', ms: Math.round(performance.now() - started) }; }
         finally { clearTimeout(timer); }

@@ -1,13 +1,35 @@
 """Deterministic transparent scoring; no model judge and no training on references."""
+import re
 import unicodedata
 from languages import PROFILES
 
 
+_FOLD = None
+
+
+def fold_script(text, language):
+    """A language with scripts folds to Simplified, so a decode is not charged for the script it was written in. The live
+    path converts to the session's script; one-pass and full-clip decodes are Whisper's own, in either script."""
+    global _FOLD
+    if not PROFILES[language].get('scripts'):
+        return text
+    if _FOLD is None:
+        import opencc
+        _FOLD = opencc.OpenCC('t2s')
+    return _FOLD.convert(text)
+
+
 def units(text, language):
-    text = unicodedata.normalize('NFKC', text).casefold()
+    text = unicodedata.normalize('NFKC', fold_script(text, language)).casefold()
     # Punctuation is a word boundary for word-scored languages, removed for character-scored ones.
     text = ''.join(' ' if unicodedata.category(c)[0] in ('P', 'S', 'Z') else c for c in text)
-    return text.split() if PROFILES[language]['scoring'] == 'word' else list(''.join(text.split()))
+    if PROFILES[language]['scoring'] == 'word':
+        return text.split()
+    # Code-switched speech: a run of Latin letters or digits is one unit, as a mixed error rate counts it, so an English
+    # term weighs as one word rather than one unit per letter.
+    if PROFILES[language].get('latinWords'):
+        return re.findall(r'[a-z0-9]+|\S', text)
+    return list(''.join(text.split()))
 
 
 def distance(reference, hypothesis):

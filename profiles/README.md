@@ -12,7 +12,7 @@ Mappings are hints. A glossary cannot repair recognition errors, and glossary te
 
 ## Language profiles
 
-`languages.json` holds one profile per language, keyed by its ISO 639 code as Whisper reports it. The service and the Python worker both read it. `LANGUAGE_PAIR`, default `en-ja`, must name two profiled languages. English, Japanese, Spanish, French, Italian and Portuguese have profiles; a profile makes a pair selectable, and the [gates](../docs/wiki/gates.md) say which languages have passed theirs.
+`languages.json` holds one profile per language, keyed by its ISO 639 code as Whisper reports it. The service and the Python worker both read it. `LANGUAGE_PAIR`, default `en-ja`, must name two profiled languages, with a script subtag such as `en-zh-Hant` when one of them has scripts. English, Japanese, Spanish, French, Italian, Portuguese and Chinese have profiles; a profile makes a pair selectable, and the [gates](../docs/wiki/gates.md) say which languages have passed theirs.
 
 | Field | Use |
 | --- | --- |
@@ -22,6 +22,7 @@ Mappings are hints. A glossary cannot repair recognition errors, and glossary te
 | `sentenceEnd` | characters that end a sentence; rolling segmentation closes a row at one after 3 s of locked audio |
 | `clauseEnd` | characters that end a clause; rolling segmentation closes a row at one only when given a clause length, which the live service does not set |
 | `stockPhrases` | sign-offs Whisper hallucinates; a long turn or row that is only these is dropped. Every profile's phrases apply in every session |
+| `stockPatterns` | optional: sign-offs that vary, matched against the whole compacted text as regular expressions valid in both JavaScript and Python. Chinese uses one for subtitle-volunteer credits, which carry people's names that no tracked file may hold |
+| `latinWords` | optional, character scoring only: a run of Latin letters or digits counts as one unit, for speech that switches into English. Chinese sets it |
 | `uncaptioned` | short label for a marker row, speech heard but not captioned; the displays show both pair languages' labels and never name the speech's language |
-
-A script variant, such as Simplified or Traditional Chinese, is meant to be a profile setting, not a separate code. No such setting exists yet.
+| `scripts` | optional, for a language written in more than one script: each script's `name`, `uncaptioned` label and OpenCC target `convert` (`cn` or `tw`), keyed by BCP 47 subtag, the first being the default. The session's script names the language and labels its markers, and the service converts text recognized in the language, and translations into it, to that script. Only Chinese has scripts: `Hans`, Simplified, and `Hant`, Traditional in Taiwan's character forms |

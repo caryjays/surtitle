@@ -8,8 +8,10 @@ import { z } from 'zod';
 import { Controller } from '../apps/service/controller.ts';
 import { createCaptionServer } from '../apps/service/server.ts';
 import { localTranscriberFactory } from '../packages/providers/local.ts';
+import { inScript } from '../packages/providers/script.ts';
+import { languageTag } from '../apps/web/client.ts';
 import { LocalTranslator } from '../packages/providers/local-translator.ts';
-import { parsePair, type TranslationInput } from '../packages/protocol/index.ts';
+import { parsePairTag, profile, type TranslationInput } from '../packages/protocol/index.ts';
 import { loadGlossary, resolveGlossaryPath } from '../apps/service/glossary.ts';
 
 async function main() {
@@ -19,7 +21,7 @@ async function main() {
   const rolling = process.argv.includes('--rolling');
   // --pair en-es: the same run in another pair, with that language's first public gate clip in place of the Japanese one.
   const at = process.argv.indexOf('--pair');
-  const pair = parsePair(at < 0 ? 'en-ja' : process.argv[at + 1] ?? '');
+  const { pair, script } = parsePairTag(at < 0 ? 'en-ja' : process.argv[at + 1] ?? '');
   const other = pair.find(language => language !== 'en') ?? pair[1];
   const manifest = z.array(z.object({ id: z.string(), sha256: z.string() })).parse(JSON.parse(await readFile('benchmarks/fleurs.json', 'utf8')));
   const clips = [{ path: '.local/fixtures/en_us-1675.wav', sha256: manifest.find(f => f.id === 'en_us-1675')?.sha256 }];
@@ -28,7 +30,7 @@ async function main() {
     // The first clip of two sentences: a one-sentence clip can come back as one segment, which locks only when it closes.
     const gate = z.object({ fixtures: z.array(z.object({ id: z.string(), sha256: z.string(), language: z.string(), reference: z.string() })) })
       .parse(JSON.parse(await readFile(`benchmarks/gate-fleurs-${other}.json`, 'utf8'))).fixtures
-      .find(f => f.language === other && /[.!?] \S/.test(f.reference))!;
+      .find(f => f.language === other && (profile(other).spaced ? /[.!?] \S/ : /[。！？]\S/).test(f.reference))!;
     clips.push({ path: `.local/fixtures/gate/${gate.id}.wav`, sha256: gate.sha256 });
   }
   const parts: Buffer[] = [Buffer.alloc(48_000 * 2 * 10)]; // Initialization silence, not a live latency measurement.
@@ -54,11 +56,11 @@ async function main() {
   const glossary = listening ? await loadGlossary((await resolveGlossaryPath()).path) : [];
   const requests: TranslationInput[] = [];
   let partialSeen = false; let tailSeen = false;
-  const local = offline ? new LocalTranslator({ model: 'qwen3.5-4b-q4', pair }) : undefined;
+  const local = offline ? new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, script }) : undefined;
   if (local) await local.start();
   const requestMs: number[] = [];
   const controller = new Controller({ backend: offline ? 'Local transcription · translation local' : listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
-    processing: offline ? 'local-audio-local-text' : listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null, pair,
+    processing: offline ? 'local-audio-local-text' : listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null, pair, script,
     translator: local ? { async translate(input, signal, diagnostic) {
       requests.push(input); const start = performance.now();
       try { return await local.translate(input, signal, diagnostic); } finally { requestMs.push(Math.round(performance.now() - start)); }
@@ -95,7 +97,9 @@ async function main() {
       assert.equal(requests[0]!.sourceLanguage, 'en');
     }
     await overlay.reload(); await overlay.waitForSelector('.original[lang="en"]');
-    await overlay.waitForSelector(`.original[lang="${other}"]`, { timeout: 60_000 });
+    // With a script, rows carry it in their lang attribute, such as zh-Hant.
+    const tag = languageTag(other, script);
+    await overlay.waitForSelector(`.original[lang="${tag}"]`, { timeout: 60_000 });
     if (listening) {
       await overlay.waitForSelector('.translation[lang="en"]', { timeout: 60_000 });
       assert(requests.some(request => request.sourceLanguage === 'en'));
@@ -104,9 +108,11 @@ async function main() {
       assert(requests.some(request => request.context?.length));
       assert.match(await control.locator('#processing').textContent() ?? '', offline ? /no network requests/ : /recent context/);
       if (offline) {
-        await overlay.waitForSelector(`.translation[lang="${other}"]`, { timeout: 60_000 });
+        await overlay.waitForSelector(`.translation[lang="${tag}"]`, { timeout: 60_000 });
         const rows = controller.snapshot().segments.filter(row => row.state === 'ready');
-        assert(rows.some(row => row.target === other && (other === 'ja' ? /[\u3040-\u30ff\u4e00-\u9fff]/ : /[A-Za-z]{3}/).test(row.translation ?? '')), 'a translation out of English');
+        assert(rows.some(row => row.target === other && (profile(other).scoring === 'character' ? /[\u3040-\u30ff\u4e00-\u9fff]/ : /[A-Za-z]{3}/).test(row.translation ?? '')), 'a translation out of English');
+        // Recognized text and translations in a language with scripts reach the display in the session's script.
+        assert(rows.every(row => [[row.source, row.original], [row.target, row.translation ?? '']].every(([language, text]) => inScript(language!, script, text!) === text)), 'text in the session script');
         assert(rows.some(row => row.target === 'en' && /[A-Za-z]{3}/.test(row.translation ?? '')), 'an English translation');
       }
     } else {

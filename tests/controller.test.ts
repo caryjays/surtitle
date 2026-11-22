@@ -57,7 +57,7 @@ test('clear aborts translations and upstream, old callbacks cannot repaint; new 
 });
 test('the pair changes only while capture is off, among the offered pairs, and starts a new session in Auto', async t => {
   const h = harness({ pairs: [['en', 'ja'], ['en', 'es']] }); t.after(() => h.controller.dispose());
-  assert.deepEqual(h.controller.snapshot().pairs, [['en', 'es'], ['en', 'ja']]);
+  assert.deepEqual(h.controller.snapshot().pairs, ['en-es', 'en-ja']);
   await h.controller.start('ja-en'); h.final('a');
   const before = h.controller.snapshot();
   h.controller.setPair(['en', 'es']);

@@ -80,6 +80,13 @@ function rolling(request) {
   // late: a word is returned only once a further second of speech follows it, or the speech has ended, so a decode's
   // newest word has settled and the decode before did not have it yet.
   const late = behavior === 'rolling-late' && ms * 48 + 2400 > pcm.length ? 1000 : 0;
+  // scripts: Chinese words written in Simplified on even decodes and Traditional on odd ones, as Whisper switches scripts.
+  if (behavior === 'rolling-scripts') {
+    const words = decodes % 2 ? ['發展', '這裏', '後來'] : ['发展', '这里', '后来'];
+    for (let k = 0; (k + 1) * 1000 <= ms; k++) segments.push({ endMs: (k + 1) * 1000, text: words[(start / 20 + k) % 3] });
+    return { type: 'final', id: request.id, text: segments.map(s => s.text).join(''), language: request.language ?? 'zh',
+      inferenceMs: 1, rejected: !segments.length, segments };
+  }
   if (behavior !== 'rolling-noise' && !misheard) {
     for (let k = 0; (k + 1) * 1000 + late <= ms; k++) {
       segments.push({ endMs: (k + 1) * 1000, text: ` w${start + 20 * k}${behavior === 'rolling-unstable' ? `x${decodes}` : ''}${behavior === 'rolling-clauses' && (start / 20 + k) % 2 ? '、' : ''}` });

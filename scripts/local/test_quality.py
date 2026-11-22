@@ -78,7 +78,9 @@ class QualityTests(unittest.TestCase):
                     self.assertEqual(accepted_text({'segments': mixed}), previous(mixed))
 
     def test_stock_sign_off_from_a_long_turn_is_rejected(self):
-        for text in ['ご視聴ありがとうございました', 'お疲れ様でした。', 'Thank you for watching!', ' Thank you. Thank you.']:
+        # A subtitle credit with any name, in either script, by pattern; the name here is a placeholder.
+        for text in ['ご視聴ありがとうございました', 'お疲れ様でした。', 'Thank you for watching!', ' Thank you. Thank you.',
+                     '字幕志愿者 王小明', '中文字幕志願者 王小明', '优优独播剧场——YoYo Television Series Exclusive']:
             text_out, rejected, metrics = accepted_result({'segments': [segment(text)]}, audio_seconds=12)
             self.assertEqual((text_out, rejected), ('', True))
             self.assertEqual(metrics['stockPhraseDrops'], 1)
@@ -87,7 +89,8 @@ class QualityTests(unittest.TestCase):
     def test_stock_sign_off_said_for_real_survives(self):
         # Short audio, unknown duration, or a sign-off inside real speech is kept.
         for text, seconds in [('ご視聴ありがとうございました', 3), ('Thank you.', 5.9), ('Thank you.', None),
-                              ('今日はお疲れ様でした、また来週。', 12), ('Thank you for the question.', 12)]:
+                              ('今日はお疲れ様でした、また来週。', 12), ('Thank you for the question.', 12),
+                              ('我们感谢字幕志愿者王小明的帮助，他翻译了整部纪录片。', 12)]:
             text_out, rejected, metrics = accepted_result({'segments': [segment(text)]}, audio_seconds=seconds)
             self.assertEqual((text_out, rejected), (text, False))
             self.assertEqual(metrics['stockPhraseDrops'], 0)
