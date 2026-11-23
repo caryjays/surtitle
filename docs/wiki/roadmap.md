@@ -1,6 +1,6 @@
 # Roadmap
 
-Verified: 2026-11-21 · Sources: none
+Verified: 2026-11-22 · Sources: none
 
 Where the project is going and in what order. What is done and open right now lives in [status](status.md); the reasons are in [decisions](decisions.md).
 
@@ -20,11 +20,11 @@ The service and pages stay TypeScript. Recognition stays in a Python worker beca
 
 | Stage | Pair | Notes |
 | --- | --- | --- |
-| 0 | Generalize the pair | Protocol takes a configured pair, modes become `auto` and the two directions, language-specific rules move into one profile per language. The gate runner, replay and translation eval take a gate or pair as well. This work does not wait for the Japanese gate. Done: English, Japanese, Spanish, French, Italian, Portuguese and Chinese have profiles |
+| 0 | Generalize the pair | Protocol takes a configured pair, modes become `auto` and the two directions, language-specific rules move into one profile per language. The gate runner, replay and translation eval take a gate or pair as well. This work does not wait for the Japanese gate. Done: English, Japanese, Spanish, French, Italian, Portuguese, Chinese and Korean have profiles |
 | 1 | EN ↔ JA | Ships when it passes the Japanese gate below; later stages do not wait for it |
 | 2 | EN ↔ ES, then FR, IT and PT | Shared profile shape: spaces, Latin punctuation, WER scoring. Spanish went first, alone, as the pilot that proved the per-language gate tooling; French, Italian and Portuguese each have a gate in its shape. Risk: per-language stock-phrase hallucinations, and these close neighbours as each other's third languages |
-| 3 | EN ↔ ZH, Simplified and Traditional | Reuses Japanese CJK work: CER, `。！？`, no spaces. Script normalized with OpenCC as a profile setting; regional vocabulary handled by glossary and context. Started: the profile, both scripts and their conversion are built; the gate is not |
-| 4 | EN ↔ KO | Easier recognition than Japanese; translation shares the dropped-subject and word-order problems |
+| 3 | EN ↔ ZH, Simplified and Traditional | Reuses Japanese CJK work: CER, `。！？`, no spaces. Script normalized with OpenCC as a profile setting; regional vocabulary handled by glossary and context. Started: the profile, both scripts, their conversion and a gate with one run |
+| 4 | EN ↔ KO | Easier recognition than Japanese; translation shares the dropped-subject and word-order problems. Started: the profile, scored by character and written with spaces, and a gate in the Japanese gate's shape |
 | 5 | EN ↔ DE | Clause-final verbs make mid-sentence cuts force guessing; depends on rolling mode locking only settled segments |
 
 Through the medium term every pair includes English, and a session runs one pair. Several languages in one session, or pairs without English, are a long-term possibility once models handle them reliably; they are not designed for now. The per-language profiles and source identifiers keep that option open without building for it.

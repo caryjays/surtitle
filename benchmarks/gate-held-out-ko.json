@@ -1,0 +1,66 @@
+{
+  "datasets": {
+    "Pansori-TEDxKR": {
+      "version": "1.0",
+      "license": "CC BY-NC-ND 4.0",
+      "source": "https://www.openslr.org/58",
+      "mirror": "https://openslr.trmal.net/resources/58/pansori-tedxkr-corpus-1.0.tar.gz",
+      "archiveSha256": "acfe2c885708abd17b1f735be68db7e0d14203b1838b1946731465a3a20bb753"
+    }
+  },
+  "scope": "Held-out set of the Korean gate. Korean: whole talks of Pansori-TEDxKR 1.0 in path order whose fragments add up to at least 300 s, until at least 1800 s; TEDx talks given in Korea from 2010 to 2014. The corpus cuts each talk at subtitle boundaries and keeps no times, so each recording is its fragments in number order with 0.5 s of digital silence between them and 0.5 s at each end: every pause is the same length, and speech in fragments the authors dropped is absent. References are the unpunctuated transcripts. English: the excerpts of gate-held-out.json, unchanged. Chosen before recognition.",
+  "fixtures": [
+    {
+      "id": "held-ko-lvIVLOef9AM",
+      "language": "ko",
+      "source": "https://www.openslr.org/resources/58/pansori-tedxkr-corpus-1.0.tar.gz",
+      "sourceSha256": "acfe2c885708abd17b1f735be68db7e0d14203b1838b1946731465a3a20bb753",
+      "video": "lvIVLOef9AM",
+      "fragments": 151,
+      "startSeconds": 0,
+      "endSeconds": 466.943,
+      "seconds": 466.94,
+      "audioSha256": "49fc485b9a603a688d4e5f09df5737d883359b1804faac11d649dbeee4488ed7",
+      "referenceSha256": "68cf96a31938b123ef197efa5769db0516ebfa9ef9ec37cc8c3485b4bc8e43fd"
+    },
+    {
+      "id": "held-ko-ZBNO2Drz36c",
+      "language": "ko",
+      "source": "https://www.openslr.org/resources/58/pansori-tedxkr-corpus-1.0.tar.gz",
+      "sourceSha256": "acfe2c885708abd17b1f735be68db7e0d14203b1838b1946731465a3a20bb753",
+      "video": "ZBNO2Drz36c",
+      "fragments": 159,
+      "startSeconds": 0,
+      "endSeconds": 460.005,
+      "seconds": 460.0,
+      "audioSha256": "ee58f47cefd07f9b9a825ef2774004f8e2b2494d667426d00a403794c5677811",
+      "referenceSha256": "6d2364bb6aa3d6e75ddc56ace30d36bc59ad1c584f8183fb02587a8c5a9b888f"
+    },
+    {
+      "id": "held-ko-jUe7EdiQP1c",
+      "language": "ko",
+      "source": "https://www.openslr.org/resources/58/pansori-tedxkr-corpus-1.0.tar.gz",
+      "sourceSha256": "acfe2c885708abd17b1f735be68db7e0d14203b1838b1946731465a3a20bb753",
+      "video": "jUe7EdiQP1c",
+      "fragments": 117,
+      "startSeconds": 0,
+      "endSeconds": 472.565,
+      "seconds": 472.56,
+      "audioSha256": "817dc8afc0de4faff5feeba40124a42e69fbb92a132ec65f69814cafda275441",
+      "referenceSha256": "8e737a63f32da5c601a61da4a1b0d2b5d361809e4b64138120c98dd55916c8a4"
+    },
+    {
+      "id": "held-ko-zRvDWVfib2c",
+      "language": "ko",
+      "source": "https://www.openslr.org/resources/58/pansori-tedxkr-corpus-1.0.tar.gz",
+      "sourceSha256": "acfe2c885708abd17b1f735be68db7e0d14203b1838b1946731465a3a20bb753",
+      "video": "zRvDWVfib2c",
+      "fragments": 127,
+      "startSeconds": 0,
+      "endSeconds": 403.45,
+      "seconds": 403.45,
+      "audioSha256": "dc5ae5105a5c4a6fb9bebf4762113979528cfb075d4206d436c478801c5d2c25",
+      "referenceSha256": "6bfc143f0c86e9ba48bdb8e18b3c0430e99fefb04e52b947815c44c0841a2fb7"
+    }
+  ]
+}

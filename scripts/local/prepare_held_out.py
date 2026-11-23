@@ -10,7 +10,8 @@ Needs ffmpeg and yt-dlp. No model, API or .env use. References are untrusted fix
 split of Multilingual TEDx, read from one file of a pinned Hugging Face mirror, with the first gate's English excerpts
 unchanged. It writes benchmarks/gate-held-out-<language>.json and the cache's held-out-<language>.json, and needs pyarrow
 in the Python that runs it. --language zh does the same with whole Mandarin lectures of the 2021 NTU machine learning
-course, Taiwan Mandarin with English terms, from the long-form test set of a pinned Hugging Face dataset.
+course, Taiwan Mandarin with English terms, from the long-form test set of a pinned Hugging Face dataset. --language ko
+does the same with whole TEDx Korea talks of the Pansori-TEDxKR corpus, read from its one archive, pinned by checksum.
 """
 import argparse
 import csv
@@ -51,6 +52,14 @@ NTU_REPO = 'generative-fusion-decoding/ml-lecture-2021-long'
 NTU_REVISION = 'b670ea58e0973b0a364e92ef1e7cf23a74db7092'
 NTU_FILES = 14
 NTU_LIMIT = 160 * 1024 * 1024
+# Pansori-TEDxKR (Choi and Lee, 2018), CC BY-NC-ND 4.0, https://www.openslr.org/58: TEDx talks given in Korea, cut at
+# subtitle boundaries into numbered FLAC fragments with one unpunctuated transcript file per talk. Fragments carry no times,
+# and numbers are missing where a fragment failed the authors' validation.
+PANSORI = 'https://www.openslr.org/resources/58/pansori-tedxkr-corpus-1.0.tar.gz'
+PANSORI_MIRROR = 'https://openslr.trmal.net/resources/58/pansori-tedxkr-corpus-1.0.tar.gz'
+PANSORI_SHA256 = 'acfe2c885708abd17b1f735be68db7e0d14203b1838b1946731465a3a20bb753'
+PANSORI_LIMIT = 200 * 1024 * 1024
+KO_MIN_TALK, KO_GAP = 300, 0.5
 
 
 def mtedx(language):
@@ -337,6 +346,55 @@ def select_ntu(work):
     return fixtures
 
 
+def select_pansori(work):
+    """Whole talks in path order whose fragments add up to at least KO_MIN_TALK, until at least TOTAL. A talk's fragments are
+    joined in number order with KO_GAP of digital silence between them and PAD at each end, since their times are not known."""
+    import tarfile
+    import wave
+    archive = CACHE / 'pansori-tedxkr-corpus-1.0.tar.gz'
+    if not archive.is_file():
+        archive.write_bytes(fetch(PANSORI_MIRROR, PANSORI_LIMIT))
+    if digest(archive.read_bytes()) != PANSORI_SHA256:
+        raise ValueError('Archive changed')
+    clips, transcripts = {}, {}
+    with tarfile.open(archive, 'r:gz') as tar:
+        for member in tar:
+            if not member.isfile() or member.size > FILE_LIMIT:
+                continue
+            name = Path(member.name).name
+            if name.endswith('.flac'):
+                talk, number = name.removesuffix('.flac').rsplit('-', 1)
+                clips.setdefault(talk, {})[int(number)] = tar.extractfile(member).read()
+            elif name.endswith('.trans.txt'):
+                lines = tar.extractfile(member).read().decode('utf-8').splitlines()
+                transcripts[name.removesuffix('.trans.txt')] = dict(line.split(' ', 1) for line in lines if ' ' in line)
+    fixtures, total = [], 0.0
+    for talk in sorted(clips):
+        if total >= TOTAL:
+            break
+        texts = transcripts.get(talk, {})
+        numbers = [n for n in sorted(clips[talk]) if texts.get(f'{talk}-{n:04d}', '').strip()]
+        decoded = [subprocess.run(['ffmpeg', '-v', 'error', '-i', 'pipe:0', '-f', 's16le', '-ac', '1', '-ar', str(RATE), 'pipe:1'],
+                                  input=clips[talk][n], capture_output=True, check=True).stdout for n in numbers]
+        if sum(len(pcm) for pcm in decoded) / 2 / RATE < KO_MIN_TALK:
+            continue
+        gap, pad = bytes(int(KO_GAP * RATE) * 2), bytes(int(PAD * RATE) * 2)
+        pcm = pad + gap.join(decoded) + pad
+        out = work / 'talk.wav'
+        with wave.open(str(out), 'wb') as file:
+            file.setnchannels(1); file.setsampwidth(2); file.setframerate(RATE); file.writeframes(pcm)
+        # A talk's folder name starts with its speaker's name in base64; only the video ID goes in the tracked manifest.
+        video = talk.split('-', 1)[1]
+        fixture = {'id': f'held-ko-{video}', 'language': 'ko', 'source': PANSORI, 'sourceSha256': PANSORI_SHA256, 'video': video,
+                   'fragments': len(numbers), 'startSeconds': 0, 'endSeconds': round(len(pcm) / 2 / RATE, 3)}
+        store(fixture, out.read_bytes(), ' '.join(' '.join(texts[f'{talk}-{n:04d}'].split()) for n in numbers))
+        fixtures.append(fixture)
+        total += fixture['seconds']
+    if total < TOTAL:
+        raise ValueError('Insufficient talks')
+    return fixtures
+
+
 def further(language):
     """A further gate's held-out set: its own manifest, and a gate manifest beside the first gate's in the cache."""
     tracked = ROOT / f'benchmarks/gate-held-out-{language}.json'
@@ -360,6 +418,15 @@ def further(language):
                          f'order, until at least {TOTAL} s; one lecturer, Taiwan Mandarin with English terms; each recording is the '
                          f"lecture's test clips joined, with no pause of a second or more; references in Traditional characters, "
                          f'unpunctuated, with the spaces between characters removed. {unchanged}')
+            elif language == 'ko':
+                fixtures = select_pansori(Path(folder))
+                datasets = {'Pansori-TEDxKR': {'version': '1.0', 'license': 'CC BY-NC-ND 4.0', 'source': 'https://www.openslr.org/58',
+                                               'mirror': PANSORI_MIRROR, 'archiveSha256': PANSORI_SHA256}}
+                scope = (f'Held-out set of the Korean gate. Korean: whole talks of Pansori-TEDxKR 1.0 in path order whose fragments add up '
+                         f'to at least {KO_MIN_TALK} s, until at least {TOTAL} s; TEDx talks given in Korea from 2010 to 2014. The corpus '
+                         f'cuts each talk at subtitle boundaries and keeps no times, so each recording is its fragments in number order '
+                         f'with {KO_GAP} s of digital silence between them and {PAD} s at each end: every pause is the same length, and '
+                         f'speech in fragments the authors dropped is absent. References are the unpunctuated transcripts. {unchanged}')
             else:
                 name = MTEDX_NAMES[language]
                 fixtures = select_mtedx(Path(folder), language)
@@ -400,7 +467,7 @@ def gate_manifest(fixtures):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--language', choices=sorted([*MTEDX_SHA256, 'zh']))
+    parser.add_argument('--language', choices=sorted([*MTEDX_SHA256, 'zh', 'ko']))
     CACHE.mkdir(parents=True, exist_ok=True)
     language = parser.parse_args().language
     if language:

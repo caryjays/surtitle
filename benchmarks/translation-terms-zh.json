@@ -1,0 +1,533 @@
+{
+  "version": 1,
+  "note": "English and Chinese pair. Per public clip of gate-fleurs-zh.json: groups of acceptable spellings, at least one of which must appear in a correct translation into the other language. Matching is case-insensitive after NFKC normalization. The English clips are the 25 of translation-terms-es.json; the Chinese clips are the first 25 in manifest order whose reference holds a name, number or specific noun. Chinese terms list Simplified and Traditional forms, so one file serves both scripts. Written from the public references before any translation was run.",
+  "terms": {
+    "gate-en-1972": [
+      [
+        "恐龙",
+        "恐龍"
+      ],
+      [
+        "羽毛"
+      ]
+    ],
+    "gate-en-1876": [
+      [
+        "马里亚纳",
+        "馬里亞納",
+        "Marianas"
+      ]
+    ],
+    "gate-en-1846": [
+      [
+        "3:2",
+        "3∶2",
+        "3比2",
+        "三比二"
+      ]
+    ],
+    "gate-en-1776": [
+      [
+        "150"
+      ],
+      [
+        "200"
+      ],
+      [
+        "邓拉普",
+        "鄧拉普",
+        "登拉普",
+        "Dunlap"
+      ]
+    ],
+    "gate-en-1729": [
+      [
+        "北卡罗来纳",
+        "北卡羅來納",
+        "北卡羅萊納",
+        "北卡"
+      ]
+    ],
+    "gate-en-1919": [
+      [
+        "尼拉贡戈",
+        "尼拉貢戈",
+        "尼拉戈贡戈",
+        "尼拉戈貢戈",
+        "Nyiragongo"
+      ],
+      [
+        "大猩猩"
+      ]
+    ],
+    "gate-en-1685": [
+      [
+        "35"
+      ]
+    ],
+    "gate-en-1752": [
+      [
+        "鱼",
+        "魚"
+      ],
+      [
+        "灭绝",
+        "滅絕",
+        "绝种",
+        "絕種"
+      ]
+    ],
+    "gate-en-1749": [
+      [
+        "维希",
+        "維希",
+        "維琪",
+        "Vichy"
+      ],
+      [
+        "1940"
+      ]
+    ],
+    "gate-en-1705": [
+      [
+        "8月15",
+        "八月十五"
+      ],
+      [
+        "1940"
+      ],
+      [
+        "法国",
+        "法國"
+      ]
+    ],
+    "gate-en-1858": [
+      [
+        "兰塔涅",
+        "蘭塔涅",
+        "朗塔涅",
+        "拉塔涅",
+        "Lantagne"
+      ],
+      [
+        "爆发",
+        "爆發",
+        "疫情"
+      ]
+    ],
+    "gate-en-1897": [
+      [
+        "萨赫勒",
+        "薩赫勒",
+        "萨赫尔",
+        "薩赫爾",
+        "Sahel"
+      ],
+      [
+        "大西洋"
+      ]
+    ],
+    "gate-en-1680": [
+      [
+        "虎"
+      ],
+      [
+        "五",
+        "5"
+      ]
+    ],
+    "gate-en-1953": [
+      [
+        "阿登布鲁克",
+        "阿登布魯克",
+        "Addenbrooke"
+      ],
+      [
+        "剑桥",
+        "劍橋",
+        "Cambridge"
+      ]
+    ],
+    "gate-en-1701": [
+      [
+        "羊"
+      ],
+      [
+        "10,000",
+        "10000",
+        "一万",
+        "一萬",
+        "1万",
+        "1萬"
+      ],
+      [
+        "扎格罗斯",
+        "扎格羅斯",
+        "札格罗斯",
+        "札格羅斯",
+        "Zagros"
+      ],
+      [
+        "伊朗"
+      ]
+    ],
+    "gate-en-1710": [
+      [
+        "Apple",
+        "苹果",
+        "蘋果"
+      ],
+      [
+        "34"
+      ]
+    ],
+    "gate-en-1975": [
+      [
+        "梵蒂冈",
+        "梵蒂岡"
+      ],
+      [
+        "800"
+      ]
+    ],
+    "gate-en-1720": [
+      [
+        "巧克力",
+        "可可"
+      ],
+      [
+        "比利时",
+        "比利時"
+      ]
+    ],
+    "gate-en-1723": [
+      [
+        "1889"
+      ],
+      [
+        "德国",
+        "德國"
+      ]
+    ],
+    "gate-en-1769": [
+      [
+        "金字塔"
+      ],
+      [
+        "法老"
+      ]
+    ],
+    "gate-en-1999": [
+      [
+        "布热津斯基",
+        "布熱津斯基",
+        "布里辛斯基",
+        "Brzezinski"
+      ],
+      [
+        "肯尼迪",
+        "甘迺迪",
+        "Kennedy"
+      ],
+      [
+        "约翰逊",
+        "約翰遜",
+        "约翰森",
+        "詹森",
+        "Johnson"
+      ]
+    ],
+    "gate-en-1722": [
+      [
+        "科莫",
+        "古莫",
+        "库默",
+        "庫默",
+        "葛謨",
+        "Cuomo"
+      ],
+      [
+        "53"
+      ]
+    ],
+    "gate-en-1830": [
+      [
+        "SWAPO",
+        "西南非洲人民组织",
+        "西南非洲人民組織"
+      ]
+    ],
+    "gate-en-1831": [
+      [
+        "普利特维采",
+        "普利特維采",
+        "普利特维奇",
+        "普利特維奇",
+        "十六湖",
+        "Plitvice"
+      ]
+    ],
+    "gate-en-1814": [
+      [
+        "氢",
+        "氫"
+      ],
+      [
+        "质子",
+        "質子"
+      ]
+    ],
+    "gate-zh-1903": [
+      [
+        "creativ"
+      ],
+      [
+        "organi"
+      ]
+    ],
+    "gate-zh-1953": [
+      [
+        "Addenbrooke"
+      ],
+      [
+        "Cambridge"
+      ]
+    ],
+    "gate-zh-1830": [
+      [
+        "SWAPO",
+        "South West Africa",
+        "Southwest Africa"
+      ]
+    ],
+    "gate-zh-1910": [
+      [
+        "Paris"
+      ],
+      [
+        "arrogan"
+      ]
+    ],
+    "gate-zh-1902": [
+      [
+        "Paget"
+      ],
+      [
+        "Yarmouth"
+      ]
+    ],
+    "gate-zh-1763": [
+      [
+        "moon",
+        "lunar"
+      ],
+      [
+        "tide",
+        "tidal"
+      ],
+      [
+        "Sagittarius"
+      ]
+    ],
+    "gate-zh-1837": [
+      [
+        "Washington"
+      ],
+      [
+        "contract"
+      ]
+    ],
+    "gate-zh-1905": [
+      [
+        "Moldova"
+      ],
+      [
+        "Chișinău",
+        "Chisinau",
+        "Kishinev"
+      ],
+      [
+        "Romanian"
+      ],
+      [
+        "Russian"
+      ]
+    ],
+    "gate-zh-1779": [
+      [
+        "Trump"
+      ],
+      [
+        "Erdoğan",
+        "Erdogan"
+      ],
+      [
+        "Turkey",
+        "Turkish",
+        "Türkiye"
+      ]
+    ],
+    "gate-zh-1792": [
+      [
+        "pH"
+      ],
+      [
+        "cabbage"
+      ]
+    ],
+    "gate-zh-1780": [
+      [
+        "Kundalini"
+      ],
+      [
+        "yoga"
+      ]
+    ],
+    "gate-zh-1962": [
+      [
+        "pH"
+      ],
+      [
+        "hydrogen"
+      ]
+    ],
+    "gate-zh-1884": [
+      [
+        "micro-expression",
+        "microexpression",
+        "micro expression"
+      ],
+      [
+        "lie",
+        "lying"
+      ]
+    ],
+    "gate-zh-1958": [
+      [
+        "Arab"
+      ],
+      [
+        "Africa"
+      ]
+    ],
+    "gate-zh-1871": [
+      [
+        "Middle East"
+      ]
+    ],
+    "gate-zh-1738": [
+      [
+        "T. rex",
+        "T-rex",
+        "T rex",
+        "Tyrannosaurus"
+      ],
+      [
+        "dinosaur"
+      ]
+    ],
+    "gate-zh-1698": [
+      [
+        "atom"
+      ],
+      [
+        "matter"
+      ]
+    ],
+    "gate-zh-1989": [
+      [
+        "Canad"
+      ],
+      [
+        "5"
+      ],
+      [
+        "100"
+      ],
+      [
+        "prime minister",
+        "premier"
+      ]
+    ],
+    "gate-zh-1725": [
+      [
+        "Asus"
+      ],
+      [
+        "Eee PC"
+      ],
+      [
+        "2007"
+      ],
+      [
+        "Taipei"
+      ]
+    ],
+    "gate-zh-1712": [
+      [
+        "1966"
+      ],
+      [
+        "Sundarbans"
+      ],
+      [
+        "400"
+      ],
+      [
+        "Bengal"
+      ],
+      [
+        "30,000",
+        "30000",
+        "30 000",
+        "thirty thousand"
+      ],
+      [
+        "deer"
+      ]
+    ],
+    "gate-zh-2002": [
+      [
+        "game"
+      ]
+    ],
+    "gate-zh-1804": [
+      [
+        "Haiti"
+      ],
+      [
+        "Nepal"
+      ],
+      [
+        "peacekeep"
+      ]
+    ],
+    "gate-zh-1661": [
+      [
+        "China",
+        "Chinese"
+      ],
+      [
+        "econom"
+      ]
+    ],
+    "gate-zh-1700": [
+      [
+        "crust"
+      ],
+      [
+        "highland"
+      ]
+    ],
+    "gate-zh-1697": [
+      [
+        "pain"
+      ],
+      [
+        "drug",
+        "medication",
+        "medicine"
+      ]
+    ]
+  }
+}

@@ -18,6 +18,12 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(score('講 decoder', '讲 decoders', 'zh')['errors'], 1)
         self.assertEqual(units('GPT', 'ja'), list('gpt'))
 
+    def test_korean_scores_syllables_without_spaces(self):
+        self.assertEqual(units('오늘은 GPU 2개, 그리고…', 'ko'), ['오', '늘', '은', 'gpu', '2', '개', '그', '리', '고'])
+        # Spacing differences cost nothing; a wrong syllable costs one.
+        self.assertEqual(score('할 수 있습니다', '할수 있습니다', 'ko')['errors'], 0)
+        self.assertEqual(score('할 수 있습니다', '할 수 없습니다', 'ko')['errors'], 1)
+
     def test_edit_distance(self):
         self.assertEqual(distance(list('kitten'), list('sitting')), 3)
         self.assertEqual(distance([], ['extra']), 1)

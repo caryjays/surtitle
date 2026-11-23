@@ -8,13 +8,18 @@ import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
-const GATES = ['ja', 'es', 'fr', 'it', 'pt'] as const;
+const GATES = ['ja', 'es', 'fr', 'it', 'pt', 'zh', 'ko'] as const;
 type Gate = typeof GATES[number];
+// The pairs a run replays when --gates is not given: the five of the full runs since 2026-11-17, so they stay comparable.
+// Chinese and Korean run with --gates zh,ko.
+const DEFAULT_GATES: Gate[] = ['ja', 'es', 'fr', 'it', 'pt'];
+// Chinese replays in Traditional, the script of its held-out lectures and of its read-through.
+const pairOf = (gate: Gate) => gate === 'zh' ? 'en-zh-Hant' : `en-${gate}`;
 const TARGET = { p50Ms: 3000, p90Ms: 4500 };
 const AUDIO = '.local/fixtures/held-out';
 
 const { values } = parseArgs({ options: {
-  gates: { type: 'string', default: GATES.join(',') },
+  gates: { type: 'string', default: DEFAULT_GATES.join(',') },
   // A smoke run: at most this many talks per language. It checks the pipeline and is never a gate result.
   talks: { type: 'string' },
   // Score an existing run folder without replaying.
@@ -71,7 +76,7 @@ if (values.score) {
 const gates = values.gates!.split(',') as Gate[];
 const limit = values.talks === undefined ? null : Number(values.talks);
 if (!gates.length || gates.some(g => !GATES.includes(g)) || (limit !== null && !(Number.isInteger(limit) && limit >= 1))) {
-  console.error('Usage: pnpm gate:delay [--gates ja,es,fr,it,pt] [--talks <n per language, smoke only>] [--hold <ms>, experiment] [--fresh-length, experiment] | --score <run folder>'); process.exit(2);
+  console.error('Usage: pnpm gate:delay [--gates ja,es,fr,it,pt, or any of ja,es,fr,it,pt,zh,ko] [--talks <n per language, smoke only>] [--hold <ms>, experiment] [--fresh-length, experiment] | --score <run folder>'); process.exit(2);
 }
 const plan = gates.map(gate => ({ gate, talks: talks(gate, limit) }));
 const missing = plan.flatMap(p => p.talks).filter(id => !existsSync(join(AUDIO, `${id}.wav`)));
@@ -93,13 +98,13 @@ const run = { smoke: limit !== null, ...(values.hold ? { hold: values.hold } : {
 const save = () => writeFileSync(join(out, 'run.json'), JSON.stringify(run, null, 2) + '\n');
 
 for (const { gate, talks: list } of plan) {
-  const entry = { gate, pair: `en-${gate}`, talks: list, loadBefore: load() } as typeof run.pairs[number];
+  const entry = { gate, pair: pairOf(gate), talks: list, loadBefore: load() } as typeof run.pairs[number];
   run.pairs.push(entry); save();
-  console.log(`Replaying en-${gate}: ${list.length} talks, about ${list.length * 6} min in real time; load ${entry.loadBefore.join(' ')}`);
-  const replay = spawnSync('npx', ['tsx', 'scripts/contention-replay.ts', '--pair', `en-${gate}`, '--translate', 'local',
+  console.log(`Replaying ${entry.pair}: ${list.length} talks, about ${list.length * 6} min in real time; load ${entry.loadBefore.join(' ')}`);
+  const replay = spawnSync('npx', ['tsx', 'scripts/contention-replay.ts', '--pair', entry.pair, '--translate', 'local',
     '--out', join(out, `${gate}.json`), ...(values.hold ? ['--hold', values.hold] : []), ...(values['fresh-length'] ? ['--fresh-length'] : []), ...list.map(id => join(AUDIO, `${id}.wav`))], { stdio: 'inherit' });
   entry.loadAfter = load(); entry.exit = replay.status; save();
-  if (replay.status !== 0) console.error(`en-${gate} replay failed; going on with the next pair.`);
+  if (replay.status !== 0) console.error(`${entry.pair} replay failed; going on with the next pair.`);
 }
 
 const results = run.pairs.filter(p => p.exit === 0).flatMap(p => score(join(out, `${p.gate}.json`), p.talks).map(r => ({ gate: p.gate, ...r })));

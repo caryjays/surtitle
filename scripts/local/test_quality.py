@@ -120,3 +120,11 @@ class QualityTests(unittest.TestCase):
         self.assertEqual(segment_ends([{'text': 'x' * 3000, 'end': 1.0}, {'text': 'y' * 1001, 'end': 2.0}], 5000),
                          [{'endMs': 1000, 'text': 'x' * 3000}])
 
+
+    def test_script_matches_each_language_by_its_letters(self):
+        self.assertTrue(script_matches('그래서 오늘은 GPU 이야기를 하겠습니다', 'ko'))
+        self.assertFalse(script_matches('今日はその話をします', 'ko'))
+        self.assertFalse(script_matches('그래서 오늘은', 'ja'))
+        self.assertTrue(script_matches('今日はその話をします', 'ja'))
+        self.assertTrue(script_matches('这里的软件', 'zh'))
+        self.assertFalse(script_matches('So today', 'ko'))

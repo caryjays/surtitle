@@ -22,13 +22,15 @@ FLEURS = f'https://huggingface.co/datasets/google/fleurs/resolve/{FLEURS_REVISIO
 FLEURS_LOCALES = {'en': 'en_us', 'ja': 'ja_jp'}
 # Languages with a gate of their own beside English, each with its own public manifest; see select_language.
 # Mandarin's FLEURS set is mainland speech written in Simplified; one gate covers both of the profile's scripts.
-GATE_LOCALES = {'es': 'es_419', 'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br', 'zh': 'cmn_hans_cn'}
+GATE_LOCALES = {'es': 'es_419', 'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br', 'zh': 'cmn_hans_cn', 'ko': 'ko_kr'}
 # Speech outside the pair, which Auto should reject: a kanji language and three Latin-script ones.
 OTHER_LOCALES = {'zh': 'cmn_hans_cn', 'ko': 'ko_kr', 'es': 'es_419', 'de': 'de_de'}
 PER_OTHER = 10
 # A gate's own further third languages, its close neighbours, beside the shared set; see select_neighbours.
 # Mandarin's: Japanese, which shares its characters, and Cantonese, which Whisper reports as yue, outside the pair.
-GATE_OTHER_LOCALES = {'es': {'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br'}, 'zh': {'ja': 'ja_jp', 'yue': 'yue_hant_hk'}}
+# Korean's: Japanese, the language nearest it in grammar and sound; Mandarin is in the shared set.
+GATE_OTHER_LOCALES = {'es': {'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br'}, 'zh': {'ja': 'ja_jp', 'yue': 'yue_hant_hk'},
+                      'ko': {'ja': 'ja_jp'}}
 MUSAN_REVISION = '3edcfdf89b56dbe6a395ff29f9c29489e03d1321'
 MUSAN_MIRROR = f'https://huggingface.co/datasets/FluidInference/musan/resolve/{MUSAN_REVISION}/'
 MUSAN_ARCHIVE = 'https://www.openslr.org/resources/17/musan.tar.gz'

@@ -160,9 +160,9 @@ def script_matches(text, language):
         return False
     if PROFILES[language]['scoring'] == 'word':
         return all('LATIN' in unicodedata.name(c, '') for c in letters)
-    # Character-scored means Japanese today; a script setting in the profiles waits on Chinese.
-    cjk = sum(unicodedata.name(c, '').startswith(('CJK UNIFIED', 'HIRAGANA', 'KATAKANA')) for c in letters)
-    return cjk >= len(letters) / 2
+    # A character-scored language's letters by Unicode name prefix: Korean's are Hangul; without the setting, kanji and kana.
+    own = tuple(PROFILES[language].get('letters', ('CJK UNIFIED', 'HIRAGANA', 'KATAKANA')))
+    return sum(unicodedata.name(c, '').startswith(own) for c in letters) >= len(letters) / 2
 
 
 def accepted_text(result):

@@ -74,5 +74,18 @@
       "Hans": { "name": "Simplified Chinese", "uncaptioned": "无字幕", "convert": "cn" },
       "Hant": { "name": "Traditional Chinese (Taiwan)", "uncaptioned": "無字幕", "convert": "tw" }
     }
+  },
+  "ko": {
+    "name": "Korean",
+    "scoring": "character",
+    "latinWords": true,
+    "spaced": true,
+    "letters": ["HANGUL"],
+    "sentenceEnd": ".!?",
+    "clauseEnd": ",;:",
+    "stockPhrases": ["다음 영상에서 만나요", "다음 주에 만나요", "이 시각 세계였습니다", "시청해주셔서 감사합니다", "구독과 좋아요 부탁드립니다", "감사합니다"],
+    "stockPatterns": ["(한글)?자막by[가-힣]{0,4}"],
+    "reading": { "floor": 5, "ceiling": 15 },
+    "uncaptioned": "자막 없음"
   }
 }

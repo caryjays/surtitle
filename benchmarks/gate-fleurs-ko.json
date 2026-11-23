@@ -1,0 +1,1088 @@
+{
+  "dataset": "Google FLEURS",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "scope": "Language-gate public set for ko: its first 60 distinct sentence IDs in test-archive order, 4 to 16 s, excluding its IDs in gate-other*.json, chosen before recognition; and the English fixtures of gate-fleurs.json, unchanged.",
+  "fixtures": [
+    {
+      "id": "gate-ko-1826",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10315643998667715978.wav",
+      "sha256": "4b061678509d6f52f3d30d954ddb5b7077f55bad65b184d50a56c53fe6373c34",
+      "seconds": 8.82,
+      "reference": "사건 발생 이후, 깁슨(Gibson)은 병원으로 이송되었으나 얼마 후 숨을 거뒀다."
+    },
+    {
+      "id": "gate-ko-1993",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10444003922347352411.wav",
+      "sha256": "19007734e07ecc8176bd8f767208bb573e3c4ed1856267c3953c8e90d04225ed",
+      "seconds": 13.56,
+      "reference": "대서양 허리케인의 열 번째 폭풍인 아열대 폭풍 제리가 오늘 대서양에서 생성되었습니다."
+    },
+    {
+      "id": "gate-ko-1829",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10449970185079774245.wav",
+      "sha256": "15e1f29935b24e29739bfcebdf927ddfc7ec5fd2a48c022a0696f0086f4d4973",
+      "seconds": 11.22,
+      "reference": "무거운 세금을 물리는 국가의 여행객들은 때때로 상당한 금액을 아낄 수 있다. 특히 주류나 담배를 살 때 그렇다."
+    },
+    {
+      "id": "gate-ko-1992",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/1045279638662756242.wav",
+      "sha256": "ef13e2b646212c56943e9e410f0a1a6a1f5f528ace6670bebbfaeb763c90c2b2",
+      "seconds": 13.32,
+      "reference": "널리 알려진 사파리라는 표현은 특히 사바나의 멋진 아프리카의 야생동물들을 보기위한 육로 여행을 칭한다."
+    },
+    {
+      "id": "gate-ko-1742",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10505940208824594418.wav",
+      "sha256": "468da776f7640d894001d2795fd764629d0113dbf8384bd1d74ca31b281fb0d1",
+      "seconds": 10.32,
+      "reference": "홍콩 섬은 홍콩 영토에 홍콩이라는 이름을 부여한 곳이자 많은 관광객들이 주안점으로 여기는 곳이다."
+    },
+    {
+      "id": "gate-ko-1849",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10548358307598295019.wav",
+      "sha256": "27974d430f29309c0421a84dec4bf152d8460543d08794e67cc4fcc1956f65f5",
+      "seconds": 13.26,
+      "reference": "만약 내셔널 트레저라는 영화를 봤다면, 아마 독립선언서의 뒷면에 보물지도가 쓰여졌다고 생각할지도 모른다."
+    },
+    {
+      "id": "gate-ko-1709",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10621726497080042953.wav",
+      "sha256": "56322acc2a79964edc3ab5be17d661ac42b6b4f6d4ffdce80d22204df3168fe9",
+      "seconds": 9.36,
+      "reference": "보고서는 행정부의 현재 이라크 정책에 대해 거의 모든 측면에서 매우 비판적이며 즉각적인 방향 변경을 촉구합니다."
+    },
+    {
+      "id": "gate-ko-1845",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10622690890202871117.wav",
+      "sha256": "5182fa5dea8b8648f403ac72ae3c27419750f02815f74c60ff4bee4b2c076f7d",
+      "seconds": 13.74,
+      "reference": "왕과 왕비는 마차를 타고 자신들에게 소리를 지르고 위협을 하는 군중들에게 둘러싸인 채 파리로 돌아갔다."
+    },
+    {
+      "id": "gate-ko-1674",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10667839008527105971.wav",
+      "sha256": "32edf138b41fe9475085ee516f54aa4432968d113721401ec9763b3f55122d17",
+      "seconds": 10.38,
+      "reference": "일부 지역에서는 1분간 물을 끓이는 것으로 충분하다. 다른 지역에서는 수 분 동안 물을 끓일 필요가 있다."
+    },
+    {
+      "id": "gate-ko-1765",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10674428304946245757.wav",
+      "sha256": "c2c33f602e02092f3e9d1246811147861d6fa55feeb962f3f1b835f47f47de10",
+      "seconds": 15.36,
+      "reference": "1537년 아순시온(Asunción)이 설립된 이래 파라과이는 토착적인 특징과 정체성을 상당 부분 유지해 왔습니다."
+    },
+    {
+      "id": "gate-ko-1677",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10745666594192256552.wav",
+      "sha256": "9e939037d4860f86fcdf6a6fad3e4fbd6fc3296a08100f6ca6edf807dda1e73a",
+      "seconds": 4.68,
+      "reference": "오늘날 날개를 접을 수 없는 곤충은 잠자리와 파리밖에 없습니다."
+    },
+    {
+      "id": "gate-ko-1757",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10868903903368306216.wav",
+      "sha256": "b7597a2d650474f8e4623498f8e1ecc04a8e8c7de3ae918985a72fa57ae72f8c",
+      "seconds": 14.82,
+      "reference": "생식 계열 세포의 돌연변이만이 자녀에게 유전될 수 있고, 다른 곳에서의 돌연변이는 세포 사망 또는 암을 유발할 수 있습니다."
+    },
+    {
+      "id": "gate-ko-1771",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/10964298219027588401.wav",
+      "sha256": "ae1a498484997dbcb110df126854f13926df2ec04c36fe6ceea2640a3ac508db",
+      "seconds": 13.62,
+      "reference": "비록 중앙 무대에서 연주하는 곡은 끝날 수 있지만, 축제 곳곳에서는 밤늦게까지 음악을 연주할 수도 있다는 것을 잊지 마세요."
+    },
+    {
+      "id": "gate-ko-1910",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11135324899979291899.wav",
+      "sha256": "6e3d4c92195821dc1dd0b0eed5017d82fe9c2cfd3b63cb0999b1d4c307712a57",
+      "seconds": 7.32,
+      "reference": "파리 사람들은 자기중심적이고, 무례하고, 오만하다는 평판이 있습니다."
+    },
+    {
+      "id": "gate-ko-1894",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11320272182475458144.wav",
+      "sha256": "b557ff680e8845175c8fe64f51a535bb172dd801bc6f184b6d474236c8cc9bf7",
+      "seconds": 11.46,
+      "reference": "커리는 약용 식물과 향신료를 기본으로 하여 고기나 채소를 곁들이는 요리입니다."
+    },
+    {
+      "id": "gate-ko-1804",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11341660294355646596.wav",
+      "sha256": "48b4c2d06135a2f9a609f52e258c0ebefbbeb86ca3a9174e9e712aafe5d9268b",
+      "seconds": 12.6,
+      "reference": "아이티 정의와 민주주의 연구소는 네팔의 UN 평화 유지 부대가 의도치 않게 아이티에 질병을 전파시켰다는 독립적인 연구를 언급했다."
+    },
+    {
+      "id": "gate-ko-1697",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11356282555446764329.wav",
+      "sha256": "bd730c41b559a9689be439d1c79c6f27dcc71e5cdd58eafa08e6372beaf9ee7d",
+      "seconds": 12.66,
+      "reference": "고통을 극복하는 데 필요한 약들이 경기에서는 금지된 약물이기에 복용을 할 수 없었다."
+    },
+    {
+      "id": "gate-ko-1666",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11356572884265750080.wav",
+      "sha256": "21b846dbc1a9262e40cd3e09f95cb10802f63196a25c9c70b8c83db4c0d3c8f3",
+      "seconds": 9.96,
+      "reference": "자신의 의견이 아닌 정부의 의견을 듣고 싶을 수도 있지만, 각국 정부의 조언들은 자국민에 맞춰져 있다."
+    },
+    {
+      "id": "gate-ko-2005",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11368863851088641817.wav",
+      "sha256": "936edc8491d97c6365629a35b45c6bb949358ffe056268dc7e4421ffdd6e2812",
+      "seconds": 4.68,
+      "reference": "하지만 여전히 새에는 공룡처럼 보이게 하는 것들이 많습니다."
+    },
+    {
+      "id": "gate-ko-1776",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11394748796925515761.wav",
+      "sha256": "2ac823b039169dc78408f58a760973cc885eb8a0c779b2ab3ffd8e7539215b26",
+      "seconds": 11.88,
+      "reference": "그날 밤 동안 지금은 '던랩 브로드사이드'라고 불리는 인쇄물이 150에서 200장 만들어졌다."
+    },
+    {
+      "id": "gate-ko-1866",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/1144276032055203360.wav",
+      "sha256": "e438edeca4aa40ef1a3faf5b2de01af63693d27f2eb5343309e156c3faa3c98f",
+      "seconds": 11.28,
+      "reference": "첫째, 대부분의 기수들은 힐이 있고 밑창이 매끈하고 좁은 승마화를 신습니다."
+    },
+    {
+      "id": "gate-ko-1672",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/1145601900959919741.wav",
+      "sha256": "5600b72d721a524ae57df5b6b42df4d746703c6f54dad75baf9eed98f60ef3a4",
+      "seconds": 9.78,
+      "reference": "원단이 너무 뜨거워지지 않도록 주의하세요(원단이 수축하거나 그을릴 수 있습니다)."
+    },
+    {
+      "id": "gate-ko-1673",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11472033285601460505.wav",
+      "sha256": "17a474b20fb7f8511185de3c5f50317e2d0f940bcd68c79a1d3470e22ec92779",
+      "seconds": 12.66,
+      "reference": "독립 전쟁 기간 동안 13개 주는 우선 연합 규약에 따라 의회가 유일한 구성 요소인 권력이 강하지 않은 중앙 정부를 구성했다."
+    },
+    {
+      "id": "gate-ko-1695",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11512640885331138301.wav",
+      "sha256": "be8d389cdea9d6e299c9798c631eaabe7499980fb2f0fb976be0729e1b7bba6c",
+      "seconds": 15.66,
+      "reference": "단순하면서도 특히 여름철에 인기 있는 저녁식사는 치즈나 참치 등과 같은 손쉽게 구할 수 있는 양념과 토마토, 올리브오일을 곁들인 빵인 파 엠브 올리입니다."
+    },
+    {
+      "id": "gate-ko-1737",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11610764122588490928.wav",
+      "sha256": "88a054fd1396e64cf107682a70a1f332b2641e6c9e3a764b5d0cb13f29ab63bc",
+      "seconds": 9.0,
+      "reference": "사자는 무리 지어 사는 가장 사회적인 고양이과 동물입니다."
+    },
+    {
+      "id": "gate-ko-1862",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11622050030345895189.wav",
+      "sha256": "ec1ba2bdd5f5c184d885a94ff422ad8b08d5949c75b4a98f9ad695217e7fb585",
+      "seconds": 14.76,
+      "reference": "FAA의 주장에 따르면 NextGen은 항공기가 더 짧은 노선을 비행해서 매년 수백만 갤런의 연료를 절약하고 탄소 배출을 줄일 수 있는 시스템입니다."
+    },
+    {
+      "id": "gate-ko-1691",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11674801609078023406.wav",
+      "sha256": "ccbba1519716dd7994885b237415b69318a113185e8336b69a01e6b9af0c9e86",
+      "seconds": 11.22,
+      "reference": "대기업은 일부 항로에서 자사 소속 항공기를 사용합니다만 그밖에 다른 항로이거나 소기업이라면 문제가 있습니다."
+    },
+    {
+      "id": "gate-ko-1724",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11703874585796955974.wav",
+      "sha256": "e4b2ad06056c8e5d0d6f373d6dd96320ebaa25ad2a6c0b5ec06d31562c3e4f2f",
+      "seconds": 12.12,
+      "reference": "사치의 진원지라는 명성은 서기 400년경에 시작하여 서기 1100년경까지 이어졌습니다."
+    },
+    {
+      "id": "gate-ko-1879",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11709240773390553836.wav",
+      "sha256": "269374f021cbde806f82561c743eaeac88c7f84c557b275e03113d2b6b57b660",
+      "seconds": 9.9,
+      "reference": "사람들은 뭔가 새로운 것이 생긴다면, 키보드가 어떻게 될 것인지 궁금해하고 있을 뿐이다."
+    },
+    {
+      "id": "gate-ko-1964",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11800040547070956694.wav",
+      "sha256": "e7f279c8687ea5cbf3d70e6cc249717c46ef4c3484df8a58e0c377522a670fc4",
+      "seconds": 13.86,
+      "reference": "아직도 존재하는 것으로 알려진 25개의 던랩 브로드 사이드는 이 문서의 남아있는 가장 오래된 사본이다. 손으로 쓴 원본은 더 이상 남아 있지 않다."
+    },
+    {
+      "id": "gate-ko-1830",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11857839904365726502.wav",
+      "sha256": "c78fe4924e19802aa810f89488ad76644b8b3ee64183821fa9ef4dc3ebf68aab",
+      "seconds": 13.56,
+      "reference": "집권당인 서아프리카 인민 기구(SWAPO)도 의회 선거에서 과반수를 유지했습니다."
+    },
+    {
+      "id": "gate-ko-1977",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11859537746411417197.wav",
+      "sha256": "3e5192590a816c733020ae3cb2834f4e0b2d93f6275064ca69077dad76b636cc",
+      "seconds": 10.98,
+      "reference": "무리는 1~3마리의 동족 성인 수컷과 무려 30마리에 이르는 암컷과 새끼로 구성됩니다."
+    },
+    {
+      "id": "gate-ko-1864",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11870050757069587252.wav",
+      "sha256": "17d6a31d28e173eaff9c97664139f0599900891c565ec11ff2a5fc943e3a4b88",
+      "seconds": 14.16,
+      "reference": "키르치네르 여사는 2005년 부에노스아이레스 지방 대표단의 일원으로 상원 의원 선거운동을 시작할 때와 같은 장소인 아르헨티나 극장에서 대통령 출마 의사를 밝혔다."
+    },
+    {
+      "id": "gate-ko-1978",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11900504341992999200.wav",
+      "sha256": "ec7dbc60d8a5b1f08c40ba9e5ab3ea1dbd65d81a6e8ce539aa9358cdd7524185",
+      "seconds": 8.52,
+      "reference": "스프링복스의 경우, 다섯 경기 연패를 기록했다."
+    },
+    {
+      "id": "gate-ko-1926",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/11980001366993941236.wav",
+      "sha256": "48cf0144cad9cd65b644683bd61719e3417097d42fbc9b11d0f45f89db3ce344",
+      "seconds": 12.0,
+      "reference": "심리학을 비롯해 과학에서는 모든 물질에 대한 아리스토텔레스의 견해를 받아들였다."
+    },
+    {
+      "id": "gate-ko-1934",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12000153514430269279.wav",
+      "sha256": "882fb868fdc147100b13264076b668abcc825be63b9efc00bd5b4da51be94c90",
+      "seconds": 10.2,
+      "reference": "보통 관광객들과 행상인들의 소리를 항상 듣게 된다. 빛과 소리의 이야기는 마치 이야기책 같다."
+    },
+    {
+      "id": "gate-ko-1783",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12034054612491407259.wav",
+      "sha256": "52196de5f93c7a65c0ea5bf14c1cac777c11f77903041d5c885cf76a73d502c6",
+      "seconds": 13.2,
+      "reference": "지역별 및 계절별 악천후 현상에는 폭풍설, 눈보라, 진눈깨비 및 황사 등이 포함됩니다."
+    },
+    {
+      "id": "gate-ko-1707",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12120768976986875668.wav",
+      "sha256": "617f121fb2f9d025d3fd6d36b7004c7fc7905b0c86b158e4b56721c35fd070b7",
+      "seconds": 6.78,
+      "reference": "이곳은 남아프리카의 명소 중 하나로 남아프리카 국립 공원(SANParks)의 플래그십입니다."
+    },
+    {
+      "id": "gate-ko-1681",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12162895861697555860.wav",
+      "sha256": "4bea3999be75e99a4d4edad7c52e850cd27190f807424618ee4047190abd239b",
+      "seconds": 15.12,
+      "reference": "그러나 실험은 하나 혹은 그 이상의 가설을 제거하는 것이며, 질문을 하고 관찰을 하며 과학적 연구로 이끌어내는 것이다."
+    },
+    {
+      "id": "gate-ko-1682",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12195093133167599866.wav",
+      "sha256": "4facd42b6682939101b3ff7e4aff0de3e8d8588ff1155186c754f04e7641882a",
+      "seconds": 9.54,
+      "reference": "누가 기록한 것인지는 아무도 모르지만, 이 큰 양피지 문서(75.6 cm x 62.2 cm)는 초기에 말려 보관되었습니다."
+    },
+    {
+      "id": "gate-ko-1696",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12195514766787871900.wav",
+      "sha256": "3c407c9380c3c25a2e70a26bc91780d2717fc91ec48784ad9ff1133636dd89b0",
+      "seconds": 11.04,
+      "reference": "대학 연구진은 두 화합물이 서로 반응하여 결정을 형성하고 이는 신장의 기능을 차단할 수 있다고 밝혔다."
+    },
+    {
+      "id": "gate-ko-1895",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12256029121499129411.wav",
+      "sha256": "347c36e843b1b95a7d71623969f587d1ca05234267ed7140e6ab0682da2ee77e",
+      "seconds": 11.16,
+      "reference": "그리스어에 대한 지식이 감소함에 따라, 서구는 그리스 철학 및 과학의 뿌리와 단절되어 있음을 알게 되었습니다."
+    },
+    {
+      "id": "gate-ko-1887",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12283368537894545309.wav",
+      "sha256": "05307ffb61a9537d78c637652b148ed711a94a93fdbce3762486fa5a3c52c60b",
+      "seconds": 11.1,
+      "reference": "병원에서 일하는 동한 리긴스는 여가 시간에 조기 진통에 관해 조사하기 시작했다."
+    },
+    {
+      "id": "gate-ko-1957",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12322214958613662038.wav",
+      "sha256": "a01e3fa348869420a45520ae0bc2458da43c57b5c0b9d0d59d813c47fbe81f45",
+      "seconds": 9.72,
+      "reference": "그는 그 소문을 \"정치적 수다와 어리석음\"이라고 언급했습니다."
+    },
+    {
+      "id": "gate-ko-1806",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12441676103687962243.wav",
+      "sha256": "1296834a466d3bb57bb00fa7147244052197c97ab83d0866d5e59e5e8ec81328",
+      "seconds": 15.3,
+      "reference": "이들의 시대에는 빛 공해가 오늘날과 같은 수준이 아니었기 때문에 이들은 오늘날의 관측대와 달리 도시나 캠퍼스와 같이 쉽게 접근할 수 있는 장소에 위치했습니다."
+    },
+    {
+      "id": "gate-ko-1727",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12488893150512482567.wav",
+      "sha256": "a3e4c9b5d397af1ce76744c026258791781a49b99bb3e9ccff8959ee595874fd",
+      "seconds": 10.26,
+      "reference": "야생 아동은 버려지거나 도망치기 전에 심한 아동학대나 트라우마를 경험했을 수 있습니다."
+    },
+    {
+      "id": "gate-ko-1739",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12589757627743410499.wav",
+      "sha256": "445fbe3856371a3cfaa9cc1d34dc5f2aa2d1e3b43d49161ac55729111ca75776",
+      "seconds": 15.78,
+      "reference": "메카 북쪽의 산 중 한 곳의 꼭대기에 자리 잡고 있는 이 동굴은 세계의 나머지 지역으로부터 완전히 고립되어 있다."
+    },
+    {
+      "id": "gate-ko-1868",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12679683349083702127.wav",
+      "sha256": "ab7aec8ed1ccc6654ec94f77cca1aab0eec81cddbdf0a3bb24a325b2655de9f3",
+      "seconds": 13.98,
+      "reference": "스펙트럼의 또 다른 끝에서는 팀이 해오던 모든 것을 바꾸고 자신만의 방식으로 만들어야 한다고 생각하는 인지하지 못한 개인으로 바뀝니다."
+    },
+    {
+      "id": "gate-ko-1958",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12768880648081484894.wav",
+      "sha256": "36bc3f36f75ae8b5b8f971c7a1aa8849a6a70725a86a6f1b3f30025ddfff23be",
+      "seconds": 14.28,
+      "reference": "이 도시는 아프리카보다 아랍 성향이 더 있기 때문에 말리의 다른 도시들과 극명한 대조를 이루고 있습니다."
+    },
+    {
+      "id": "gate-ko-1679",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12788118264869112521.wav",
+      "sha256": "9c681df9dab82172786f47f72885752c5d71bacf26900a0aa8c57a7b34302428",
+      "seconds": 10.02,
+      "reference": "에어로스미스는 투어 콘서트의 남아있는 공연들을 취소했다."
+    },
+    {
+      "id": "gate-ko-1744",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12822450452598008094.wav",
+      "sha256": "35e24a816569a2b1e84c6cf4aa2ada151c6f53096514d8f72ae0ba35cfb52031",
+      "seconds": 11.1,
+      "reference": "로스비 수(Rossby number)가 작을수록 자기 역전 면에서 항성의 활동성 역시 작다."
+    },
+    {
+      "id": "gate-ko-2007",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12828266844174893861.wav",
+      "sha256": "a80504ddfddefe0d88c0b0016eabdeb2ef646be1dc25b0afc44488b6f395d17d",
+      "seconds": 8.88,
+      "reference": "미국 공병대는 시간당 6인치의 강우량이 기 파손된 제방을 무너뜨릴 수 있다고 추정했다."
+    },
+    {
+      "id": "gate-ko-1689",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12854820689695729683.wav",
+      "sha256": "1fa9de1b88d8f9dad8f2a2c321ff7ebf26e773a9e33cd388c1b3f687ed89bc68",
+      "seconds": 12.42,
+      "reference": "유럽은 상대적으로 작지만 많은 독립 국가들이 있는 대륙입니다. 보통 여러 국가를 여행하는 것은 비자 신청과 여권 심사를 여러 번 거쳐야 한다는 것을 의미합니다."
+    },
+    {
+      "id": "gate-ko-1664",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12950939528903265336.wav",
+      "sha256": "d1a9de58c7018b71de196e1c2acc95e7f055a0063001991e9a0fcd8fa99a1159",
+      "seconds": 11.76,
+      "reference": "건조한 두 분말을 함께 휘저은 후에 물에 젖은 깨끗한 손으로 공에 짜 넣는다."
+    },
+    {
+      "id": "gate-ko-1822",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/12988724693829869998.wav",
+      "sha256": "077f0270b8d411bde01e4512e25f4143aa465b3886ea560192e39efa6cebadbb",
+      "seconds": 12.12,
+      "reference": "모로코 술탄은 다루 이 바드야(Daru l-Badya)라는 도시로 재건축하고, 여기에 무역 거점을 세운 스페인 상인들은 이곳을 카사블랑카라고 불렀다."
+    },
+    {
+      "id": "gate-ko-1781",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/13039517665548639500.wav",
+      "sha256": "26db187ca698fabf326181b533d0cdd5e47c77944504b120a9b0dd9c9e793859",
+      "seconds": 10.92,
+      "reference": "마다가스카르는 야생 동물에 관해서는 현재 가장 크고 독보적인 대륙이다."
+    },
+    {
+      "id": "gate-ko-1863",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/1312571734724051705.wav",
+      "sha256": "7f09a8d2a74f04247f37a5198e582206448593fc7ded443f1d7d6c8ae0f0ea0f",
+      "seconds": 13.5,
+      "reference": "티벳 명상의 중심에는 신성 요가(Deity Yoga)가 있다. 다양한 신을 시각화해 에너지 채널을 청소하고, 차크라를 활성화하며, 계몽 의식을 창조한다."
+    },
+    {
+      "id": "gate-ko-1966",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/13143123894081319958.wav",
+      "sha256": "93ed778edc111b9176b0c537a18c177aeb2aef9cd31f58b1df5c7256ceaedf98",
+      "seconds": 9.84,
+      "reference": "10월에 시작된 광범위한 반정권 프로테스트에 대한 Martelly의 대응 차원에서 위원회가 마련되었습니다."
+    },
+    {
+      "id": "gate-ko-1741",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/13171832368101876656.wav",
+      "sha256": "53856afc854aa5749fd1ba9e8b32e02d41a89229282001494ea87166a937682c",
+      "seconds": 12.06,
+      "reference": "북쪽의 넓은 지역은 인적이 드물며, 몇몇 지역은 거의 사람이 살지 않는 황무지다."
+    },
+    {
+      "id": "gate-ko-1861",
+      "language": "ko",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/ko_kr/audio/test.tar.gz",
+      "member": "test/13177652821881600377.wav",
+      "sha256": "5b17ba756c9e6a0ea0602488f604ffbee76b398550f2e1d418bc4d30244c08fe",
+      "seconds": 10.86,
+      "reference": "결과적으로 무대에서 공연자들이 마리화나 담배를 피우고 극장 자체에서 관객들에게 참여하도록 독려하고 있다."
+    },
+    {
+      "id": "gate-en-1972",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10233995782544396174.wav",
+      "sha256": "bfa2f3fb72a05cbcb7c0000a460435f2d0eedca7c5cc90f01aacc89127df7f63",
+      "seconds": 4.32,
+      "reference": "Many people don't think about them as dinosaurs because they have feathers and can fly."
+    },
+    {
+      "id": "gate-en-1938",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10235738076911595987.wav",
+      "sha256": "3802ffc3e69c66e0d2e66652015bff0c6b1b8498bfb8670623eb4e34bc9e008d",
+      "seconds": 11.42,
+      "reference": "The hospital has followed protocol for infection control, including separating the patient from others to prevent possible infection of others."
+    },
+    {
+      "id": "gate-en-1876",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10323357556845456822.wav",
+      "sha256": "6b3081a29a5bb6fc6434e8525690edc26b23844841e119c916183f4ba1863372",
+      "seconds": 10.8,
+      "reference": "The Northern Marianas emergency management office said that there were no damages reported in the nation."
+    },
+    {
+      "id": "gate-en-1914",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10335587906469246566.wav",
+      "sha256": "14c9f40d7087ed487823917a9bc1838a037d78d315a694f7ace632651c612a61",
+      "seconds": 6.96,
+      "reference": "Twentieth century research has shown that there are two pools of genetic variation: hidden and expressed."
+    },
+    {
+      "id": "gate-en-1846",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10344335557154974057.wav",
+      "sha256": "8152d901627ad1bb88fee68b1f3adb706e33d2292bca02ef4d92465e2db4c84f",
+      "seconds": 11.04,
+      "reference": "The aspect ratio of this format (dividing by twelve to obtain the simplest whole-number ratio) is therefore said to be 3:2."
+    },
+    {
+      "id": "gate-en-1806",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1036771894648013441.wav",
+      "sha256": "9514bffb9e0bd3397f2cf90041eff51b87e68293335f7ff904515a19f8d416e3",
+      "seconds": 9.9,
+      "reference": "As light pollution in their heyday was not the kind of problem it is today, they are usually located in cities or at campuses, easier to reach than those built in modern times."
+    },
+    {
+      "id": "gate-en-1776",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1038214857203833067.wav",
+      "sha256": "0471eb4c8306e143524c09a45c2b4137204ac2a19fc7ed896ed8391ac864347c",
+      "seconds": 4.8,
+      "reference": "Through the night between 150 and 200 copies were made, now known as \"Dunlap broadsides\"."
+    },
+    {
+      "id": "gate-en-1729",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10383288285905292158.wav",
+      "sha256": "76e349546fc73bf40326c0ac33d62b87ffe7b5455afd825f431494e2f7690a8c",
+      "seconds": 11.28,
+      "reference": "For example, each year students from Bennet School in North Carolina design a website about their trip to the State Capital, each year the website gets remodeled, but old versions are kept online to serve as a scrapbook."
+    },
+    {
+      "id": "gate-en-1855",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10405958125670257178.wav",
+      "sha256": "cd878b528dca67fdf3754d07a5d43c64dc3577e2105966ba529267d35dc5968b",
+      "seconds": 10.92,
+      "reference": "Lion prides act much like packs of wolves or dogs, animals surprisingly similar to lions (but not other big cats) in behavior, and also very deadly to their prey."
+    },
+    {
+      "id": "gate-en-1919",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10411016628242228511.wav",
+      "sha256": "f93693f080704373d85c2761a4fe12c2a2a4a6ea721576c5c3bf4226dfefa44c",
+      "seconds": 11.28,
+      "reference": "The city is also the base to climb the Nyiragongo volcano along with some of the cheapest Mountain Gorilla tracking in Africa."
+    },
+    {
+      "id": "gate-en-1802",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1042003289011443756.wav",
+      "sha256": "80c74220cd80f918367c517e5ddff1ea9b2d366b7711b83a276a828564cfcc49",
+      "seconds": 5.72,
+      "reference": "The Internet combines elements of both mass and interpersonal communication."
+    },
+    {
+      "id": "gate-en-1711",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1043394666292127188.wav",
+      "sha256": "8c5d2b4634bab071370c4d03aca8134cdc25dc256f7409fe872dc82803d3b4c7",
+      "seconds": 15.56,
+      "reference": "These theories look at what it is about certain people that make them want the things that they do and what things in their environment will make them do or not do certain things."
+    },
+    {
+      "id": "gate-en-1685",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1045619486290403122.wav",
+      "sha256": "b32ac05d6df3e023930ff5687e27634e5ca78a44474437e634a794158654a4de",
+      "seconds": 13.92,
+      "reference": "For example, the most common still image photography format in the world is 35mm, which was the dominant film size at the close of the analog film era."
+    },
+    {
+      "id": "gate-en-1992",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1046653381869710616.wav",
+      "sha256": "32bafaf58802bef28cbde443d173e51c0afe7c58c8260cb0f5776e2c60a2a3a5",
+      "seconds": 8.64,
+      "reference": "The term safari in popular use refers to overland travel to view the stunning African wildlife, particularly on savanna."
+    },
+    {
+      "id": "gate-en-2005",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10471564175308895403.wav",
+      "sha256": "5a56cbc0ec373f9873b762d79e8b6874c889ba07e2bd195c40098e84bd170f5e",
+      "seconds": 5.36,
+      "reference": "But there are a lot of things about birds that still look like a dinosaur."
+    },
+    {
+      "id": "gate-en-1982",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10481451226514948764.wav",
+      "sha256": "6ba50cd176389e65cafd4172d0f6b9849dd12ee2962ee3b0f224bbf55e4a2365",
+      "seconds": 10.14,
+      "reference": "Women: It is recommended that any women travellers say that they are married, regardless of actual marital status."
+    },
+    {
+      "id": "gate-en-1674",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10492135991603561867.wav",
+      "sha256": "ed78d88661c8f76d7b8951665a3c2e9adea23828fe3e70fd9df95465cb8f8ede",
+      "seconds": 5.64,
+      "reference": "In some areas boiling water for a minute is enough, in others several minutes are needed."
+    },
+    {
+      "id": "gate-en-1952",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10492761258488775721.wav",
+      "sha256": "3f498f6216c60544714c9b334c4cfe4811b60b2dadbc710e68d127371a5ffdfd",
+      "seconds": 8.58,
+      "reference": "Anyone who's going to drive at high latitudes or over mountain passes should consider the possibility of snow, ice, or freezing temperatures."
+    },
+    {
+      "id": "gate-en-1752",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10536763405165824117.wav",
+      "sha256": "efd479bbb60aebde59283b7cbb6ba748113d16799427a052c43fa02da5e68f8a",
+      "seconds": 11.44,
+      "reference": "As a result, two fish species have become extinct, and two others have become endangered, including the humpback chub."
+    },
+    {
+      "id": "gate-en-1749",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1054805305879816018.wav",
+      "sha256": "62a8881cf2a0aaec9fa70155b452ce23e5a46738490fe764011b927b24842ef1",
+      "seconds": 9.6,
+      "reference": "It was ruled by the \"Vichy\" French. These were French people who had made peace with the Germans in 1940 and worked with the invaders instead of fighting them."
+    },
+    {
+      "id": "gate-en-1705",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10550734868852131138.wav",
+      "sha256": "3b008cd258b15a8c0ed5bdcaf26b3139b3fcfc8709509f0b2a279dc1bede4f7e",
+      "seconds": 10.12,
+      "reference": "On 15 August 1940, the Allies invaded southern France, the invasion was called \"Operation Dragoon\"."
+    },
+    {
+      "id": "gate-en-1662",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10614481583312370701.wav",
+      "sha256": "0f92f2bed63210286148e6947faf7ca90bb635ec7525bcb7f48bdedfe79b425d",
+      "seconds": 8.38,
+      "reference": "Alloys are basically a mixture of two or more metals. Don't forget that there are many elements on the periodic table."
+    },
+    {
+      "id": "gate-en-1790",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10731896540541531669.wav",
+      "sha256": "bf0d559b48ed4a6e241f81db66fe7224d615b63eea0cb04bde55f4b18ea95b33",
+      "seconds": 14.66,
+      "reference": "His work is of such recognized quality and detail that he is one of the very few \"household names\" among philatelists. Some specialize in collecting his work alone."
+    },
+    {
+      "id": "gate-en-1858",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10751756685109361684.wav",
+      "sha256": "07cce1e9fe871d0d584490855fcb02a029eb6a0cc6e37b316e39990c4164a1a2",
+      "seconds": 6.3,
+      "reference": "Danielle Lantagne, a UN expert on the disease, stated the outbreak was likely caused by the peacekeepers."
+    },
+    {
+      "id": "gate-en-1789",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10768814098664478369.wav",
+      "sha256": "72f827270ff9808e65b0ea15f47313207d360a0d5b49ad4c647b9c93fecb9f47",
+      "seconds": 14.6,
+      "reference": "The other nominations include Best Picture, Director, Cinematography, Costume Design, Film-editing, Original Score, Production Design, Sound Editing, Sound Mixing and Original Screenplay."
+    },
+    {
+      "id": "gate-en-1909",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10849792007407044602.wav",
+      "sha256": "48040b2408179454e0299ee86e69c7f1e59c66003a8967aa3ae0b06e53eb654e",
+      "seconds": 5.64,
+      "reference": "Virtual teams are held to the same standards of excellence as conventional teams, but there are subtle differences."
+    },
+    {
+      "id": "gate-en-1897",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10861831846737909528.wav",
+      "sha256": "6684928f432514e69a5fb8157b817981e63f2c2697ce09c4dbe8a946e1a30062",
+      "seconds": 9.58,
+      "reference": "In the north the region is bounded by the Sahel, and in the south and west by the Atlantic Ocean."
+    },
+    {
+      "id": "gate-en-1680",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10894616243452123700.wav",
+      "sha256": "7df2a964d8ce3931be897abeac59dd02669c709163fe23e928d917d31cf27601",
+      "seconds": 10.2,
+      "reference": "A well rounded athlete, the tiger can climb (though not well), swim, leap great distances and pull with five times the force of a strong human."
+    },
+    {
+      "id": "gate-en-1953",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10899527843662463911.wav",
+      "sha256": "6fb8634b7820a56c76d53120be3accf3c63059a338fdef4b0fe2ca09665ee0a8",
+      "seconds": 6.84,
+      "reference": "He was subsequently relocated to Addenbrooke's Hospital in Cambridge."
+    },
+    {
+      "id": "gate-en-1740",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10903101168349732260.wav",
+      "sha256": "6450b7622ccab79fd14d3d317c9d88e6e54bbad391004e12e0aa981bd77fb764",
+      "seconds": 8.34,
+      "reference": "The pyramid sound and light show is one of the most interesting things in the area for kids."
+    },
+    {
+      "id": "gate-en-1717",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10933070083389897676.wav",
+      "sha256": "50a77dbf37a15f5529162b650c7c5f76486d9215cebb026a6be9f95aa9e65a01",
+      "seconds": 10.92,
+      "reference": "Due to the underwater topology the return flow is concentrated at a few deeper sections, and a fast current to deep water may form there."
+    },
+    {
+      "id": "gate-en-1987",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10937407360976471523.wav",
+      "sha256": "5c67e2a8371caa74a5445a30dedd91dc43e4b6a8a7ffadbf67e06d7acc1349eb",
+      "seconds": 9.82,
+      "reference": "The crash occurred high up in mountainous terrain, and is believed to have been the result of hostile fire."
+    },
+    {
+      "id": "gate-en-1990",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10938576782105608041.wav",
+      "sha256": "34eef6d3531779f297c25d5f695baf92a37ef32149e293d79b9afac4ff36654c",
+      "seconds": 8.76,
+      "reference": "Blogs can also help improve student writing. While students often begin their blog experience with sloppy grammar and spelling, the presence of an audience generally changes that."
+    },
+    {
+      "id": "gate-en-1908",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/10969774925516121312.wav",
+      "sha256": "087fbfdba69858b9397d67a2c80f34d827ce09a46e895ac1c7df97fc8c44d635",
+      "seconds": 4.5,
+      "reference": "This is an important way to distinguish between some verbs and objects."
+    },
+    {
+      "id": "gate-en-1678",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1111475259790805601.wav",
+      "sha256": "2ec0ade3595e05c1e91a751fc73811f69606b9682a23b2eeb48c6840e959bee9",
+      "seconds": 12.78,
+      "reference": "Oliver Sacks, in his paper The President's Speech, indicated how people who are unable to understand speech because of brain damage are nevertheless able to assess sincerity accurately."
+    },
+    {
+      "id": "gate-en-1701",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11147918080606585533.wav",
+      "sha256": "3859f7a841e3d99099cb1f5f88057c864bc560c3700566369f7acc79a7f7c3db",
+      "seconds": 10.62,
+      "reference": "Goats seem to have been first domesticated roughly 10,000 years ago in the Zagros Mountains of Iran."
+    },
+    {
+      "id": "gate-en-2001",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1116140877447157610.wav",
+      "sha256": "4b4fbbb4ccd842960f70b767882296ef7e9e96613ed6b20acd2baf0f90d96eb3",
+      "seconds": 7.32,
+      "reference": "Travellers are strongly advised to be aware of any risk of severe weather affecting their area as they may affect any travel plans."
+    },
+    {
+      "id": "gate-en-1991",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1116401173651214130.wav",
+      "sha256": "81df6287d12095143e798c36bc6a2809f14e2ad09ed3e176d81b8a574bf448f2",
+      "seconds": 11.4,
+      "reference": "During this period of European history, the Catholic Church, which had become rich and powerful, came under scrutiny."
+    },
+    {
+      "id": "gate-en-1895",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11200231708585274851.wav",
+      "sha256": "023f7620e05af8b94de3de49a50c5a4d9d9d0d74501b4d7e2d1b3f91aca0594b",
+      "seconds": 10.18,
+      "reference": "As knowledge of Greek declined, the West found itself cut off from its Greek philosophical and scientific roots."
+    },
+    {
+      "id": "gate-en-1710",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11260391063812418810.wav",
+      "sha256": "52146e497ab6ec9ea0f95029b00019b7c07ca31ff13143b968c4a7565f15f9d1",
+      "seconds": 9.12,
+      "reference": "Last week, METI announced that Apple had informed it of 34 additional overheating incidents, which the company called \"non-serious.\""
+    },
+    {
+      "id": "gate-en-1975",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11265842188315045636.wav",
+      "sha256": "07385deba3f670720414e0c0b301ec3e311ae617b1b4d0fa3e73d41a1969749c",
+      "seconds": 10.74,
+      "reference": "Vatican City's population is around 800. It is the smallest independent country in the world and the country with the lowest population."
+    },
+    {
+      "id": "gate-en-1720",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11374239868879585530.wav",
+      "sha256": "f42cea08615fab29cbbe5076d44e035906e02985e9ca62e71e994e81813d8136",
+      "seconds": 6.42,
+      "reference": "The hot chocolate is up to Belgian standards. Fruit juices are pricey but excellent."
+    },
+    {
+      "id": "gate-en-1723",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11426556553252626005.wav",
+      "sha256": "e9216146bc8a9054526e538464eea6f016a25753658c7b46a82c0c337a780aab",
+      "seconds": 12.78,
+      "reference": "The harbor was the site of an infamous naval standoff in 1889 when seven ships from Germany, the US, and Britain refused to leave the harbor."
+    },
+    {
+      "id": "gate-en-1769",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11459777646810052940.wav",
+      "sha256": "8c389f0f3ccd71b95b1b2ebf95d873665294b5fc5ec3f0f3cb34d13b0ff6f51f",
+      "seconds": 8.94,
+      "reference": "Built by the Egyptians in the third century BCE, the Great Pyramid is one of many large pyramid structures built to honor dead Pharaoh."
+    },
+    {
+      "id": "gate-en-1794",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1146643745158029931.wav",
+      "sha256": "3f2274e8674add31a68f297a459dd90fb92f1564de16f1e205e1725154ff5892",
+      "seconds": 8.88,
+      "reference": "A civilization is a singular culture shared by a significant large group of people who live and work co-operatively, a society."
+    },
+    {
+      "id": "gate-en-1882",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11504385604540375365.wav",
+      "sha256": "1a70d8dcac8e35870aad704f4c679c3dfdd3f38ebde9fc0804168a9f959a8b99",
+      "seconds": 6.18,
+      "reference": "Scientists hope to understand how planets form, especially how the Earth formed, since comets collided with the Earth long ago."
+    },
+    {
+      "id": "gate-en-1890",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11525263464519603482.wav",
+      "sha256": "c0996d5550e436d59a44587a1c436e9b7f248b81cde6b18d0a88b9934a6d0453",
+      "seconds": 6.84,
+      "reference": "Most modern research telescopes are enormous facilities in remote areas with favorable atmospheric conditions."
+    },
+    {
+      "id": "gate-en-1849",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1153104690713813269.wav",
+      "sha256": "697a11c90a68e690a23d2ec1e25c070f65fb1db92e9a3a143066e1c81367e255",
+      "seconds": 6.78,
+      "reference": "If you have watched the movie National Treasure, you may think a treasure map was written on the back of the Declaration of Independence."
+    },
+    {
+      "id": "gate-en-1893",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11536232800365538941.wav",
+      "sha256": "d08ee182ad247752711fcee9a7b8928d68d32fff3b15d4007b048380fa499742",
+      "seconds": 10.2,
+      "reference": "The Sundarbans are the largest littoral mangrove belt in the world, stretching 80 km (50 mi) into the Bangladeshi and Indian hinterland from the coast."
+    },
+    {
+      "id": "gate-en-1667",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11554335886429174193.wav",
+      "sha256": "6e8948a700c2ee114c7131b8e52a44897b3cf86cf86a1d89bf93b4ad10c802c0",
+      "seconds": 14.22,
+      "reference": "Generally speaking, two behaviors can emerge as managers begin to lead their former peers. One end of the spectrum is trying to remain “one of the guys” (or gals)."
+    },
+    {
+      "id": "gate-en-1814",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11559094331412401332.wav",
+      "sha256": "1601a4599ee795a79f49e7f484733b1a30a4f9f8ca828d719751c8d28213fd80",
+      "seconds": 7.68,
+      "reference": "Hydrogen ions are protons that had their electrons stripped off them (since Hydrogen atoms consist of one proton and one electron)."
+    },
+    {
+      "id": "gate-en-1999",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11596505942268625598.wav",
+      "sha256": "f1e3c56aba23bdf8db9880a17fcadd5d9fbfc6cbc7469488d6a18443ac87e25e",
+      "seconds": 8.76,
+      "reference": "Throughout 1960s, Brzezinski worked for John F. Kennedy as his advisor and then the Lyndon B. Johnson administration."
+    },
+    {
+      "id": "gate-en-1722",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11617272550749387741.wav",
+      "sha256": "8f53bc60c4494b529ba07669695304d3b7b09e0500f07a5ca690eadae5afde87",
+      "seconds": 9.42,
+      "reference": "Cuomo, 53, began his governorship earlier this year and signed a bill last month legalizing same-sex marriage."
+    },
+    {
+      "id": "gate-en-1778",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11665346626937246597.wav",
+      "sha256": "8652db54f8b59b71899bfe28acb9c6bd922c2741f16c3fe99a1a7fab33341e78",
+      "seconds": 5.04,
+      "reference": "Television reports show white smoke coming from the plant."
+    },
+    {
+      "id": "gate-en-1830",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11668734600035674277.wav",
+      "sha256": "e814b6357fba30d26b3ac82a466f532b9b1d529db0fff6fadb8ad8d87e249c74",
+      "seconds": 10.64,
+      "reference": "The ruling party, South West Africa People's Organisation (SWAPO), also retained a majority in the parliamentary elections."
+    },
+    {
+      "id": "gate-en-1841",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11670188897888947692.wav",
+      "sha256": "f6a0424b2478aa6fe8eac741f9f459dd288d93975259441cc7802744e5871ac5",
+      "seconds": 9.48,
+      "reference": "Nothing can be seen other than the clear, beautiful sky above and the many surrounding mountains. Very little of this world can be seen or heard from inside the cave."
+    },
+    {
+      "id": "gate-en-1866",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11705046490861852963.wav",
+      "sha256": "2df691ddc4252a9b222bc422abf9f4fa2d1fc0a03228cce7b553d09f56790077",
+      "seconds": 7.86,
+      "reference": "First, most riders wear riding boots with a heel and a smooth, quite narrow, sole."
+    },
+    {
+      "id": "gate-en-1831",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11781376959217630586.wav",
+      "sha256": "525bbeb705781bd512ce564f73799cb6298e252632cd48e09bc9169cc7097135",
+      "seconds": 15.36,
+      "reference": "The Plitvice Lakes national park is heavily forested, mainly with beech, spruce, and fir trees, and features a mixture of Alpine and Mediterranean vegetation."
+    },
+    {
+      "id": "gate-en-1939",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11820398005906165915.wav",
+      "sha256": "749cadddc168b40d0e26dff9b6c572e6ebc3a665976289613304aca43d85e958",
+      "seconds": 7.02,
+      "reference": "Also after the Revolution occupations were open to all male applicants allowing the most ambitious and successful to succeed."
+    },
+    {
+      "id": "gate-en-1870",
+      "language": "en",
+      "archive": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/11827077161070295147.wav",
+      "sha256": "f007465752485062d8e1c1d5612979ee61620e05d9fd4c3cc13398d5dba26db8",
+      "seconds": 4.32,
+      "reference": "The scenes are displayed on the pyramids and the different pyramids are lit up."
+    }
+  ]
+}

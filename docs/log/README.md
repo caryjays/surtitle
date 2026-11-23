@@ -76,6 +76,8 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-20-obs-live-path-and-fresh-length.md](2026-11-20-obs-live-path-and-fresh-length.md) | French through Chrome's capture into the live service, with and without OBS: a step in request time only with OBS just launched and the Mac in use, none with its preview lit and left alone; closing long rows on one decode, an experiment, lower p90 on 6 of 8 Italian talks, not yet shown |
 | [2026-11-21-chinese-scripts.md](2026-11-21-chinese-scripts.md) | Chinese profile with Simplified and Traditional (Taiwan) scripts, the script as a pair subtag, OpenCC conversion of recognized text and translations; fake providers only |
 | [2026-11-21-mandarin-gate.md](2026-11-21-mandarin-gate.md) | Mandarin public and held-out sets, stock sweep, gate file and first rolling run: fails held-out error over one-pass narrowly; Cantonese shown as Chinese |
+| [2026-11-22-korean-gate.md](2026-11-22-korean-gate.md) | Korean profile, Hangul in the worker's script check, public and Pansori-TEDxKR held-out sets, stock sweep and first rolling run: every measured part passes |
+| [2026-11-22-chinese-korean-local-translation.md](2026-11-22-chinese-korean-local-translation.md) | Required terms, local translator on the public clips, browser smokes, read-throughs in four directions and part 6 for `en-zh` and `en-ko`: English to Korean opens each talk in Japanese, from the English-to-Japanese example glossary; part 6 passes 9 of 10 talks |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

@@ -26,6 +26,9 @@ export const LanguageProfile = z.object({
   sentenceEnd: z.string().min(1).max(20),
   // Clause punctuation; rolling segmentation can close a shorter row at one when given a clause length.
   clauseEnd: z.string().min(1).max(20),
+  // Character scoring only: the language's letters as Unicode character-name prefixes, for the worker's check that a decode
+  // forced into the language is written in it. Without it, kanji and kana; Korean sets HANGUL.
+  letters: z.array(z.string().regex(/^[A-Z][A-Z ]{0,39}$/)).min(1).max(4).optional(),
   stockPhrases: z.array(z.string().min(1).max(80)).max(32),
   // Sign-offs that vary, such as a subtitle credit followed by any name: each must match the whole compacted text, as
   // both a JavaScript (u flag) and a Python regular expression. Keeps names out of the profile.

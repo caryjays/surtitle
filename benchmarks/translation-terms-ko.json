@@ -1,0 +1,497 @@
+{
+  "version": 1,
+  "note": "English and Korean pair. Per public clip of gate-fleurs-ko.json: groups of acceptable spellings, at least one of which must appear in a correct translation into the other language. Matching is case-insensitive after NFKC normalization. The English clips are the 25 of translation-terms-es.json; the Korean clips are the first 25 in manifest order whose reference holds a name, number or specific noun. Written from the public references before any translation was run.",
+  "terms": {
+    "gate-en-1972": [
+      [
+        "공룡"
+      ],
+      [
+        "깃털"
+      ]
+    ],
+    "gate-en-1876": [
+      [
+        "마리아나",
+        "Marianas"
+      ]
+    ],
+    "gate-en-1846": [
+      [
+        "3:2",
+        "3대2",
+        "3 대 2",
+        "3 : 2"
+      ]
+    ],
+    "gate-en-1776": [
+      [
+        "150"
+      ],
+      [
+        "200"
+      ],
+      [
+        "던랩",
+        "던랍",
+        "Dunlap"
+      ]
+    ],
+    "gate-en-1729": [
+      [
+        "노스캐롤라이나",
+        "노스 캐롤라이나",
+        "North Carolina"
+      ]
+    ],
+    "gate-en-1919": [
+      [
+        "니라공고",
+        "니이라공고",
+        "Nyiragongo"
+      ],
+      [
+        "고릴라"
+      ]
+    ],
+    "gate-en-1685": [
+      [
+        "35"
+      ]
+    ],
+    "gate-en-1752": [
+      [
+        "물고기",
+        "어종",
+        "어류"
+      ],
+      [
+        "멸종"
+      ]
+    ],
+    "gate-en-1749": [
+      [
+        "비시",
+        "Vichy"
+      ],
+      [
+        "1940"
+      ]
+    ],
+    "gate-en-1705": [
+      [
+        "8월 15일",
+        "8월15일"
+      ],
+      [
+        "1940"
+      ],
+      [
+        "프랑스"
+      ]
+    ],
+    "gate-en-1858": [
+      [
+        "랑타뉴",
+        "란타뉴",
+        "랑타녜",
+        "란타그네",
+        "Lantagne"
+      ],
+      [
+        "발병",
+        "발생",
+        "창궐",
+        "유행",
+        "확산"
+      ]
+    ],
+    "gate-en-1897": [
+      [
+        "사헬",
+        "Sahel"
+      ],
+      [
+        "대서양"
+      ]
+    ],
+    "gate-en-1680": [
+      [
+        "호랑이",
+        "범"
+      ],
+      [
+        "다섯",
+        "5"
+      ]
+    ],
+    "gate-en-1953": [
+      [
+        "애든브룩",
+        "아덴브룩",
+        "애덴브룩",
+        "Addenbrooke"
+      ],
+      [
+        "케임브리지",
+        "캠브리지",
+        "Cambridge"
+      ]
+    ],
+    "gate-en-1701": [
+      [
+        "염소"
+      ],
+      [
+        "10,000",
+        "10000",
+        "1만",
+        "만 년",
+        "만년"
+      ],
+      [
+        "자그로스",
+        "Zagros"
+      ],
+      [
+        "이란"
+      ]
+    ],
+    "gate-en-1710": [
+      [
+        "Apple",
+        "애플"
+      ],
+      [
+        "34"
+      ]
+    ],
+    "gate-en-1975": [
+      [
+        "바티칸"
+      ],
+      [
+        "800"
+      ]
+    ],
+    "gate-en-1720": [
+      [
+        "초콜릿",
+        "초콜렛",
+        "코코아"
+      ],
+      [
+        "벨기에"
+      ]
+    ],
+    "gate-en-1723": [
+      [
+        "1889"
+      ],
+      [
+        "독일"
+      ]
+    ],
+    "gate-en-1769": [
+      [
+        "피라미드"
+      ],
+      [
+        "파라오"
+      ]
+    ],
+    "gate-en-1999": [
+      [
+        "브레진스키",
+        "브레젠스키",
+        "브레진스끼",
+        "Brzezinski"
+      ],
+      [
+        "케네디",
+        "Kennedy"
+      ],
+      [
+        "존슨",
+        "Johnson"
+      ]
+    ],
+    "gate-en-1722": [
+      [
+        "쿠오모",
+        "Cuomo"
+      ],
+      [
+        "53"
+      ]
+    ],
+    "gate-en-1830": [
+      [
+        "SWAPO",
+        "스와포",
+        "서남아프리카인민기구",
+        "남서아프리카인민기구",
+        "서남아프리카 인민 기구",
+        "남서아프리카 인민 기구"
+      ]
+    ],
+    "gate-en-1831": [
+      [
+        "플리트비체",
+        "Plitvice"
+      ]
+    ],
+    "gate-en-1814": [
+      [
+        "수소"
+      ],
+      [
+        "양성자"
+      ]
+    ],
+    "gate-ko-1826": [
+      [
+        "Gibson"
+      ],
+      [
+        "hospital"
+      ]
+    ],
+    "gate-ko-1993": [
+      [
+        "Atlantic"
+      ],
+      [
+        "Jerry"
+      ],
+      [
+        "subtropical"
+      ],
+      [
+        "tenth",
+        "10th"
+      ]
+    ],
+    "gate-ko-1829": [
+      [
+        "tax"
+      ],
+      [
+        "alcohol",
+        "liquor"
+      ],
+      [
+        "tobacco",
+        "cigarette"
+      ]
+    ],
+    "gate-ko-1992": [
+      [
+        "safari"
+      ],
+      [
+        "savanna"
+      ],
+      [
+        "Africa"
+      ]
+    ],
+    "gate-ko-1742": [
+      [
+        "Hong Kong"
+      ]
+    ],
+    "gate-ko-1849": [
+      [
+        "National Treasure"
+      ],
+      [
+        "Declaration of Independence"
+      ],
+      [
+        "treasure map"
+      ]
+    ],
+    "gate-ko-1709": [
+      [
+        "Iraq"
+      ]
+    ],
+    "gate-ko-1845": [
+      [
+        "Paris"
+      ],
+      [
+        "king"
+      ],
+      [
+        "queen"
+      ]
+    ],
+    "gate-ko-1674": [
+      [
+        "boil"
+      ],
+      [
+        "minute"
+      ]
+    ],
+    "gate-ko-1765": [
+      [
+        "1537"
+      ],
+      [
+        "Asunción",
+        "Asuncion"
+      ],
+      [
+        "Paraguay"
+      ]
+    ],
+    "gate-ko-1677": [
+      [
+        "dragonfl"
+      ],
+      [
+        "wing"
+      ]
+    ],
+    "gate-ko-1757": [
+      [
+        "mutation"
+      ],
+      [
+        "cancer"
+      ],
+      [
+        "germ"
+      ]
+    ],
+    "gate-ko-1771": [
+      [
+        "festival"
+      ],
+      [
+        "music"
+      ]
+    ],
+    "gate-ko-1910": [
+      [
+        "Paris"
+      ],
+      [
+        "arrogan"
+      ]
+    ],
+    "gate-ko-1894": [
+      [
+        "curry"
+      ],
+      [
+        "spice"
+      ]
+    ],
+    "gate-ko-1804": [
+      [
+        "Haiti"
+      ],
+      [
+        "Nepal"
+      ],
+      [
+        "peacekeep"
+      ]
+    ],
+    "gate-ko-1697": [
+      [
+        "pain"
+      ],
+      [
+        "drug",
+        "medication",
+        "medicine"
+      ]
+    ],
+    "gate-ko-1666": [
+      [
+        "government"
+      ]
+    ],
+    "gate-ko-2005": [
+      [
+        "dinosaur"
+      ],
+      [
+        "bird"
+      ]
+    ],
+    "gate-ko-1776": [
+      [
+        "Dunlap"
+      ],
+      [
+        "150"
+      ],
+      [
+        "200"
+      ],
+      [
+        "broadside"
+      ]
+    ],
+    "gate-ko-1866": [
+      [
+        "boot"
+      ],
+      [
+        "heel"
+      ]
+    ],
+    "gate-ko-1672": [
+      [
+        "fabric",
+        "cloth"
+      ],
+      [
+        "shrink"
+      ]
+    ],
+    "gate-ko-1673": [
+      [
+        "13",
+        "thirteen"
+      ],
+      [
+        "Articles of Confederation"
+      ],
+      [
+        "Congress"
+      ]
+    ],
+    "gate-ko-1695": [
+      [
+        "pa amb oli"
+      ],
+      [
+        "tomato"
+      ],
+      [
+        "olive oil"
+      ],
+      [
+        "cheese"
+      ],
+      [
+        "tuna"
+      ]
+    ],
+    "gate-ko-1737": [
+      [
+        "lion"
+      ],
+      [
+        "social"
+      ]
+    ]
+  }
+}
