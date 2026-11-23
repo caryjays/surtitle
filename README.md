@@ -1,5 +1,7 @@
 # Surtitle
 
+**[caryjays.github.io/surtitle](https://caryjays.github.io/surtitle/)**: the project homepage, with an introduction, setup steps and an OBS walkthrough.
+
 Live captions on one Mac, pairing English with one other language per session. Surtitles are the translated text projected above a stage during a live performance; this does the same for a talk, a lecture or a conversation. Chrome captures the microphone, a loopback Node service runs MLX Whisper in an isolated Python worker, and OBS can compose a transparent overlay. Translation is off by default and can run on the same Mac with a local model, or in the cloud. Nothing is recorded or persisted.
 
 Japanese is the first language pair. Spanish runs as a pilot beside it. French, Italian, Portuguese, Chinese (Simplified or Traditional, Taiwan) and Korean are selectable with gates of their own, not yet passed. Each pair ships after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md) and [gates](docs/wiki/gates.md).
