@@ -2,7 +2,7 @@
 
 Live captions on one Mac, pairing English with one other language per session. Surtitles are the translated text projected above a stage during a live performance; this does the same for a talk, a lecture or a conversation. Chrome captures the microphone, a loopback Node service runs MLX Whisper in an isolated Python worker, and OBS can compose a transparent overlay. Translation is off by default and can run on the same Mac with a local model, or in the cloud. Nothing is recorded or persisted.
 
-Japanese is the first language pair. Spanish runs as a pilot beside it, and French, Italian and Portuguese are selectable with gates of their own, not yet passed. Each pair ships after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md) and [gates](docs/wiki/gates.md).
+Japanese is the first language pair. Spanish runs as a pilot beside it. French, Italian, Portuguese, Chinese (Simplified or Traditional, Taiwan) and Korean are selectable with gates of their own, not yet passed. Each pair ships after it passes a written quality gate; see the [roadmap](docs/wiki/roadmap.md) and [gates](docs/wiki/gates.md).
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -35,7 +35,7 @@ Three profiles, all with local recognition:
 
 ## Language pair
 
-`LANGUAGE_PAIR=en-ja` is the default; `en-es` selects the Spanish pilot, and `en-fr`, `en-it` and `en-pt` the newer pairs. The console can switch the pair while capture is off. Speech outside the pair is not captioned and leaves a marker row.
+`LANGUAGE_PAIR=en-ja` is the default; `en-es` selects the Spanish pilot, and `en-fr`, `en-it`, `en-pt`, `en-zh-Hans`, `en-zh-Hant` and `en-ko` the newer pairs. The console can switch the pair while capture is off. Speech outside the pair is not captioned and leaves a marker row.
 
 ## Overlay for OBS
 
@@ -43,6 +43,7 @@ Add a Browser Source at `http://127.0.0.1:4317/overlay`, 1920 × 1080, Local fil
 
 ## Documentation
 
+- [Project homepage](site/index.html): a standalone introduction, setup guide and OBS walkthrough. Preview from the repository root with `python3 -m http.server 4173 --bind 127.0.0.1 --directory site`, then open `http://127.0.0.1:4173`. It needs no build and does not start caption capture.
 - [Wiki](docs/wiki/README.md): current state. Start with [overview](docs/wiki/overview.md), [status](docs/wiki/status.md) and [architecture](docs/wiki/architecture.md).
 - [Log](docs/log/README.md): dated history and the pre-wiki documents.
 - [AGENTS.md](AGENTS.md): mandatory rules for agents, including credential safety and documentation practices.
@@ -67,6 +68,7 @@ The full list is in [testing](docs/wiki/testing.md).
 ```text
 apps/web/            Operator page, overlay, AudioWorklet
 apps/service/        Loopback HTTP/WebSocket service and caption controller
+site/                Standalone static project homepage; no caption service or build required
 packages/protocol/   Runtime-validated shared schemas
 packages/providers/  Local worker and translator adapters, turn and rolling segmentation, cloud adapters
 scripts/local/       Python worker, setup, scoring, benchmarks, experiments
