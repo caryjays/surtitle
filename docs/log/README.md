@@ -79,6 +79,7 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-22-korean-gate.md](2026-11-22-korean-gate.md) | Korean profile, Hangul in the worker's script check, public and Pansori-TEDxKR held-out sets, stock sweep and first rolling run: every measured part passes |
 | [2026-11-22-chinese-korean-local-translation.md](2026-11-22-chinese-korean-local-translation.md) | Required terms, local translator on the public clips, browser smokes, read-throughs in four directions and part 6 for `en-zh` and `en-ko`: English to Korean opens each talk in Japanese, from the English-to-Japanese example glossary; part 6 passes 9 of 10 talks |
 | [2026-11-22-project-homepage.md](2026-11-22-project-homepage.md) | Static project homepage, setup instructions, OBS walkthrough and responsive browser checks |
+| [2026-11-22-homepage-on-pages.md](2026-11-22-homepage-on-pages.md) | Homepage published with GitHub Pages by a workflow; share preview image and address metadata |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

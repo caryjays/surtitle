@@ -43,7 +43,7 @@ Add a Browser Source at `http://127.0.0.1:4317/overlay`, 1920 × 1080, Local fil
 
 ## Documentation
 
-- [Project homepage](site/index.html): a standalone introduction, setup guide and OBS walkthrough. Preview from the repository root with `python3 -m http.server 4173 --bind 127.0.0.1 --directory site`, then open `http://127.0.0.1:4173`. It needs no build and does not start caption capture.
+- [Project homepage](https://caryjays.github.io/surtitle/): a standalone introduction, setup guide and OBS walkthrough, served by GitHub Pages from `site/`. Preview from the repository root with `python3 -m http.server 4173 --bind 127.0.0.1 --directory site`, then open `http://127.0.0.1:4173`. It needs no build and does not start caption capture.
 - [Wiki](docs/wiki/README.md): current state. Start with [overview](docs/wiki/overview.md), [status](docs/wiki/status.md) and [architecture](docs/wiki/architecture.md).
 - [Log](docs/log/README.md): dated history and the pre-wiki documents.
 - [AGENTS.md](AGENTS.md): mandatory rules for agents, including credential safety and documentation practices.

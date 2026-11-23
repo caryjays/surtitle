@@ -6,7 +6,7 @@ Read [the wiki start page](docs/wiki/README.md), then [overview](docs/wiki/overv
 
 If `private/AGENTS.md` exists, read it after this file. It carries the maintainer's personal context and is never tracked.
 
-This repository is standalone. Do not depend on, import from, or modify any other repository. It is public on GitHub; no hosted deployment exists. Pushing is publishing: ask first.
+This repository is standalone. Do not depend on, import from, or modify any other repository. It is public on GitHub. The only hosted deployment is the static homepage in `site/`, which GitHub Pages serves from `main`; the caption service is never hosted. Pushing is publishing, and a push that touches `site/` redeploys the homepage: ask first.
 
 ## Credential safety — mandatory
 

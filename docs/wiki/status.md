@@ -14,7 +14,7 @@ What runs:
 - Three translation profiles: off (the default), offline (`pnpm dev:offline`, a pinned local Qwen3.5-4B with streaming replies) and cloud (`pnpm dev:listen`).
 - The operator console at `/control`, with an audience view, overlay URL builder, health, shortcuts, runtime settings and a switch between the pairs while capture is off; the roll-up overlay with a reading-pace pacer; opt-in content-free diagnostics read with `pnpm diag:latency`.
 - Speech outside the pair is not captioned and leaves a marker row. A recognizer that falls behind restarts on its own, visibly.
-- A standalone project homepage in `site/` introduces the project, links to GitHub and the wiki, and explains local captions, offline translation and OBS setup. It is previewed locally and awaits approval for publication; see [the homepage entry](../log/2026-11-22-project-homepage.md).
+- A standalone project homepage in `site/` introduces the project, links to GitHub and the wiki, and explains local captions, offline translation and OBS setup. GitHub Pages serves it from `main`; see [the homepage entry](../log/2026-11-22-project-homepage.md) and [its publication](../log/2026-11-22-homepage-on-pages.md).
 
 The maintainer has rehearsed it in OBS with English, Japanese and off-pair speech, and has run microphone sessions in `en-es` with offline translation; see [other languages](../log/2026-11-10-other-languages.md) and [the session](../log/2026-11-12-en-es-microphone-session.md).
 
