@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121416" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Surtitle is an open-source live caption companion for Apple Silicon. Pair English with another language, translate locally, and bring bilingual captions into OBS.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Surtitle">
+  <meta property="og:title" content="Surtitle — Your words. In their language.">
+  <meta property="og:description" content="Open-source live bilingual captions for talks, lectures and conversations. Speech is recognized on your Apple Silicon Mac and composed into OBS.">
+  <meta name="twitter:card" content="summary">
+  <title>Surtitle — Your words. In their language.</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./main.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="brand" href="#" aria-label="Surtitle home"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span>surtitle<span class="brand-period">.</span></a>
+    <nav aria-label="Main navigation">
+      <a href="#how-it-works">How it works</a>
+      <a href="#get-started">Get started</a>
+      <a class="github-link" href="https://github.com/caryjays/surtitle"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9 19 C4 20 4 17 2 17 M16 22 V18 C16 17 16 16 15 16 C18 16 21 14 21 10 C21 8 20 7 20 7 C20 6 20 4 19 3 C17 3 15 5 15 5 C13 4 11 4 9 5 C9 5 7 3 5 3 C4 4 4 6 4 7 C4 7 3 8 3 10 C3 14 6 16 9 16 C8 17 8 18 8 19 V22"/></svg>GitHub</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="small-rule"></span> OPEN SOURCE · BUILT FOR APPLE SILICON</p>
+        <h1 id="hero-title">Your words.<br>In their<br><span>language.</span></h1>
+        <p class="hero-description">Live bilingual captions for talks, lectures, and conversations. Recognize speech on your Mac. Bring the translation to your audience.</p>
+        <div class="hero-actions"><a class="button primary" href="#get-started">Get started</a><a class="text-link" href="https://github.com/caryjays/surtitle#readme">Read the README</a></div>
+        <p class="hero-note">Local recognition. Optional translation. No account.</p>
+      </div>
+
+      <div class="hero-visual">
+        <div class="demo-topline"><span>ONE VOICE. TWO LANGUAGES.</span><span class="demo-tag">Illustrative demo</span></div>
+        <div class="stage">
+          <div class="stage-heading"><span class="stage-label">A SHARED PERSPECTIVE</span><span class="stage-glyph" aria-hidden="true">s.</span></div>
+          <div class="orbit-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div><span class="orbit-center"></span></div>
+          <p class="slide-title">Good ideas<br>travel further.</p>
+          <div class="caption-overlay">
+            <p class="caption-source" id="demo-source" lang="en">Let's build something together.</p>
+            <p class="caption-translation" id="demo-translation" lang="ja">一緒に何かを作りましょう。</p>
+          </div>
+          <div class="stage-footer"><span>YOUR PRESENTATION + SURTITLE</span><span aria-hidden="true">▰ ▰ ▰</span></div>
+        </div>
+        <div class="demo-bottomline"><span>Same idea. A different direction.</span><div class="segmented direction-switch" role="group" aria-label="Caption illustration direction"><button type="button" data-direction="en-ja" aria-pressed="true">EN → JA</button><button type="button" data-direction="ja-en" aria-pressed="false">JA → EN</button></div></div>
+        <p class="visual-caption">Original speech, smaller. Translation, front and center.</p>
+      </div>
+    </section>
+
+    <div class="principles wrap" aria-label="Project highlights"><span>Audio stays on your Mac</span><span>Works with OBS</span><span>No audio or transcript storage</span><span>Apache 2.0 licensed</span></div>
+
+    <section id="how-it-works" class="section wrap">
+      <div class="section-intro"><p class="eyebrow">A CAPTION LAYER FOR YOUR WORLD</p><h2>Speak naturally.<br>Keep everyone with you.</h2><p>Surtitle takes its name from the translated text above a theatre stage. Here, the stage is your screen.</p></div>
+      <div class="workflow">
+        <article><div class="flow-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="12" y="4" width="8" height="15" rx="4"/><path d="M8 15a8 8 0 0 0 16 0M16 23v5m-5 0h10"/></svg></div><h3>Capture in Chrome.</h3><p>Choose a microphone in the operator console. Local MLX Whisper turns speech into text on your Apple Silicon Mac.</p><span class="flow-label">MICROPHONE → LOCAL RECOGNITION</span></article>
+        <article><div class="flow-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 8h15M11 4v4M7 8c1 7 5 11 12 14M16 8c-1 6-5 11-12 14M19 28l5-14 5 14m-8-5h6"/></svg></div><h3>Choose your translation.</h3><p>Keep original captions, add a local translator for offline use, or opt into paid cloud text translation. Set the direction or leave it on Auto.</p><span class="flow-label">ONE SESSION → ONE LANGUAGE PAIR</span></article>
+        <article><div class="flow-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="3" y="5" width="26" height="19" rx="2"/><path d="M10 29h12M16 24v5M8 15h11M8 19h16"/></svg></div><h3>Put it on your stage.</h3><p>Read in the console or layer transparent captions over slides, a demo, or a camera in OBS. Changing scenes keeps capture running.</p><span class="flow-label">BILINGUAL TEXT → YOUR AUDIENCE</span></article>
+      </div>
+    </section>
+
+    <section id="get-started" class="setup-section">
+      <div class="wrap setup-grid">
+        <div class="setup-copy"><p class="eyebrow accent">FROM REPOSITORY TO FIRST WORDS</p><h2>Make yourself<br>understood.</h2><p>Run Surtitle from source. Start with local captions, then add translation when you're ready.</p><div class="requirements"><h3>What you'll need</h3><ul><li>An Apple Silicon Mac</li><li>Node.js 22.9+, pnpm, uv, and ffmpeg</li><li>Google Chrome and a microphone</li><li>OBS, if you want an audience overlay</li></ul></div><p class="setup-note">Initial setup downloads a few gigabytes of pinned models and public test fixtures. After setup, the local profiles run without a network connection.</p><a class="text-link" href="https://github.com/caryjays/surtitle/blob/main/docs/wiki/operations.md">Full setup &amp; operating guide</a></div>
+        <div class="setup-instructions">
+          <ol class="steps">
+            <li><h3>Install and run</h3>
+              <div class="segmented profile-picker" role="group" aria-label="Setup profile"><button type="button" data-profile="local" aria-pressed="true">Local captions</button><button type="button" data-profile="offline" aria-pressed="false">Offline translation</button></div>
+              <div class="terminal"><div class="terminal-header"><span>TERMINAL</span><button type="button" id="copy-command" class="copy-button">Copy commands</button></div><pre><code id="setup-code"><span class="line">git clone https://github.com/caryjays/surtitle.git</span><span class="line">cd surtitle</span><span class="line">pnpm install</span><span class="line">pnpm local:setup</span><span class="line">pnpm dev:local</span></code></pre><div class="terminal-footer"><span id="profile-note">Local recognition · Translation off · No API key</span></div></div>
+              <p id="copy-status" class="copy-status" role="status"></p></li>
+            <li><h3>Open the operator console</h3><p>Once the service is running, open <a href="http://127.0.0.1:4317/control"><code>http://127.0.0.1:4317/control</code></a> in Chrome on that Mac. Use <code>127.0.0.1</code>; <code>localhost</code> is intentionally refused.</p></li>
+            <li><h3>Pick your input. Start speaking.</h3><p>Choose the language pair, click Start microphone, and allow microphone access when Chrome asks. Speak when the activity line says Listening. To use another input, pick it under the console's diagnostics section; device names appear once access is allowed. In the translation profiles, keep the room quiet through the 1.5-second noise calibration first.</p></li>
+          </ol>
+          <details class="cloud-option"><summary>Prefer cloud translation?</summary><p>The explicit <code>pnpm dev:listen</code> profile uses paid text translation through OpenAI or Anthropic. Recognition stays local; speech-derived text goes to the selected provider. Configure your own key following the <a href="https://github.com/caryjays/surtitle/blob/main/docs/wiki/overview.md#configuration">configuration guide</a>, then run <code>pnpm preflight:listen</code> before starting. Paid requests begin after Start, for finalized speech.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap obs-section" aria-labelledby="obs-title">
+      <div class="composition" role="img" aria-label="An illustration of transparent bilingual captions layered over a presentation in OBS"><div class="composition-top"><span>YOUR OBS SCENE</span><span>1920 × 1080</span></div><div class="composition-slide"><span class="composition-label">SLIDES / DEMO / CAMERA</span><div class="slide-lines" aria-hidden="true"><i></i><i></i><i></i></div><div class="mini-orbit" aria-hidden="true"></div></div><div class="composition-captions"><span>Here's where the conversation begins.</span><strong lang="ja">ここから会話が始まります。</strong></div><div class="composition-bottom"><span class="layer-icon" aria-hidden="true">▱</span> Transparent caption overlay</div></div>
+      <div class="obs-copy"><p class="eyebrow">READY FOR YOUR NEXT PRESENTATION</p><h2 id="obs-title">Your scene.<br>With subtitles.</h2><p>Add a Browser Source in OBS and paste the overlay URL. Start at 1920 × 1080, leave Local file unchecked, and place it above your presentation.</p><div class="url-box"><code>http://127.0.0.1:4317/overlay</code><button type="button" id="copy-overlay" class="copy-button">Copy URL</button></div><p id="overlay-copy-status" class="copy-status" role="status"></p><p class="obs-note">Keep the operator tab open and capture running in Chrome. The console's Overlay for OBS panel lets you adjust the caption window and copy a custom URL.</p><a class="text-link" href="https://github.com/caryjays/surtitle/blob/main/docs/wiki/operations.md#obs">Read the OBS guide</a></div>
+    </section>
+
+    <section class="language-section wrap" aria-labelledby="languages-title"><div><p class="eyebrow">ONE PAIR AT A TIME</p><h2 id="languages-title">Start with English<br>and Japanese.</h2><p>Japanese is the first, rehearsed pair. Spanish is a pilot. More languages are selectable, with their own quality gates still in progress.</p><a class="text-link" href="https://github.com/caryjays/surtitle/blob/main/docs/wiki/status.md">See current progress &amp; known limits</a></div><div class="language-list"><div><span>English + Japanese</span><span class="language-status">First pair</span></div><div><span>English + Spanish</span><span class="language-status">Pilot</span></div><div><span>French · Italian · Portuguese</span><span class="language-status quiet">In evaluation</span></div><div><span>Chinese · Korean</span><span class="language-status quiet">In evaluation</span></div><p>Chinese offers Simplified and Traditional scripts. Use a microphone near one speaker; overlapping voices and distant group speech aren't supported. Recognition and translation can make mistakes. Rehearse before presenting.</p></div></section>
+
+    <section class="closing wrap"><div><p class="eyebrow accent">BUILT IN THE OPEN</p><h2>A little less lost<br>in translation.</h2></div><div><p>Explore the code, follow the experiments, or help make the next conversation easier to understand.</p><a class="button primary" href="https://github.com/caryjays/surtitle">Explore on GitHub</a></div></section>
+  </main>
+  <footer class="site-footer wrap"><a class="brand" href="#" aria-label="Surtitle home"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span>surtitle<span class="brand-period">.</span></a><p>Live captions. Shared understanding.</p><nav aria-label="Project resources"><a href="https://github.com/caryjays/surtitle/blob/main/docs/wiki/README.md">Documentation</a><a href="https://github.com/caryjays/surtitle/issues">Issues</a><a href="https://github.com/caryjays/surtitle/blob/main/LICENSE">Apache 2.0</a></nav></footer>
+</body>
+</html>

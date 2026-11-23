@@ -14,7 +14,7 @@ pnpm local:setup   # Python venv, pinned models and public fixtures; no key need
 pnpm dev:local     # local recognition, translation off, never reads .env
 ```
 
-Open `http://127.0.0.1:4317/control` in Chrome, pick the input, click Start, stay quiet through the short calibration, then speak. The page is the operator console: session controls, an audience view of what the overlay shows, health and settings.
+Open `http://127.0.0.1:4317/control` in Chrome, pick the input, click Start, then speak; the translation profiles first ask for quiet through a short calibration. The page is the operator console: session controls, an audience view of what the overlay shows, health and settings.
 
 ## Translation
 
