@@ -7,11 +7,20 @@ import { agreedRest, agreedTail, endsSentence, isStockPhrase, joinText, lockCoun
 import { Snapshot, type TurnMeasurement } from '../packages/protocol/index.ts';
 import type { TranscriptEvent, Translator } from '../packages/providers/types.ts';
 
-test('stable text is the agreed prefix and never ends inside a Latin word', () => {
+test('stable text is the agreed prefix and never ends inside a word written with spaces', () => {
   assert.equal(stablePrefix('Hello world', 'Hello words'), 'Hello ');
   assert.equal(stablePrefix('version 12', 'version 123'), 'version ');
   assert.equal(stablePrefix('今日は晴れ', '今日は雨'), '今日は');
   assert.equal(stablePrefix('', 'anything'), '');
+  // Accented letters and Hangul are word characters; a word the newest decode ends is whole.
+  assert.equal(stablePrefix('Dice que está bien', 'Dice que están'), 'Dice que ');
+  assert.equal(stablePrefix('Dice que están', 'Dice que está bien'), 'Dice que está');
+  assert.equal(stablePrefix('Vive en esta', 'Vive en está'), 'Vive en ');
+  assert.equal(stablePrefix('Il a été là', 'Il a étudié'), 'Il a ');
+  assert.equal(stablePrefix("l'homme", "l'hommage"), "l'");
+  assert.equal(stablePrefix('저는 학교에', '저는 학생입니다'), '저는 ');
+  assert.equal(stablePrefix('コーヒーを', 'コーラを'), 'コー');
+  assert.equal(stablePrefix('我们今天去', '我们今晚去'), '我们今');
 });
 test('only whole segments inside the stable text that have settled lock, unless forced or final', () => {
   const segments = [{ endMs: 2000, text: ' One.' }, { endMs: 4000, text: ' Two.' }, { endMs: 5500, text: ' Thr' }];
@@ -24,11 +33,18 @@ test('only whole segments inside the stable text that have settled lock, unless 
   assert.deepEqual(lockCount([{ endMs: 25_000, text: ' long' }], '', 25_000, false), { count: 1, forced: true });
   assert.deepEqual(lockCount(segments, '', 6000, true), { count: 3, forced: false });
 });
-test('row text joins segments without gluing Latin words and detects sentence ends', () => {
+test('row text joins segments without gluing words and detects sentence ends', () => {
   assert.equal(joinText('', ' Hello.'), 'Hello.');
   assert.equal(joinText('Hello.', ' World'), 'Hello. World');
   assert.equal(joinText('Hello.', 'World'), 'Hello. World');
   assert.equal(joinText('今日は', '晴れです。'), '今日は晴れです。');
+  assert.equal(joinText('Fue al café', 'y luego volvió.'), 'Fue al café y luego volvió.');
+  assert.equal(joinText('Hola.', '¿Cómo estás?'), 'Hola. ¿Cómo estás?');
+  assert.equal(joinText('Il est là.', 'Été comme hiver'), 'Il est là. Été comme hiver');
+  assert.equal(joinText('안녕하세요.', '저는 학생입니다.'), '안녕하세요. 저는 학생입니다.');
+  assert.equal(joinText('저는', '학생입니다.'), '저는 학생입니다.');
+  assert.equal(joinText('你好。', '我们开始'), '你好。我们开始');
+  assert.equal(joinText('今日は.', '晴れ'), '今日は.晴れ');
   const ends = '.!?。！？';
   assert(endsSentence('It works.', ends) && endsSentence('そうです。」', ends) && !endsSentence('and then', ends));
   assert(!endsSentence('そうです。', '.!?') && endsSentence('a-b]', ']-'));

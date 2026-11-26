@@ -1,6 +1,6 @@
 # Operator page and overlay
 
-Verified: 2026-11-22 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/preview.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
+Verified: 2026-11-26 · Sources: apps/web/control.ts, apps/web/control.html, apps/web/overlay.html, apps/web/client.ts, apps/web/history.ts, apps/web/preview.ts, apps/web/reading.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, apps/web/style.css, packages/protocol/index.ts, profiles/languages.json, apps/service/server.ts
 
 ## /control
 
@@ -20,6 +20,7 @@ Layout: a top bar with the capture state, the listening presets, the capture con
 | Microphone, Refresh inputs, Recalibrate room noise, Automatic mic gain | Input panel | device choice; `calibrate`, listen mode only, keeps finished rows and cancels pending translations |
 | Direction, New session | Session panel | any of the three modes; `new-session` |
 | Language pair | Session panel, when the service offers more than one pair | `set-pair`: English with any profiled language, once per script for a language with scripts, such as Simplified Chinese and Traditional Chinese (Taiwan), only while capture is off; starts a new session in Auto, so the screen and translation context are cleared, and the page relabels itself. Not remembered across a restart, which returns to `LANGUAGE_PAIR` |
+| Glossary | Session panel, when the service has term sets | `set-glossary`: one of the offered sets by name, only while capture is off; starts a new session. Beneath it, how many names and terms the pair sends and which terms it leaves out; see [translation](translation.md#glossary) |
 | Segmentation | Session panel, when the recognizer offers the choice | `set-segmentation`: turns or rolling, only while capture is off, from the next Start |
 | Translate finalized text | Session panel, when a translator is configured; labeled on this Mac or paid cloud requests | `set-translation`: off drops queued requests and keeps originals; a request already sent finishes |
 

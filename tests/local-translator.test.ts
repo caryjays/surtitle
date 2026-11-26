@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { LocalTranslator } from '../packages/providers/local-translator.ts';
 import { partialObject } from '../packages/providers/chat.ts';
+import { PROFILES } from '../packages/protocol/languages.ts';
 import type { TranslationDiagnostic } from '../packages/protocol/index.ts';
 
 function translator(behavior = 'normal') {
@@ -81,6 +82,26 @@ test('a directed request gives the model its reply opening, unless replyOpening 
   await live.translate({ text: 'Hmm', mode: 'auto', glossary: [], sourceLanguage: 'unknown' }, new AbortController().signal);
   await generated.translate({ text: 'こんにちは', mode: 'auto', glossary: [], sourceLanguage: 'ja' }, new AbortController().signal);
   assert.deepEqual(sent.map(line => JSON.parse(line).opening), ['{"source":"ja","target":"en","text":"', undefined, undefined]);
+});
+test('a directed request into a language whose profile lists foreign writing asks the worker to avoid it, unless scriptGuard is false', async t => {
+  const sent: string[] = [];
+  const make = (pair: ['en', 'ko'] | ['en', 'ja'], scriptGuard?: boolean) => new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, ...(scriptGuard === undefined ? {} : { scriptGuard }), workerFactory: () => {
+    const child = spawn(process.execPath, ['tests/fixtures/fake-translate-worker.mjs', 'normal'], { stdio: ['pipe', 'pipe', 'pipe'], env: {} });
+    const write = child.stdin.write.bind(child.stdin);
+    child.stdin.write = ((chunk: string) => { sent.push(chunk); return write(chunk); }) as typeof child.stdin.write;
+    return child;
+  } });
+  const korean = make(['en', 'ko']), unguarded = make(['en', 'ko'], false), japanese = make(['en', 'ja']);
+  t.after(() => { korean.close(); unguarded.close(); japanese.close(); });
+  const ask = (local: LocalTranslator, text: string, sourceLanguage: 'en' | 'ko' | 'unknown') =>
+    local.translate({ text, mode: 'auto', glossary: [], sourceLanguage }, new AbortController().signal).catch(() => {});
+  await ask(korean, 'Hello.', 'en');       // into Korean: guarded
+  await ask(korean, '안녕하세요.', 'ko');    // into English: nothing to avoid
+  await ask(korean, 'Hmm', 'unknown');     // no direction: the model decides, unguarded
+  await ask(unguarded, 'Hello.', 'en');
+  await ask(japanese, 'Hello.', 'en');     // Japanese lists none
+  assert.deepEqual(sent.map(line => JSON.parse(line).avoid), [PROFILES.ko!.foreign, undefined, undefined, undefined, undefined]);
+  assert.ok(PROFILES.ko!.foreign?.includes('CJK'));
 });
 test('in a pair of one script, context rows in the other language are not sent to the local model', async t => {
   const sent: string[] = [];

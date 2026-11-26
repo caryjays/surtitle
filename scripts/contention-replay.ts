@@ -79,7 +79,7 @@ const translator = values.translate === 'local' ? new (holdMs === null ? LocalTr
     onUsage: u => { usage.requests++; usage.inputTokens += u.inputTokens; usage.outputTokens += u.outputTokens; } }) : null;
 if (translator instanceof LocalTranslator) await translator.start();
 const controller = new Controller({ pair, script, backend: 'replay', processing: cloud ? 'local-audio-cloud-text' : translator ? 'local-audio-local-text' : 'local-only', sessionLimitMs: null,
-  glossary: await loadGlossary(EXAMPLE_GLOSSARY), translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
+  glossary: [], termSets: [await loadGlossary(EXAMPLE_GLOSSARY, 'Example')], translator, segmentation: 'rolling', translationUnit: values.units as 'row' | 'piece',
   transcriber: localTranscriberFactory({ model: 'turbo-q4', segmentation: 'rolling', calibrationMs: CALIBRATION_MS, rows, cadence, pauseMs,
     ...(holdMs === null ? {} : { holdRolls }), ...(values['fresh-length'] ? { freshLengthClose: true } : {}) }) });
 // Collected as rows change: a snapshot holds only the latest rows. Keyed by recording and sequence.

@@ -25,12 +25,19 @@ export const ROLLING = {
   otherMarkDecodes: 3,
 };
 
-// Text two consecutive hypotheses agree on, never ending inside a Latin word or number.
+// A letter, mark or digit of a script written with spaces between words: Latin with its accents, Hangul and the like.
+// Kana and Chinese characters are left out, since their text has no spaces and agreement may end at any character.
+const WORD = String.raw`(?![\p{scx=Han}\p{scx=Hiragana}\p{scx=Katakana}])[\p{L}\p{M}\p{N}]`;
+const WORD_END = new RegExp(`${WORD}$`, 'u');
+const WORD_START = new RegExp(`^${WORD}`, 'u');
+const LAST_WORD = new RegExp(`(?:${WORD})+$`, 'u');
+
+// Text two consecutive hypotheses agree on, never ending inside a word or number of a script written with spaces.
 export function stablePrefix(previous: string, current: string) {
   let n = 0;
   while (n < previous.length && n < current.length && previous[n] === current[n]) n++;
   const stable = current.slice(0, n);
-  return /[A-Za-z0-9]$/.test(stable) && /[A-Za-z0-9]/.test(current[n] ?? '') ? stable.replace(/[A-Za-z0-9]+$/, '') : stable;
+  return WORD_END.test(stable) && WORD_START.test(current.slice(n)) ? stable.replace(LAST_WORD, '') : stable;
 }
 
 export function hypothesis(segments: WorkerSegment[]) {
@@ -50,11 +57,13 @@ export function lockCount(segments: WorkerSegment[], stable: string, windowMs: n
   return { count, forced: false };
 }
 
-// Append locked text to a row, keeping a space between Latin words that Whisper sometimes omits.
+// Append locked text to a row, keeping a space between words that Whisper sometimes omits, in any script written with spaces.
+const JOIN_END = new RegExp(`(?:${WORD}|[.,!?;:'")»])$`, 'u');
+const JOIN_START = new RegExp(`^(?:${WORD}|["'(¿¡«])`, 'u');
 export function joinText(row: string, text: string) {
   if (!row) return text.trimStart();
   if (/\s$/.test(row) || /^\s/.test(text)) return row + text;
-  return /[A-Za-z0-9.,!?;:'")]$/.test(row) && /^[A-Za-z0-9"'(]/.test(text) ? `${row} ${text}` : row + text;
+  return JOIN_END.test(row) && JOIN_START.test(text) ? `${row} ${text}` : row + text;
 }
 
 // ends lists the sentence-final characters of the session's languages; closing quotes and brackets may follow.

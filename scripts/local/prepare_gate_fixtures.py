@@ -27,7 +27,7 @@ GATE_LOCALES = {'es': 'es_419', 'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br', 'zh
 OTHER_LOCALES = {'zh': 'cmn_hans_cn', 'ko': 'ko_kr', 'es': 'es_419', 'de': 'de_de'}
 PER_OTHER = 10
 # A gate's own further third languages, its close neighbours, beside the shared set; see select_neighbours.
-# Mandarin's: Japanese, which shares its characters, and Cantonese, which Whisper reports as yue, outside the pair.
+# Mandarin's: Japanese, which shares its characters, and Cantonese, which has its own code, yue, but which Whisper detects as zh.
 # Korean's: Japanese, the language nearest it in grammar and sound; Mandarin is in the shared set.
 GATE_OTHER_LOCALES = {'es': {'fr': 'fr_fr', 'it': 'it_it', 'pt': 'pt_br'}, 'zh': {'ja': 'ja_jp', 'yue': 'yue_hant_hk'},
                       'ko': {'ja': 'ja_jp'}}

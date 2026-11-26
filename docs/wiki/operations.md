@@ -1,6 +1,6 @@
 # Operations
 
-Verified: 2026-11-22 · Sources: package.json, apps/service/main.ts, scripts/diagnostics-latency.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
+Verified: 2026-11-23 · Sources: package.json, apps/service/main.ts, scripts/diagnostics-latency.ts, apps/web/control.html, scripts/local/download_models.py, scripts/local/download_vad.py, scripts/local/download_fixtures.py
 
 Requirements: Apple Silicon Mac, Node 22.9 or later, pnpm, uv, ffmpeg, Google Chrome.
 
@@ -28,7 +28,7 @@ After editing source, stop the service, run the `dev:*` command again and reload
 ## Listening session
 
 1. `pnpm preflight:listen`, then `pnpm dev:listen`; or `pnpm preflight:offline`, then `pnpm dev:offline`, for translation on this Mac with no key and no network. Open `http://127.0.0.1:4317/control` in Chrome.
-2. In the Session panel choose the language pair, if not the one the service started in, and the direction: Auto, or one fixed direction for a lecture. Under the diagnostics disclosure pick the microphone; names appear after permission. Reload resets this to System default, so check the Actual input line after Start; it also shows the echo cancellation, noise suppression and automatic gain the browser applied.
+2. In the Session panel choose the language pair, if not the one the service started in, the glossary for the talk, and the direction: Auto, or one fixed direction for a lecture. Under the diagnostics disclosure pick the microphone; names appear after permission. Reload resets this to System default, so check the Actual input line after Start; it also shows the echo cancellation, noise suppression and automatic gain the browser applied.
 3. Click Start microphone. Wait through model warmup and the 1.5 s calibration, during which the whole room must be quiet. Speak when the activity line says Listening.
 4. Read. Scrolling back pauses Follow latest; Jump to latest resumes it. Text & spacing adjusts sizes and width. Preview long conversation works only while paused.
 5. For a stretch in one language, switch to that fixed direction while active; the next turn uses it. Translate now finalizes a long turn without stopping.

@@ -87,6 +87,10 @@ export async function createCaptionServer(options: { controller: Controller; por
               if (!options.controller.offers(command.pair, command.script)) throw new Error('pair');
               options.controller.setPair(command.pair, command.script);
               break;
+            case 'set-glossary':
+              if (!options.controller.offersGlossary(command.name)) throw new Error('glossary');
+              options.controller.setGlossary(command.name);
+              break;
           }
         } catch { options.controller.fail('protocol'); ws.close(1008, 'Invalid command'); }
       });

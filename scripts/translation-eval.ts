@@ -10,7 +10,7 @@ import { ChatCompletionsTranslator } from '../packages/providers/chat.ts';
 import { LocalTranslator, type LocalTranslationModel } from '../packages/providers/local-translator.ts';
 import { TranslationFailure, type Translator } from '../packages/providers/types.ts';
 import { translationInstructionsFor } from '../packages/providers/translation.ts';
-import { inScript } from '../packages/providers/script.ts';
+import { attached, inScript } from '../packages/providers/script.ts';
 import {
   CaseFile, JudgeResult, TermFile, VariantFile, applyVariant, blindJobs, direction, isPaid, judgeInstructionsFor, judgeSchema, parseCandidate, summarize, table, termScore, usageFrom,
   type Candidate, type EvalCase, type Variant, type Judgment, type Price, type Run, type Usage,
@@ -118,7 +118,7 @@ async function call(entry: typeof pool[number], item: EvalCase, repeat: number):
   try {
     // Shown in the session's script, as the controller shows it.
     const raw = await entry.translator.translate(inputFor(item, entry.c), signal, value => { diagnostic = value; });
-    const translation = { ...raw, text: inScript(raw.target, script, raw.text) };
+    const translation = { ...raw, text: attached(raw.target, inScript(raw.target, script, raw.text)) };
     const ms = Math.round(performance.now() - start);
     const groups = item.terms ?? terms[item.referenceId];
     return { candidate: entry.c.label, caseId: item.id, repeat, ms, outcome: 'completed', translation,

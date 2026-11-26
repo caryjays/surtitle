@@ -25,6 +25,8 @@ export type LocalTranslatorOptions = {
   promptCache?: boolean;
   // When the direction is known, the reply's opening up to its text is given to the model, not generated. On unless false.
   replyOpening?: boolean;
+  // When the direction is known, writing the target language's profile lists as foreign cannot be generated. On unless false.
+  scriptGuard?: boolean;
   // Per-request generation timing, for the eval and the service's diagnostics. Never text.
   onTiming?: (timing: { inferenceMs: number; promptTokens: number; generationTokens: number }) => void;
 };
@@ -123,7 +125,8 @@ export class LocalTranslator implements Translator {
       }, { once: true });
       const direction = /^([a-z]{2,3})-([a-z]{2,3})$/.exec(input.mode);
       const opening = this.options.replyOpening !== false && direction ? { opening: `{"source":"${direction[1]}","target":"${direction[2]}","text":"` } : {};
-      worker.stdin.write(JSON.stringify({ id, system, user, maxTokens: this.options.maxTokens ?? 512, ...opening }) + '\n');
+      const avoid = this.options.scriptGuard !== false && direction ? profile(direction[2]!).foreign : undefined;
+      worker.stdin.write(JSON.stringify({ id, system, user, maxTokens: this.options.maxTokens ?? 512, ...opening, ...(avoid ? { avoid } : {}) }) + '\n');
     });
     this.options.onTiming?.({ inferenceMs: result.inferenceMs, promptTokens: result.promptTokens, generationTokens: result.generationTokens });
     if (result.finish === 'length') { diagnostic?.({ response: 'incomplete', outputTokenLimitReached: true }); throw new Error('incomplete translation'); }

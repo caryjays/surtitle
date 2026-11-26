@@ -29,6 +29,16 @@ export const LanguageProfile = z.object({
   // Character scoring only: the language's letters as Unicode character-name prefixes, for the worker's check that a decode
   // forced into the language is written in it. Without it, kanji and kana; Korean sets HANGUL.
   letters: z.array(z.string().regex(/^[A-Z][A-Z ]{0,39}$/)).min(1).max(4).optional(),
+  // Writing a translation into the language never holds, as Unicode character-name prefixes. The local translator cannot
+  // generate a token that holds such a character; Korean rules out Chinese characters and kana.
+  foreign: z.array(z.string().regex(/^[A-Z][A-Z ]{0,39}$/)).min(1).max(8).optional(),
+  // Particles written onto the word before them. The local translator leaves a space between a number or Latin word and
+  // its particle, "AI 는"; in a translation into the language that space is removed. A closed list of whole words, so
+  // an ordinary word after a number keeps its space.
+  particles: z.array(z.string().min(1).max(8)).min(1).max(40).optional(),
+  // The language's writing, as Unicode script names, that stands directly beside a Latin word or number. The local
+  // translator leaves a space there, "AI は" and "10 月"; in a translation into the language that space is removed.
+  adjoining: z.array(z.enum(['Han', 'Hiragana', 'Katakana'])).min(1).optional(),
   stockPhrases: z.array(z.string().min(1).max(80)).max(32),
   // Sign-offs that vary, such as a subtitle credit followed by any name: each must match the whole compacted text, as
   // both a JavaScript (u flag) and a Python regular expression. Keeps names out of the profile.

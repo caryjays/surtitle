@@ -75,7 +75,7 @@ packages/protocol/   Runtime-validated shared schemas
 packages/providers/  Local worker and translator adapters, turn and rolling segmentation, cloud adapters
 scripts/local/       Python worker, setup, scoring, benchmarks, experiments
 benchmarks/          Gate targets, public fixture manifests and attribution; no audio in Git
-profiles/            Language profiles and an example translation glossary; a private one can override it
+profiles/            Language profiles and an example glossary of names and preferred translations; private ones can replace it
 docs/wiki, docs/log  Current state and history
 ```
 

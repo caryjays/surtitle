@@ -215,8 +215,10 @@ export class LocalTranscriber implements Transcriber {
     // Text in a language with scripts is shown in the session's script before decodes are compared: Whisper can write
     // the same audio in either script from one decode to the next.
     const language = message.language;
-    const shown = (text: string) => inScript(language, this.options.script, text);
-    if (PROFILES[language]?.scripts) message = { ...message, text: shown(message.text),
+    // A term set's heard spellings are replaced here too, so every decode is compared, locked and shown with the name as written.
+    const correct = this.options.correct;
+    const shown = (text: string) => { const converted = inScript(language, this.options.script, text); return correct ? correct(language, converted) : converted; };
+    if (PROFILES[language]?.scripts || correct) message = { ...message, text: shown(message.text),
       ...(message.segments ? { segments: message.segments.map(segment => ({ ...segment, text: shown(segment.text) })) } : {}) };
     const repeated = !message.rejected && isRepetitiveTranscript(message.text);
     const rejected = message.rejected || repeated;

@@ -1,6 +1,6 @@
 # Overview
 
-Verified: 2026-11-22 · Sources: apps/service/main.ts, apps/service/glossary.ts, package.json, .env.example
+Verified: 2026-11-23 · Sources: apps/service/main.ts, apps/service/glossary.ts, package.json, .env.example
 
 Surtitle is a local live caption companion for one Mac that pairs English with one other language per session; Japanese is the rehearsed pair, Spanish is a pilot that meets its measured recognition accuracy targets on replayed audio, with the rating of held-out rows still owed, and French, Italian and Portuguese are selectable with gates of their own not yet passed. Chinese, in Simplified or Traditional characters, and Korean are selectable with gates of their own not yet passed. The name is the theatre term for translated text projected above a stage during a live performance. An operator browser tab captures a microphone, a loopback Node service turns speech into bilingual text, and a transparent overlay page can be composed in OBS. It was built by a presenter who gives English talks to Japanese audiences and reads Japanese lectures in English, and it has been used live at a conference.
 
@@ -29,11 +29,13 @@ Surtitle is a local live caption companion for one Mac that pairs English with o
 
 `.env` is ignored and never read by agents. It holds `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TRANSCRIPTION_BACKEND`, `TRANSLATION_BACKEND` with `off` default, `cloud` or `local`, `LOCAL_TRANSLATION_MODEL` with `qwen3.5-4b-q4` default or `qwen3.5-2b-q4` for comparison, `TRANSLATION_PROVIDER` with `openai` default or `anthropic`, `LOCAL_MODEL` with `turbo-q4` default or `small-q4`, `LOCAL_MAX_TURN_MS` from 1000 to 12000, `LOCAL_PREVIEWS` which is `on` in listen mode by default, `LOCAL_SEGMENTATION` with `rolling` default or `turns`, `LANGUAGE_PAIR`, the pair the service starts in, `en-ja` by default, with `en-es`, `en-fr`, `en-it`, `en-pt`, `en-zh-Hans`, `en-zh-Hant` and `en-ko` also profiled and the operator page able to switch while capture is off, `PORT`, `TRANSCRIPTION_MODEL`, `TRANSLATION_MODEL`, `ANTHROPIC_TRANSLATION_MODEL`, `TRANSLATION_REASONING_EFFORT` and `GLOSSARY_PATH`. The `--local-only` flag overrides all of these to local recognition with translation off; `--listen` forces local recognition plus cloud translation; `--offline` forces local recognition plus local translation and clears both keys. With local recognition on macOS the service also starts a host probe, which reports GPU use by group, thermal state and power to the operator page and diagnostics; see [diagnostics](diagnostics.md#host-load). It needs no setting and captions never depend on it.
 
-The glossary resolves in this order: `GLOSSARY_PATH` when set, `private/glossary.json` when present, otherwise the tracked `profiles/glossary.example.json`. Startup and preflight report which one loaded. A `GLOSSARY_PATH` still naming the retired default `profiles/glossary.json` falls through to the normal order with a notice.
+A glossary is a term set: the names and terms of one product, stack or subject, in one JSON file. An entry is one of two kinds. A name, `{ "name": "Claude Code" }`, is a proper noun kept as written in every pair and both directions. A term, `{ "en": "inference", "ja": "推論", "es": "inferencia" }`, is a preferred translation with one form per language, used only when the session's pair has both languages. The format, `heard` spellings and what a pair sends are in [translation](translation.md#glossary).
+
+The set a session starts with resolves in this order: `GLOSSARY_PATH` when set, `private/glossary.json` when present, otherwise the tracked `profiles/glossary.example.json`. Every valid file in `private/glossaries/` is offered beside it, with the example and an empty set, and the operator page switches among them while the microphone is off. Startup and preflight report which one loaded; `pnpm glossary:check` prints what each set sends in each pair, as counts. A `GLOSSARY_PATH` still naming the retired default `profiles/glossary.json` falls through to the normal order with a notice.
 
 ## Private overlay
 
-The ignored `private/` directory holds the maintainer's personal context: notes, the real glossary, hardware and event details, and a personal `AGENTS.md` that agents read after the tracked one. Nothing in it is linked from or copied into tracked files. See [security and privacy](security-privacy.md).
+The ignored `private/` directory holds the maintainer's personal context: notes, the real glossaries, hardware and event details, and a personal `AGENTS.md` that agents read after the tracked one. Nothing in it is linked from or copied into tracked files. See [security and privacy](security-privacy.md).
 
 ## Platform
 

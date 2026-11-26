@@ -28,6 +28,8 @@ export type TranscriberFactory = (options: {
   // The noise gate of the stream this one replaces after an automatic restart; a calibrating recognizer starts from it.
   gateThreshold?: number;
   onTurnDiagnostic?: (id: string, measurement: TurnMeasurement) => void;
+  // Applied to each recognized text, by its language, before anything else reads it: a term set's heard spellings.
+  correct?: (language: string, text: string) => string;
 }) => Transcriber;
 export class TranslationFailure extends Error {
   constructor(readonly category: 'translation-auth' | 'translation-rate-limit' | 'translation-network') {

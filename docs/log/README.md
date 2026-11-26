@@ -80,6 +80,11 @@ Dated history. Entries are append-only and never rewritten. For how things are n
 | [2026-11-22-chinese-korean-local-translation.md](2026-11-22-chinese-korean-local-translation.md) | Required terms, local translator on the public clips, browser smokes, read-throughs in four directions and part 6 for `en-zh` and `en-ko`: English to Korean opens each talk in Japanese, from the English-to-Japanese example glossary; part 6 passes 9 of 10 talks |
 | [2026-11-22-project-homepage.md](2026-11-22-project-homepage.md) | Static project homepage, setup instructions, OBS walkthrough and responsive browser checks |
 | [2026-11-22-homepage-on-pages.md](2026-11-22-homepage-on-pages.md) | Homepage published with GitHub Pages by a workflow; share preview image and address metadata |
+| [2026-11-23-language-pair-review.md](2026-11-23-language-pair-review.md) | Review and test of all eight pairs: smoke, translator probe, English to Korean in Japanese, instruction rows repeating context, word cuts outside ASCII, Cantonese |
+| [2026-11-23-glossary-term-sets.md](2026-11-23-glossary-term-sets.md) | Glossary term sets: names kept as written, preferred translations per language, the list rebuilt on a pair switch, `heard` spellings, and a probe in all eight pairs; browser smokes not run |
+| [2026-11-23-word-boundaries-and-smoke.md](2026-11-23-word-boundaries-and-smoke.md) | Word rules of rolling text extended to accented letters and Hangul; the offline smoke's own-writing check, passing in all eight pairs with term sets |
+| [2026-11-25-korean-script-guard.md](2026-11-25-korean-script-guard.md) | Korean translations: a guard in the worker against Chinese characters and kana, particles joined to numbers and Latin words, English to Korean read again over the same text, part 6 in `en-ko`; Taiwan vocabulary notes tested and not adopted |
+| [2026-11-26-japanese-spacing.md](2026-11-26-japanese-spacing.md) | Japanese translations shown with no space between a Latin word or number and the Japanese beside it; counts over the stored read-through |
 | [2026-11-11-spanish-pilot.md](2026-11-11-spanish-pilot.md) | Spanish pilot: profile, public set, gate file and first real-time run; the non-speech row traced to two pair rules and fixed |
 
 ## Pre-wiki technical records, frozen 2026-10-26

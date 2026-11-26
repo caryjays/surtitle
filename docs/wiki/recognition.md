@@ -1,6 +1,6 @@
 # Local recognition
 
-Verified: 2026-11-22 · Sources: packages/providers/script.ts, scripts/local/worker.py, scripts/local/engine.py, scripts/local/speech_gate.py, scripts/local/quality.py, scripts/local/models.json, scripts/local/vad-model.json, scripts/local/requirements.lock, packages/providers/local.ts, packages/providers/rolling.ts, packages/providers/turns.ts, packages/providers/quality.ts, scripts/local/languages.py, profiles/languages.json
+Verified: 2026-11-26 · Sources: packages/providers/script.ts, scripts/local/worker.py, scripts/local/engine.py, scripts/local/speech_gate.py, scripts/local/quality.py, scripts/local/models.json, scripts/local/vad-model.json, scripts/local/requirements.lock, packages/providers/local.ts, packages/providers/rolling.ts, packages/providers/turns.ts, packages/providers/quality.ts, scripts/local/languages.py, profiles/languages.json
 
 Recognition is Apple MLX Whisper in an isolated Python child, with a CPU Silero speech gate in front of it. Node owns capture, segmentation and session state; the worker only decodes the audio it is handed.
 
@@ -28,7 +28,7 @@ Newline-delimited JSON over stdin and stdout, one request in flight.
 
 `segments` lists each accepted Whisper segment as `{ endMs, text }`, at most 64, ordered, with ends clamped to the audio length, and empty when the reply is rejected. The list stops at a segment with no valid end or past 4,000 characters, so no text is ever placed at a guessed time. Unless the list stopped early, its texts joined and trimmed equal `text`. Rolling segmentation, below, locks text by it; turn segmentation ignores it.
 
-Node validates every reply against a strict schema. A reply in a language with scripts, so far Chinese, has its text and segments converted to the session's script before anything else reads it: Whisper writes Mandarin in Simplified or Traditional characters and can change between decodes of the same audio, which would stop rolling decodes agreeing. Whisper's large-v3 vocabulary, which Turbo shares, has Cantonese as `yue`, so Cantonese speech falls outside an `en-zh` pair; this is untested. Experiment thresholds are keyword arguments on `Engine.transcribe` and are reachable only from `scripts/local/noisy_worker.py`; the production RPC refuses them.
+Node validates every reply against a strict schema. A reply in a language with scripts, so far Chinese, has its text and segments converted to the session's script before anything else reads it: Whisper writes Mandarin in Simplified or Traditional characters and can change between decodes of the same audio, which would stop rolling decodes agreeing. Whisper's large-v3 vocabulary, which Turbo shares, has Cantonese as `yue`, but detection places Cantonese speech in `zh`, so in an `en-zh` pair it is recognized as Chinese and shown in the session's script; see [the review](../log/2026-11-23-language-pair-review.md). Experiment thresholds are keyword arguments on `Engine.transcribe` and are reachable only from `scripts/local/noisy_worker.py`; the production RPC refuses them.
 
 ## Decode pipeline
 
@@ -57,4 +57,4 @@ On the eight-clip FLEURS tuning set of 72.3 s, Turbo Q4 scored 6.82% EN WER and 
 
 ## Known limits
 
-In `turns` mode, continuous speech waits up to the 12 s cap plus decoding before its first final. In `rolling` mode a row's first text waits for its first Whisper segment to end and settle, which takes over 8 s when Whisper returns one long segment; a display that shows text early has the row's agreed text sooner, but a segment's last words have usually locked by the time three decodes agree on them. Automatic gain in the browser is on by default; there is no level normalization in the service before the gate. Overlapping voices on one microphone are not separated. See [status](status.md) for the open investigation.
+In `turns` mode, continuous speech waits up to the 12 s cap plus decoding before its first final. In `rolling` mode a row's first text waits for its first Whisper segment to end and settle, which takes over 8 s when Whisper returns one long segment; a display that shows text early has the row's agreed text sooner, which never ends inside a word of a script written with spaces, accented letters and Hangul included, but a segment's last words have usually locked by the time three decodes agree on them. Automatic gain in the browser is on by default; there is no level normalization in the service before the gate. Overlapping voices on one microphone are not separated. See [status](status.md) for the open investigation.

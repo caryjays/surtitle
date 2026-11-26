@@ -1,6 +1,6 @@
 import { Controller } from '../apps/service/controller.ts';
 import type { TranscriberFactory, TranscriptEvent, Translator } from '../packages/providers/types.ts';
-import type { AudioGate, Mode, Pair, PairChoice, Script, Segmentation, Snapshot, Translation } from '../packages/protocol/index.ts';
+import type { AudioGate, Mode, Pair, PairChoice, Script, Segmentation, Snapshot, TermSet, Translation } from '../packages/protocol/index.ts';
 export const tick = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 export function deferred<T>() {
   let resolve!: (value: T) => void; let reject!: (reason?: unknown) => void;
@@ -8,12 +8,12 @@ export function deferred<T>() {
   return { promise, resolve, reject };
 }
 export function harness(extra: { translationTimeoutMs?: number; queueTtlMs?: number; sessionLimitMs?: number | null; pair?: Pair; script?: Script | null; pairs?: (Pair | PairChoice)[];
-  segmentation?: Segmentation; processing?: Snapshot['processing']; translationUnit?: 'row' | 'piece' } = {}) {
-  const streams: { emit(event: TranscriptEvent): void; fail(): void; closed: boolean; pair?: Pair; script?: Script | null; segmentation?: Segmentation; frames: number; modes: Mode[]; flushes: number; calibrations: number; gateThreshold?: number; gate(gate: AudioGate): void }[] = [];
+  segmentation?: Segmentation; processing?: Snapshot['processing']; translationUnit?: 'row' | 'piece'; termSets?: TermSet[]; termSet?: string } = {}) {
+  const streams: { emit(event: TranscriptEvent): void; fail(): void; closed: boolean; pair?: Pair; script?: Script | null; segmentation?: Segmentation; correct?: (language: string, text: string) => string; frames: number; modes: Mode[]; flushes: number; calibrations: number; gateThreshold?: number; gate(gate: AudioGate): void }[] = [];
   const requests: { input: Parameters<Translator['translate']>[0]; signal: AbortSignal; result: ReturnType<typeof deferred<Translation>>;
     partial: NonNullable<Parameters<Translator['translate']>[3]> }[] = [];
   const factory: TranscriberFactory = options => {
-    const stream = { emit: options.onEvent, fail: options.onFailure, closed: false, pair: options.pair, script: options.script, segmentation: options.segmentation, frames: 0, modes: [options.mode], flushes: 0, calibrations: 0, gateThreshold: options.gateThreshold, gate: (gate: AudioGate) => options.onGate?.(gate) };
+    const stream = { emit: options.onEvent, fail: options.onFailure, closed: false, pair: options.pair, script: options.script, segmentation: options.segmentation, correct: options.correct, frames: 0, modes: [options.mode], flushes: 0, calibrations: 0, gateThreshold: options.gateThreshold, gate: (gate: AudioGate) => options.onGate?.(gate) };
     streams.push(stream);
     return { async connect() {}, audio() { stream.frames++; }, async finish() {}, close() { stream.closed = true; },
       setMode(mode) { stream.modes.push(mode); }, flush() { stream.flushes++; },

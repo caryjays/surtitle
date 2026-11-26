@@ -1,6 +1,6 @@
 # Content-free diagnostics
 
-Verified: 2026-11-21 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, packages/protocol/index.ts, apps/service/controller.ts, packages/providers/local.ts, packages/providers/host-probe.ts, scripts/local/host_probe.py, scripts/diagnostics-latency.ts, scripts/contention-replay.ts
+Verified: 2026-11-25 · Sources: apps/web/diagnostics.ts, packages/protocol/diagnostics.ts, packages/protocol/index.ts, apps/service/controller.ts, packages/providers/local.ts, packages/providers/host-probe.ts, scripts/local/host_probe.py, scripts/diagnostics-latency.ts, scripts/contention-replay.ts
 
 Diagnostics answer what the pipeline did with each turn without storing what anyone said. The service keeps up to 60 recent turn traces in memory; the browser records them only after the operator opts in.
 
@@ -35,7 +35,7 @@ The buffer holds 5,000 events and reports how many older ones were dropped. Stab
 | piece translation | `pieces`, one entry per piece request, at most 32: `endMs`, the row's locked audio at the cut (the row's `audioMs` for the last piece); `lagMs`, from that audio's end to the request being ready (the last piece's `speechEndToFinalMs`); `queueMs`; `firstTranslationMs`, from sending to the first translated text shown; `translationMs`; and `outcome` |
 | recognition | `recognitionQueueMs`; `recognitionInferenceMs` covering resample, gate, decode and filter; `commitToFinalMs`; `recognitionLanguage`, the decoder code; `recognitionSource`, a language of the pair or unknown; `recognitionClipped`; `adapterRepetitionRejected`; `controllerRepetitionRejected`; `recognitionFailure` |
 | quality | `speechGateRejected`, `decodedSegments`, `droppedSegments`, `noSpeechDrops`, `lowConfidenceDrops`, `repetitionDrops`, `stockPhraseDrops`, `invalidScoreDrops`, `noSpeechMax`, `logprobMin`; in rolling Auto, `pairRetries`, decodes outside the pair that the worker's retry placed in the pair, and `otherLanguageDrops`, decodes outside the pair that locked nothing |
-| translation | `contextSequences`, `contextMissingTranslations`, `contextClippedRows`, `translationQueueMs`, `translationMs`, `translationResponse`, `outputTokenLimitReached`, `translationFailure`, `originalEndsInEllipsis`, `translationEndsInEllipsis` |
+| translation | `contextSequences`, `contextMissingTranslations`, `contextClippedRows`, `translationQueueMs`, `translationMs`, `translationResponse`, `outputTokenLimitReached`, `translationFailure`, and the glossary counts `glossaryNames`, `glossaryNameMisses`, `glossaryTerms`, `glossaryTermMisses` ([translation](translation.md#glossary)), `originalEndsInEllipsis`, `translationEndsInEllipsis` |
 
 A missing field means unavailable, never zero.
 

@@ -1,6 +1,6 @@
 import { access } from 'node:fs/promises';
 import { z } from 'zod';
-import { offeredPairs, pairTag, parsePairTag, type Glossary } from '../../packages/protocol/index.ts';
+import { offeredPairs, pairTag, parsePairTag } from '../../packages/protocol/index.ts';
 import { OpenAITranslator, openAITranscriberFactory } from '../../packages/providers/openai.ts';
 import { AnthropicTranslator } from '../../packages/providers/anthropic.ts';
 import { LOCAL_TRANSLATION_MODELS, LocalTranslator } from '../../packages/providers/local-translator.ts';
@@ -8,7 +8,8 @@ import { Controller } from './controller.ts';
 import { localTranscriberFactory } from '../../packages/providers/local.ts';
 import { HostProbe } from '../../packages/providers/host-probe.ts';
 import { createCaptionServer } from './server.ts';
-import { EXAMPLE_GLOSSARY, PRIVATE_GLOSSARY, loadGlossary, resolveGlossaryPath } from './glossary.ts';
+import { EXAMPLE_GLOSSARY, PRIVATE_GLOSSARIES, PRIVATE_GLOSSARY, loadTermSets } from './glossary.ts';
+import { projectTerms } from '../../packages/providers/terms.ts';
 
 async function main() {
   // --offline is the listen profile with translation on this Mac: no key, no network requests.
@@ -42,14 +43,14 @@ async function main() {
     ...(process.argv.includes('--local-only') ? {
     TRANSCRIPTION_BACKEND: 'local', TRANSLATION_BACKEND: 'off', OPENAI_API_KEY: '', ANTHROPIC_API_KEY: '',
   } : {}) });
-  const resolved = await resolveGlossaryPath(config.GLOSSARY_PATH);
-  let glossary: Glossary;
-  try { glossary = await loadGlossary(resolved.path); }
+  let resolved: Awaited<ReturnType<typeof loadTermSets>>;
+  try { resolved = await loadTermSets(config.GLOSSARY_PATH); }
   catch {
-    console.error(`Glossary missing or invalid. Personal glossaries live in ${PRIVATE_GLOSSARY}; the tracked default is ${EXAMPLE_GLOSSARY}. Unset GLOSSARY_PATH to use them.`);
+    console.error(`Glossary missing or invalid. Personal glossaries live in ${PRIVATE_GLOSSARY} and ${PRIVATE_GLOSSARIES}; the tracked default is ${EXAMPLE_GLOSSARY}. Unset GLOSSARY_PATH to use them.`);
     process.exitCode = 1; return;
   }
   const glossarySource = resolved.source;
+  if (resolved.skipped) console.log(`${resolved.skipped} glossary file(s) left out: invalid, or a name already in use. Run pnpm glossary:check.`);
   if (resolved.retiredDefault) console.log(`GLOSSARY_PATH names the retired tracked default; using the ${glossarySource} glossary instead. Remove GLOSSARY_PATH from .env to silence this.`);
   const local = config.TRANSCRIPTION_BACKEND === 'local';
   const translate = config.TRANSLATION_BACKEND === 'cloud';
@@ -92,7 +93,8 @@ async function main() {
       // Previews apply to turns only; rolling replaces them with its own locked partials.
       previewIntervalMs: config.LOCAL_PREVIEWS === 'on' ? 3000 : undefined,
       calibrationMs: listen ? 1500 : undefined })
-      : openAITranscriberFactory(config.OPENAI_API_KEY, config.TRANSCRIPTION_MODEL, glossary),
+      : // Cloud recognition takes its keywords once, from the starting set in the starting pair.
+        openAITranscriberFactory(config.OPENAI_API_KEY, config.TRANSCRIPTION_MODEL, projectTerms(resolved.sets[0]!, config.LANGUAGE_PAIR.pair, config.LANGUAGE_PAIR.script).glossary),
     translator: localTranslation ? localTranslator! : !translate ? null : anthropic
       ? new AnthropicTranslator({ key: config.ANTHROPIC_API_KEY, model: config.ANTHROPIC_TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, ...config.LANGUAGE_PAIR })
       : new OpenAITranslator({ key: config.OPENAI_API_KEY, model: config.TRANSLATION_MODEL, effort: config.TRANSLATION_REASONING_EFFORT, ...config.LANGUAGE_PAIR }),
@@ -102,11 +104,11 @@ async function main() {
     // The starting segmentation; the operator page can switch it while capture is off.
     ...(local ? { segmentation: config.LOCAL_SEGMENTATION } : {}),
     sessionLimitMs: local ? null : 25 * 60_000,
-    glossary, backend: `${local ? 'Local' : 'Cloud'} transcription · translation ${localTranslation ? `local (${config.LOCAL_TRANSLATION_MODEL})` : translate ? `cloud (${config.TRANSLATION_PROVIDER})` : 'off'}`,
+    glossary: [], termSets: resolved.sets, backend: `${local ? 'Local' : 'Cloud'} transcription · translation ${localTranslation ? `local (${config.LOCAL_TRANSLATION_MODEL})` : translate ? `cloud (${config.TRANSLATION_PROVIDER})` : 'off'}`,
     processing: local ? (localTranslation ? 'local-audio-local-text' : translate ? 'local-audio-cloud-text' : 'local-only') : (translate ? 'cloud-audio-and-text' : 'cloud-audio-only'),
   });
   const app = await createCaptionServer({ controller, port: config.PORT, webDir: 'dist/web', configured });
-  console.log(`Captions: ${app.origin}/control | OBS: ${app.origin}/overlay | glossary: ${glossarySource}`);
+  console.log(`Captions: ${app.origin}/control | OBS: ${app.origin}/overlay | glossary: ${glossarySource}, ${resolved.sets.length} sets offered`);
   if (localTranslation) console.log('Local text translation enabled: text stays on this Mac; no network requests.');
   if (translate) console.log('Cloud text translation enabled: paid requests begin after microphone Start. Audio stays local when using the local recognizer.');
   if (!configured) console.log('Provider credential missing; configure .env before starting capture.');

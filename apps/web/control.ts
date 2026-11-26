@@ -17,6 +17,7 @@ const refresh = element<HTMLButtonElement>('refresh');
 const calibrate = element<HTMLButtonElement>('calibrate');
 const autoGain = element<HTMLInputElement>('auto-gain');
 const pairSelect = element<HTMLSelectElement>('pair');
+const glossarySelect = element<HTMLSelectElement>('glossary');
 const conversation = element<HTMLButtonElement>('conversation');
 const lecture = element<HTMLButtonElement>('lecture');
 const follow = element<HTMLInputElement>('follow');
@@ -55,6 +56,21 @@ function labelPair(next: Pair, nextScript: Script | null) {
     .map(([value, text]) => new Option(text, value)));
   if (![...mode.options].some(option => option.value === selectedMode)) selectedMode = 'auto';
   mode.value = selectedMode;
+}
+// The term sets the service offers, and what the session's pair sends of the one in use. Like the pair, it changes only
+// while the microphone is off.
+function offerGlossaries(snapshot: Snapshot) {
+  const glossary = snapshot.glossary;
+  element('glossary-row').hidden = element('glossary-note').hidden = !glossary;
+  if (!glossary) return;
+  if ([...glossarySelect.options].map(option => option.value).join('\n') !== glossary.sets.join('\n')) {
+    glossarySelect.replaceChildren(...glossary.sets.map(set => new Option(set, set)));
+  }
+  glossarySelect.value = glossary.name;
+  const count = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const [a, b] = snapshot.pair.map(code => name(code, snapshot.script));
+  element('glossary-note').textContent = `${count(glossary.names, 'name')} kept as written, ${count(glossary.terms, 'term')} with a preferred translation for ${a} ↔ ${b}.`
+    + (glossary.gaps.length ? ` Left out, no form in this pair: ${glossary.gaps.join(', ')}.` : '');
 }
 // The pairs the service offers; hidden when it offers only the one in use.
 function offerPairs(snapshot: Snapshot) {
@@ -95,7 +111,7 @@ function buttons() {
   clear.disabled = !connected;
   newSession.disabled = !connected;
   mode.disabled = !connected || transitioning;
-  pairSelect.disabled = !connected || active;
+  pairSelect.disabled = glossarySelect.disabled = !connected || active;
   conversation.disabled = lecture.disabled = !connected || transitioning;
   device.disabled = active; refresh.disabled = active; autoGain.disabled = active;
   calibrate.disabled = !connected || state?.capture !== 'active' || !state.gate || state.gate.state === 'calibrating';
@@ -137,7 +153,7 @@ function renderConsole(snapshot: Snapshot | undefined) {
   renderSession(snapshot, connected); renderHealth(snapshot, connected);
 }
 const connection = connect('control', snapshot => {
-  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair, snapshot.script); offerPairs(snapshot);
+  state = snapshot; lastState = Date.now(); diagnostics.observe(snapshot); labelPair(snapshot.pair, snapshot.script); offerPairs(snapshot); offerGlossaries(snapshot);
   element('active-direction').textContent = `Direction: ${describe(snapshot.mode, false)}`;
   // Paused selection remains local until Start; active changes are acknowledged by snapshots.
   if (['active', 'connecting', 'stopping'].includes(snapshot.capture)) {
@@ -181,6 +197,7 @@ void fetch('/health').then(response => response.json()).then((health: unknown) =
     configured = false; error.textContent = errors.credentials; buttons();
   }
 }).catch(() => { /* WebSocket status remains authoritative for connection health. */ });
+glossarySelect.onchange = () => { if (!glossarySelect.disabled) send({ type: 'set-glossary', name: glossarySelect.value }); };
 pairSelect.onchange = () => {
   if (pairSelect.disabled) return;
   try { const next = parsePairTag(pairSelect.value); send({ type: 'set-pair', ...next }); } catch { /* not an offered pair */ }

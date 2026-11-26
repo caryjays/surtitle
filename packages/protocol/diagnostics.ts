@@ -50,6 +50,9 @@ export const TurnTrace = TurnMeasurement.extend({
   contextSequences: z.array(z.number().int().nonnegative()).max(4).optional(),
   contextMissingTranslations: z.number().int().min(0).max(4).optional(),
   contextClippedRows: z.number().int().min(0).max(4).optional(),
+  // Glossary entries the row's original holds, by kind, and those whose counterpart its translation lacks: a name must
+  // be there exactly as written; a term's count is approximate, since an inflected form does not match.
+  glossaryNames: count.optional(), glossaryNameMisses: count.optional(), glossaryTerms: count.optional(), glossaryTermMisses: count.optional(),
   // Piece translation: each request for a locked piece of the row, in order. endMs: the row's locked audio at the cut;
   // lagMs: from that audio's end to the request being ready; queueMs: ready to sent; firstTranslationMs: sent to the
   // first translated text shown. The last piece's end is the row's audioMs.

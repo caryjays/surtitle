@@ -2,7 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { LocalTranslator } from '../packages/providers/local-translator.ts';
 import { AnthropicTranslator } from '../packages/providers/anthropic.ts';
-import { inScript } from '../packages/providers/script.ts';
+import { attached, inScript } from '../packages/providers/script.ts';
+import { projectTerms } from '../packages/providers/terms.ts';
 import { EXAMPLE_GLOSSARY, loadGlossary } from '../apps/service/glossary.ts';
 import { parsePairTag, type Source, type TranslationContext } from '../packages/protocol/index.ts';
 import type { Translator } from '../packages/providers/types.ts';
@@ -26,7 +27,8 @@ if (cloud && (!values.paid || !process.env.ANTHROPIC_API_KEY?.trim())) {
 const { pair, script } = parsePairTag(values.pair);
 type Row = { recording: number; sequence: number; original: string; translation: string | null; state: string; heard: string | null; uncaptioned: boolean };
 const rows: Row[] = JSON.parse(await readFile(values.in, 'utf8')).review;
-const glossary = await loadGlossary(EXAMPLE_GLOSSARY);
+// As live: the example set as the session's pair sends it.
+const { glossary } = projectTerms(await loadGlossary(EXAMPLE_GLOSSARY, 'Example'), pair, script);
 type Outcome = { translation: string | null; state: 'ready' | 'unresolved' | 'failed'; ms: number };
 const usage = { requests: 0, inputTokens: 0, outputTokens: 0 };
 
@@ -51,7 +53,7 @@ async function variant(name: string) {
         const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 12_000);
         try {
           const result = await translator.translate({ text: row.original, mode: 'auto', glossary, sourceLanguage: source, context }, abort.signal);
-          outcome = { translation: inScript(result.target, script, result.text) || null, state: result.source === 'unknown' ? 'unresolved' : 'ready', ms: Math.round(performance.now() - started) };
+          outcome = { translation: attached(result.target, inScript(result.target, script, result.text)) || null, state: result.source === 'unknown' ? 'unresolved' : 'ready', ms: Math.round(performance.now() - started) };
           source = result.source;
         } catch { outcome = { translation: null, state: 'failed', ms: Math.round(performance.now() - started) }; }
         finally { clearTimeout(timer); }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Snapshot, offeredPairs, pairTag, parsePairTag, profile } from '../packages/protocol/index.ts';
-import { inScript } from '../packages/providers/script.ts';
+import { attached, inScript } from '../packages/providers/script.ts';
 import { translationInstructionsFor } from '../packages/providers/translation.ts';
 import { languageTag, uncaptionedLabel } from '../apps/web/client.ts';
 import { previewSegments } from '../apps/web/preview.ts';
@@ -80,4 +80,25 @@ test('the Traditional preview conversation is the Simplified one as the service 
   assert.notDeepEqual(hans, hant);
   assert.deepEqual(hant, hans.map(row => ({ ...row,
     original: inScript(row.source, 'Hant', row.original), translation: inScript(row.target, 'Hant', row.translation ?? '') })));
+});
+
+test('a translation into Japanese closes the space between a Latin word or number and the Japanese beside it', () => {
+  assert.equal(attached('ja', 'これは AI の話で、10 月と 11 月に Q3 の 30% を占めます。'), 'これはAIの話で、10月と11月にQ3の30%を占めます。');
+  assert.equal(attached('ja', 'プラス 1 からプラス 1.5 程度、José さん'), 'プラス1からプラス1.5程度、Joséさん');
+  // Japanese punctuation counts as Japanese. A space between two Latin words or numbers stays, and so does one between
+  // two Japanese words or after a Latin comma.
+  assert.equal(attached('ja', 'はい。 OK です。次は Open Markets の AFM 13 と 24 です'), 'はい。OKです。次はOpen MarketsのAFM 13と24です');
+  for (const kept of ['Thank you, everyone.', '山田 太郎さん', 'Hello, 皆さん']) assert.equal(attached('ja', kept), kept);
+  // A streamed reply needs no care: a space is closed only once both of its neighbours are written.
+  assert.equal(attached('ja', '次は AI ', true), '次はAI ');
+  // Chinese keeps its spaces, and text of no known language is untouched.
+  assert.equal(attached('zh', 'AI 的 10 月'), 'AI 的 10 月'); assert.equal(attached('unknown', 'AI は'), 'AI は');
+});
+test('the controller shows a Japanese translation, streamed or final, with those spaces closed', async t => {
+  const h = harness({ pair: ['en', 'ja'] }); t.after(() => h.controller.dispose()); await h.controller.start('auto');
+  h.final('a');
+  h.requests[0]!.partial({ source: 'en', target: 'ja', text: 'AI は 2020 ' });
+  assert.equal(h.controller.snapshot().segments[0]!.translation, 'AIは2020 ');
+  h.requests[0]!.result.resolve({ source: 'en', target: 'ja', text: 'AI は 2020 年に始まりました。' }); await tick();
+  assert.deepEqual([h.controller.snapshot().segments[0]!.state, h.controller.snapshot().segments[0]!.translation], ['ready', 'AIは2020年に始まりました。']);
 });

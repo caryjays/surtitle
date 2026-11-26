@@ -1,6 +1,6 @@
 # Architecture
 
-Verified: 2026-11-22 · Sources: packages/providers/host-probe.ts, packages/providers/script.ts, packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
+Verified: 2026-11-26 · Sources: packages/providers/host-probe.ts, packages/providers/script.ts, packages/providers/local-translator.ts, apps/service/controller.ts, apps/service/server.ts, apps/service/main.ts, packages/protocol/index.ts, packages/providers/turns.ts, packages/providers/local.ts, packages/providers/openai.ts, packages/providers/anthropic.ts, packages/providers/translation.ts, packages/providers/chat.ts, apps/web/control.ts, apps/web/client.ts, apps/web/visibility.ts, apps/web/pacer.ts, apps/web/overlay.ts, apps/web/audience.ts, apps/web/console.ts, packages/protocol/languages.ts, profiles/languages.json
 
 One Node process serves two pages from one loopback origin and owns all state. Recognition runs in an isolated Python child. Translation, when enabled, is one request per finalized turn: HTTPS to a cloud provider, or stdio to a second Python child running a local model.
 
@@ -26,6 +26,8 @@ OBS Browser Source /overlay   ◀── snapshots ──────────
 A session pairs two languages. `LANGUAGE_PAIR` (default `en-ja`) sets the pair the service starts in, checked against `profiles/languages.json`; English, Japanese, Spanish, French, Italian, Portuguese, Chinese and Korean have profiles. A language written in more than one script, so far only Chinese, takes a script subtag in the pair, `en-zh-Hans` or `en-zh-Hant`; without one it shows in its first. The language code stays `zh`, as Whisper reports it, and the script is a session setting beside the pair. While capture is off the operator can switch to English with any other profiled language, once per script: the controller starts a new session in Auto, tells the translator the pair and script, and hands both to the next recognizer stream. The server closes a control socket that asks for a pair not offered. The snapshot carries the pair, its script or null, and the pairs offered as tags such as `en-ja` and `en-zh-Hant`. Modes are `auto` and the two directions written `source-target`. Schemas accept any two- or three-letter code, and the controller enforces the pair: the server closes a control socket that sends a mode outside it, a recognized language outside it becomes `unknown`, and an automatic translation into or out of another language fails the row with its original kept. Translation instructions, the output schema and cloud recognition hints are generated from the pair; for `en-ja` the instructions are unchanged text, and with a script they name the language as the script does, such as Traditional Chinese (Taiwan).
 
 Text in a language with scripts is converted to the session's script with OpenCC (`opencc-js`), at two points in the service: each recognizer reply in that language, before rolling compares decodes, since Whisper can write the same audio in either script from one decode to the next; and each translation into that language, streamed or final, in the controller, whatever the translator wrote. Every form folds to Simplified first, so Hong Kong and OpenCC forms reach the Taiwan form. Conversion is of character forms only; regional vocabulary is left to the glossary and context. Text in other languages is never converted, since it would change Japanese kanji. The control page labels its presets and direction menu from the snapshot's pair, with English first, so Lecture reads the other language into English.
+The controller holds the term sets and the one in use. The snapshot carries its name, the offered names, how many names and terms the pair sends, and the terms the pair leaves out. A `set-glossary` command, like `set-pair`, applies only while capture is off and starts a new session.
+
 ## Components
 
 | Path | Responsibility |
@@ -37,11 +39,12 @@ Text in a language with scripts is converted to the session's script with OpenCC
 | `apps/web/pacer.ts` | Releases text at a reading pace in each client; see [surfaces](surfaces.md#pacing) |
 | `apps/web/history.ts`, `reading.ts`, `diagnostics.ts` | 60-row history with search and layout preview, saved display preferences, opt-in content-free log |
 | `apps/web/overlay.ts`, `audience.ts`, `visibility.ts` | OBS overlay and its preview on the console: released text of the latest unexpired rows in a roll-up window, hidden on stale heartbeat; overlay settings in the URL |
-| `apps/service/main.ts`, `glossary.ts` | Config validation, launch flags, preflight, glossary resolution, wiring |
+| `apps/service/main.ts`, `glossary.ts` | Config validation, launch flags, preflight, term set loading, wiring |
+| `packages/protocol/terms.ts`, `packages/providers/terms.ts` | The term set format; a set as one pair sends it, the replacement of a name's heard spellings, and the count of entries a translation kept; see [translation](translation.md#glossary) |
 | `apps/service/server.ts` | Loopback HTTP and WebSocket, origin checks, one control owner, snapshot broadcast |
 | `apps/service/controller.ts` | Session, generation and epoch, rows and traces, translation queue |
 | `packages/protocol/` | Zod schemas shared by service and browser: `Command`, `Snapshot`, `Segment`, `Translation`, `TurnTrace`; `languages.ts` holds language codes, modes, the pair and the profiles |
-| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, whether it writes spaces, sentence-end and clause-end characters, stock phrases, display release rates, and for a language with scripts each script's name, marker label and OpenCC target |
+| `profiles/languages.json` | One profile per language, read by Node and the Python worker: name, scoring unit, whether it writes spaces, sentence-end and clause-end characters, stock phrases, display release rates, writing the local translator must not generate in a translation into it, particles joined to a number or Latin word before them, writing that stands beside a Latin word or number with no space, and for a language with scripts each script's name, marker label and OpenCC target |
 | `packages/providers/turns.ts` | Energy turn detector, fixed or calibrated |
 | `packages/providers/local.ts` | Local adapter: worker lifecycle, job queue, previews, repetition check |
 | `packages/providers/openai.ts` | Cloud transcriber, opt-in and never run live, plus the Responses translator |
@@ -95,7 +98,7 @@ Operations: Start begins a fresh session. Pause finishes the current turn, waits
 | Previews | every 3 s of turn audio in listen mode, two agreeing hypotheses; off in rolling mode |
 | Rolling mode | a decode per further 1 s of audio, one in flight; window under 29 s; forced lock at 25 s; rows close at 3 s with sentence punctuation or 8 s |
 | History | 60 rows and 60 turn traces |
-| Translation | queue 8, 8 s TTL, 2 concurrent, 12 s timeout, text 4,000 chars, context 4 rows × 800 + 800 chars, glossary 32 entries |
+| Translation | queue 8, 8 s TTL, 2 concurrent, 12 s timeout, text 4,000 chars, context 4 rows × 800 + 800 chars, glossary 32 entries per set |
 | Session cap | none for local recognition; 25 min for cloud recognition |
 | Stall | capture fails after 5 s without audio while active |
 | Overlay | last 2 segments, hidden 6 s after last heartbeat, finals expire after 20 s |

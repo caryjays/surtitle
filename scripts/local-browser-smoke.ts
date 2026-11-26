@@ -53,21 +53,21 @@ async function main() {
   header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22); header.writeUInt32LE(48000, 24);
   header.writeUInt32LE(96000, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write('data', 36); header.writeUInt32LE(pcm.length, 40);
   const replayPath = resolve('.local/fixtures/browser-replay.wav'); await writeFile(replayPath, Buffer.concat([header, pcm]));
-  const glossary = listening ? await loadGlossary((await resolveGlossaryPath()).path) : [];
+  const termSets = listening ? [await loadGlossary((await resolveGlossaryPath()).path)] : undefined;
   const requests: TranslationInput[] = [];
   let partialSeen = false; let tailSeen = false;
   const local = offline ? new LocalTranslator({ model: 'qwen3.5-4b-q4', pair, script }) : undefined;
   if (local) await local.start();
   const requestMs: number[] = [];
   const controller = new Controller({ backend: offline ? 'Local transcription · translation local' : listening ? 'Local transcription · FAKE translation' : 'Local transcription · translation off',
-    processing: offline ? 'local-audio-local-text' : listening ? 'local-audio-cloud-text' : 'local-only', glossary, sessionLimitMs: null, pair, script,
+    processing: offline ? 'local-audio-local-text' : listening ? 'local-audio-cloud-text' : 'local-only', glossary: [], ...(termSets ? { termSets } : {}), sessionLimitMs: null, pair, script,
     translator: local ? { async translate(input, signal, diagnostic) {
       requests.push(input); const start = performance.now();
       try { return await local.translate(input, signal, diagnostic); } finally { requestMs.push(Math.round(performance.now() - start)); }
     } } : listening ? { async translate(input) {
       requests.push(input);
       return input.sourceLanguage === other ? { source: other, target: 'en', text: 'Fixture translation into English (fake).' }
-        : { source: 'en', target: other, text: '英語のテスト翻訳（フェイク）。' };
+        : { source: 'en', target: other, text: other === 'ja' ? '英語のテスト翻訳（フェイク）。' : `Fixture translation into ${other} (fake).` };
     } } : null,
     transcriber: localTranscriberFactory({ model: 'turbo-q4', previewIntervalMs: listening ? 3000 : undefined,
       calibrationMs: listening ? 1500 : undefined, ...(rolling ? { segmentation: 'rolling' as const } : {}) }) });
@@ -110,7 +110,18 @@ async function main() {
       if (offline) {
         await overlay.waitForSelector(`.translation[lang="${tag}"]`, { timeout: 60_000 });
         const rows = controller.snapshot().segments.filter(row => row.state === 'ready');
-        assert(rows.some(row => row.target === other && (profile(other).scoring === 'character' ? /[\u3040-\u30ff\u4e00-\u9fff]/ : /[A-Za-z]{3}/).test(row.translation ?? '')), 'a translation out of English');
+        // In the language's own writing, since the local model can answer in Japanese, or repeat the English, with the
+        // target labelled as asked: kana for Japanese; Hangul for Korean and Chinese characters for Chinese, with no kana;
+        // for the rest Latin words that are not the row's own English.
+        const kana = /[\u3040-\u30ff]/;
+        const written = (row: { original: string; translation: string | null }) => {
+          const text = row.translation ?? '';
+          if (other === 'ja') return kana.test(text);
+          if (other === 'ko') return /[\uac00-\ud7af]/.test(text) && !kana.test(text);
+          if (profile(other).scoring === 'character') return /[\u4e00-\u9fff]/.test(text) && !kana.test(text);
+          return /[A-Za-z]{3}/.test(text) && text.trim().toLowerCase() !== row.original.trim().toLowerCase();
+        };
+        assert(rows.some(row => row.target === other && written(row)), 'a translation out of English');
         // Recognized text and translations in a language with scripts reach the display in the session's script.
         assert(rows.every(row => [[row.source, row.original], [row.target, row.translation ?? '']].every(([language, text]) => inScript(language!, script, text!) === text)), 'text in the session script');
         assert(rows.some(row => row.target === 'en' && /[A-Za-z]{3}/.test(row.translation ?? '')), 'an English translation');

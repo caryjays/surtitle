@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
-import type { AudioGate, Failure, Glossary, HostLoad, Mode, Segment, Segmentation, Snapshot } from '../../packages/protocol/index.ts';
+import type { AudioGate, Failure, Glossary, HostLoad, Mode, Segment, Segmentation, Snapshot, TermSet } from '../../packages/protocol/index.ts';
 import { DEFAULT_PAIR, MAX_SEGMENTS, Translation, direction, inPair, modes, pairTag, parsePairTag, profile, type Pair, type PairChoice, type Script, type Source, TurnMeasurement, TranslationDiagnostic, endsInEllipsis, type TurnTrace, type TranslationContext, type TranslationInput } from '../../packages/protocol/index.ts';
 import { TranslationFailure, type PartialTranslation, type Transcriber, type TranscriberFactory, type Translator, type TranscriptEvent } from '../../packages/providers/types.ts';
 import { isRepetitiveTranscript } from '../../packages/providers/quality.ts';
 import { endsSentence } from '../../packages/providers/rolling.ts';
-import { inScript } from '../../packages/providers/script.ts';
+import { attached, inScript } from '../../packages/providers/script.ts';
+import { fixedTerms, projectTerms, termMisses, type Projection } from '../../packages/providers/terms.ts';
 
 // Automatic recognizer restarts: at most this many within the window, then capture fails and waits for the operator.
 const RESTART = { max: 2, windowMs: 5 * 60_000 };
@@ -61,8 +62,14 @@ export class Controller {
   private segmentation: Segmentation | null;
   // Translation can be switched off for a session; it can only be switched on when a translator was configured.
   private translating: boolean;
+  // The term set in use, when the service has sets, and what the session's pair sends of it.
+  private termSet: TermSet | null;
+  private terms: Projection;
   constructor(private options: {
+    // glossary: a fixed list, sent as it is in every pair. With termSets it is not used: the set in use, termSet by name or
+    // the first, is projected onto the session's pair, and the operator may switch among the sets while capture is off.
     transcriber: TranscriberFactory; translator: Translator | null; glossary: Glossary;
+    termSets?: TermSet[]; termSet?: string;
     backend: string; processing?: Snapshot['processing']; translationTimeoutMs?: number; queueTtlMs?: number;
     // Local inference has no upstream session lifetime. Cloud ASR keeps its conservative cap.
     sessionLimitMs?: number | null;
@@ -80,6 +87,8 @@ export class Controller {
     ({ pair: this.pair, script: this.script } = choice(options.pair ?? DEFAULT_PAIR, options.script));
     const tags = (options.pairs ?? []).map(offered => pairTag(Array.isArray(offered) ? choice(offered) : offered));
     this.pairs = [...new Set([...tags, this.tag()])].sort();
+    this.termSet = options.termSets?.find(set => set.name === options.termSet) ?? options.termSets?.[0] ?? null;
+    this.terms = this.project();
     this.segmentation = options.segmentation ?? null;
     this.translating = Boolean(options.translator);
     this.clock = setInterval(() => {
@@ -92,7 +101,10 @@ export class Controller {
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   snapshot(): Snapshot {
     return { type: 'snapshot', sessionId: this.sessionId, generation: this.generation, revision: this.revision,
-      pair: [...this.pair], script: this.script, pairs: [...this.pairs], mode: this.mode, capture: this.capture, error: this.error, backend: this.options.backend,
+      pair: [...this.pair], script: this.script, pairs: [...this.pairs], mode: this.mode,
+      glossary: this.termSet ? { name: this.termSet.name, sets: this.options.termSets!.map(set => set.name),
+        names: this.terms.entries.filter(entry => entry.name).length, terms: this.terms.entries.filter(entry => !entry.name).length, gaps: [...this.terms.gaps] } : null,
+      capture: this.capture, error: this.error, backend: this.options.backend,
       processing: this.processing(), segmentation: this.segmentation,
       translation: { available: Boolean(this.options.translator), enabled: this.translating },
       restarts: this.restarts, ...(this.restarting ? { restarting: true as const } : {}), host: this.options.host?.() ?? null,
@@ -103,7 +115,16 @@ export class Controller {
     if (this.translating) return configured;
     return configured === 'local-audio-cloud-text' ? 'local-only' : configured === 'cloud-audio-and-text' ? 'cloud-audio-only' : configured;
   }
-  // Takes effect at the next Start, so a row never mixes two segmentations.
+  private project() { return this.termSet ? projectTerms(this.termSet, this.pair, this.script) : fixedTerms(this.options.glossary); }
+  offersGlossary(name: string) { return Boolean(this.options.termSets?.some(set => set.name === name)); }
+  // Only while capture is off, as a pair switch: a new session, so no row or context translated with the old set stays.
+  setGlossary(name: string) {
+    const next = this.options.termSets?.find(set => set.name === name);
+    if (!next || next === this.termSet || ['active', 'connecting', 'stopping'].includes(this.capture)) return;
+    this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.capture = 'paused';
+    this.termSet = next; this.terms = this.project();
+    this.changed();
+  }
   private tag() { return pairTag({ pair: this.pair, script: this.script }); }
   // Without a script, a pair whose language has scripts stands for its first.
   offers(pair: Pair, script?: Script | null) {
@@ -117,9 +138,11 @@ export class Controller {
     if (pairTag(next) === this.tag() || ['active', 'connecting', 'stopping'].includes(this.capture)) return;
     this.closeStream(); this.invalidate(); this.sessionId = randomUUID(); this.capture = 'paused';
     this.pair = [...next.pair] as Pair; this.script = next.script; this.mode = 'auto';
+    this.terms = this.project();
     this.options.translator?.setPair?.(this.pair, this.script);
     this.changed();
   }
+  // Takes effect at the next Start, so a row never mixes two segmentations.
   setSegmentation(value: Segmentation) {
     if (this.segmentation === null || this.segmentation === value || ['active', 'connecting', 'stopping'].includes(this.capture)) return;
     this.segmentation = value; this.changed();
@@ -177,6 +200,7 @@ export class Controller {
         onEvent: event => { if (token === this.streamToken) this.transcript(event); },
         onFailure: () => { if (token === this.streamToken) this.interrupted(); },
         ...(gateThreshold !== undefined ? { gateThreshold } : {}),
+        ...(this.terms.correct ? { correct: this.terms.correct } : {}),
         onTurnDiagnostic: (id, value) => {
           if (token !== this.streamToken) return;
           const row = this.rows.find(row => row.id === id);
@@ -392,7 +416,7 @@ export class Controller {
     if (trace) trace.translationQueueMs = Math.round(start - job.queued);
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const result = await this.request(job, { text: job.row.original, mode: job.mode, glossary: this.options.glossary,
+      const result = await this.request(job, { text: job.row.original, mode: job.mode, glossary: this.terms.glossary,
         sourceLanguage: job.row.source, context: job.context }, abort, trace, timer$ => { timer = timer$; }, partial => {
         if (job.row.state !== 'pending') return;
         // A runaway reply stops showing well past any translation of the row; its result, if valid, still shows in full.
@@ -408,6 +432,7 @@ export class Controller {
         trace.outcome = result.source === 'unknown' ? 'unresolved' : 'ready';
         trace.translationMs = job.row.translationMs!;
         trace.translationEndsInEllipsis = endsInEllipsis(result.text);
+        this.countTerms(job.row, trace);
       }
       if (this.error?.startsWith('translation')) this.error = null;
     } catch (error) {
@@ -430,8 +455,15 @@ export class Controller {
       abort.signal.addEventListener('abort', () => reject(new Error('cancelled')), { once: true });
       setTimer(setTimeout(() => abort.abort(), this.options.translationTimeoutMs ?? 12_000));
     });
-    // Translations into a language with scripts are shown in the session's script, whatever the translator wrote.
-    const shown = <T extends { target: Source; text: string }>(value: T): T => ({ ...value, text: inScript(value.target, this.script, value.text) });
+    // Translations into a language with scripts are shown in the session's script, whatever the translator wrote, and
+    // into a language with listed particles with each joined to the number or Latin word before it. A name's heard
+    // spellings are replaced in translations too: the local model writes some names in the target's own letters, such
+    // as Hangul, with the name mapped to itself in front of it.
+    const correct = this.terms.correct;
+    const shown = <T extends { target: Source; text: string }>(value: T, open = false): T => {
+      const text = attached(value.target, inScript(value.target, this.script, value.text), open);
+      return { ...value, text: correct ? correct(value.target, text).slice(0, 4000) : text };
+    };
     return shown(Translation.parse(await Promise.race([
       this.options.translator!.translate(input, abort.signal, value => {
         const diagnostic = TranslationDiagnostic.safeParse(value);
@@ -442,7 +474,7 @@ export class Controller {
         // Streamed text shows while the request runs, once its direction is valid; the result replaces it and a failure clears it.
         if (abort.signal.aborted || job.epoch !== this.epoch || !this.rows.includes(job.row)
           || partial.source === 'unknown' || !this.directed(input.mode, partial)) return;
-        show(shown(partial));
+        show(shown(partial, true));
       }), cancelled,
     ])));
   }
@@ -476,7 +508,7 @@ export class Controller {
         ...pieces.parts.map(part => ({ original: part.original.slice(0, 800), translation: part.translation.slice(0, 800) || null, source })),
       ].slice(-4);
       const mode = pieces.direction ?? job.mode;
-      const result = await this.request(job, { text, mode, glossary: this.options.glossary,
+      const result = await this.request(job, { text, mode, glossary: this.terms.glossary,
         sourceLanguage: row.source !== 'unknown' ? row.source : pieces.language, context, ...(last ? {} : { continues: true }) },
       abort, trace, timer$ => { timer = timer$; }, partial => {
         if (!['partial', 'pending'].includes(row.state)) return;
@@ -522,7 +554,15 @@ export class Controller {
     if (trace && this.traces.includes(trace)) {
       trace.outcome = row.state as 'ready' | 'unresolved'; trace.translationMs = row.translationMs!;
       trace.translationEndsInEllipsis = endsInEllipsis(row.translation ?? '');
+      this.countTerms(row, trace);
     }
+  }
+  // Counts only: whether the translation kept the glossary's names and terms; see termMisses.
+  private countTerms(row: Segment, trace: TurnTrace) {
+    if (row.state !== 'ready' || !this.terms.entries.length) return;
+    const counts = termMisses(this.terms.entries, this.pair, row.source, row.original, row.translation ?? '');
+    if (counts.names) Object.assign(trace, { glossaryNames: counts.names, glossaryNameMisses: counts.nameMisses });
+    if (counts.terms) Object.assign(trace, { glossaryTerms: counts.terms, glossaryTermMisses: counts.termMisses });
   }
   private directed(mode: Mode, result: PartialTranslation) {
     const forced = direction(mode);

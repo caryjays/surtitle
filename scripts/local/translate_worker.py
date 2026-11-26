@@ -1,8 +1,9 @@
 """Private stdio RPC for local translation: stdout is protocol only; no transcript diagnostic logs.
 
-Requests are JSON lines {id, system, user, maxTokens} with an optional opening, or {cancel: id} to stop a queued or running
-request. An opening is the known start of the reply: it ends the prompt instead of being generated, and the reply and its
-partials include it.
+Requests are JSON lines {id, system, user, maxTokens} with an optional opening and an optional avoid, or {cancel: id} to
+stop a queued or running request. An opening is the known start of the reply: it ends the prompt instead of being
+generated, and the reply and its partials include it. avoid lists writing the reply must not hold, as Unicode
+character-name prefixes: no token that decodes to such a character can be generated.
 While a request generates, {type: 'partial', id, text} carries its reply so far, at most every PARTIAL_S.
 Each request then gets exactly one reply, {type: 'result', ...} or {type: 'cancelled', id}.
 
@@ -13,6 +14,7 @@ import json
 import pathlib
 import queue
 import sys
+import re
 import threading
 import time
 
@@ -22,6 +24,7 @@ from mlx_lm.models.cache import make_prompt_cache
 from mlx_lm.sample_utils import make_sampler
 
 from prefix_cache import Prefixes
+from script_mask import holding
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MODELS = json.loads((ROOT / 'scripts/local/translators.json').read_text())
@@ -36,9 +39,11 @@ def send(message):
 
 
 def valid(request):
-    keys = {'id', 'system', 'user', 'maxTokens'}
-    return ((set(request) == keys or (set(request) == keys | {'opening'} and isinstance(request['opening'], str)
-                                      and len(request['opening']) <= 200)) and isinstance(request['id'], str) and len(request['id']) <= 100
+    keys, opening, avoid = {'id', 'system', 'user', 'maxTokens'}, request.get('opening', ''), request.get('avoid', [])
+    return (keys <= set(request) <= keys | {'opening', 'avoid'} and isinstance(opening, str) and len(opening) <= 200
+            and isinstance(avoid, list) and len(avoid) <= 8
+            and all(isinstance(a, str) and re.fullmatch(r'[A-Z][A-Z ]{0,39}', a) for a in avoid)
+            and isinstance(request['id'], str) and len(request['id']) <= 100
             and isinstance(request['system'], str) and len(request['system']) <= 20_000
             and isinstance(request['user'], str) and len(request['user']) <= 40_000
             and isinstance(request['maxTokens'], int) and 1 <= request['maxTokens'] <= 2048)
@@ -69,7 +74,21 @@ def main():
             return prompt, None
         return prompt[length:], copy.deepcopy(states[key])
 
-    def generate(system, user, max_tokens, stop=lambda: False, progress=lambda text: None, opening=''):
+    # Each token decoded on its own, for the masks of requests that name writing to avoid.
+    pieces = tokenizer._tokenizer.batch_decode([[i] for i in range(max(tokenizer.vocab.values()) + 1)])
+    masks = {}
+
+    def avoiding(prefixes):
+        """A logits processor under which no token holding such writing can be generated; built once per kind."""
+        if prefixes not in masks:
+            size = model(mx.array([[0]])).shape[-1]  # the model's output can be wider than the tokenizer's vocabulary
+            mask = mx.zeros(max(size, len(pieces)))
+            if banned := holding(pieces, prefixes):
+                mask[mx.array(banned)] = -mx.inf
+            masks[prefixes] = mask[:size]
+        return lambda tokens, logits: logits + masks[prefixes]
+
+    def generate(system, user, max_tokens, stop=lambda: False, progress=lambda text: None, opening='', avoid=()):
         # Thinking off: a caption needs the answer, not a reasoning preamble.
         prompt = tokenizer.encode(tokenizer.apply_chat_template(
             [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
@@ -78,6 +97,7 @@ def main():
         total = len(prompt)
         prompt, state = state_for(prompt)
         for last in stream_generate(model, tokenizer, prompt, max_tokens=max_tokens, sampler=sampler,
+                                    **({'logits_processors': [avoiding(tuple(avoid))]} if avoid else {}),
                                     **({'prompt_cache': state} if state is not None else {})):
             last.prompt_tokens = total  # the whole prompt, whatever part of it was reused
             text += last.text
@@ -115,7 +135,8 @@ def main():
             continue
         start = time.perf_counter()
         text, last = generate(request['system'], request['user'], request['maxTokens'], lambda: request['id'] in cancelled,
-                              lambda text: send({'type': 'partial', 'id': request['id'], 'text': text}), request.get('opening', ''))
+                              lambda text: send({'type': 'partial', 'id': request['id'], 'text': text}), request.get('opening', ''),
+                              request.get('avoid', ()))
         if text is None:
             cancelled.discard(request['id'])
             send({'type': 'cancelled', 'id': request['id']})

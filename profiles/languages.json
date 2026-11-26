@@ -15,6 +15,7 @@
     "spaced": false,
     "sentenceEnd": "。！？",
     "clauseEnd": "、，",
+    "adjoining": ["Han", "Hiragana", "Katakana"],
     "stockPhrases": ["ご視聴ありがとうございました", "ご清聴ありがとうございました", "お疲れ様でした", "チャンネル登録よろしくお願いします"],
     "reading": { "floor": 3, "ceiling": 10 },
     "uncaptioned": "字幕なし"
@@ -81,6 +82,8 @@
     "latinWords": true,
     "spaced": true,
     "letters": ["HANGUL"],
+    "foreign": ["CJK", "IDEOGRAPHIC", "HIRAGANA", "KATAKANA"],
+    "particles": ["은", "는", "가", "을", "를", "의", "에", "에는", "에도", "에서", "에서는", "에서도", "에게", "와", "과", "도", "로", "으로", "까지", "부터", "입니다", "이며"],
     "sentenceEnd": ".!?",
     "clauseEnd": ",;:",
     "stockPhrases": ["다음 영상에서 만나요", "다음 주에 만나요", "이 시각 세계였습니다", "시청해주셔서 감사합니다", "구독과 좋아요 부탁드립니다", "감사합니다"],

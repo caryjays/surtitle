@@ -1,14 +1,17 @@
-[
-  { "term": "large language model", "translation": "大規模言語モデル" },
-  { "term": "LLM", "translation": "LLM" },
-  { "term": "machine learning", "translation": "機械学習" },
-  { "term": "inference", "translation": "推論" },
-  { "term": "fine-tuning", "translation": "ファインチューニング" },
-  { "term": "retrieval-augmented generation", "translation": "検索拡張生成" },
-  { "term": "RAG", "translation": "RAG" },
-  { "term": "prompt", "translation": "プロンプト" },
-  { "term": "AI agent", "translation": "AIエージェント" },
-  { "term": "personal wiki", "translation": "パーソナルWiki" },
-  { "term": "Claude", "translation": "Claude" },
-  { "term": "ChatGPT", "translation": "ChatGPT" }
-]
+{
+  "name": "Example",
+  "terms": [
+    { "en": "large language model", "ja": "大規模言語モデル", "es": "modelo de lenguaje grande", "fr": "grand modèle de langage", "it": "modello linguistico di grandi dimensioni", "pt": "grande modelo de linguagem", "zh": "大语言模型", "ko": "대규모 언어 모델" },
+    { "name": "LLM" },
+    { "en": "machine learning", "ja": "機械学習", "es": "aprendizaje automático", "fr": "apprentissage automatique", "it": "apprendimento automatico", "pt": "aprendizado de máquina", "zh": "机器学习", "ko": "머신러닝" },
+    { "en": "inference", "ja": "推論", "es": "inferencia", "fr": "inférence", "it": "inferenza", "pt": "inferência", "zh": "推理", "ko": "추론" },
+    { "en": "fine-tuning", "ja": "ファインチューニング", "es": "ajuste fino", "fr": "affinage", "it": "fine-tuning", "pt": "ajuste fino", "zh": "微调", "ko": "파인튜닝" },
+    { "en": "retrieval-augmented generation", "ja": "検索拡張生成", "es": "generación aumentada por recuperación", "fr": "génération augmentée par récupération", "it": "generazione aumentata dal recupero", "pt": "geração aumentada por recuperação", "zh": "检索增强生成", "ko": "검색 증강 생성" },
+    { "name": "RAG" },
+    { "en": "prompt", "ja": "プロンプト", "es": "prompt", "fr": "prompt", "it": "prompt", "pt": "prompt", "zh": "提示词", "ko": "프롬프트" },
+    { "en": "AI agent", "ja": "AIエージェント", "es": "agente de IA", "fr": "agent IA", "it": "agente IA", "pt": "agente de IA", "zh": "AI智能体", "ko": "AI 에이전트" },
+    { "en": "personal wiki", "ja": "パーソナルWiki", "es": "wiki personal", "fr": "wiki personnel", "it": "wiki personale", "pt": "wiki pessoal", "zh": "个人Wiki", "ko": "개인 위키" },
+    { "name": "Claude" },
+    { "name": "ChatGPT" }
+  ]
+}

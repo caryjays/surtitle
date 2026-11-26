@@ -54,6 +54,7 @@
     "sim:display": "tsx scripts/display-sim.ts",
     "test:rolling-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --listen --rolling",
     "test:offline-browser": "pnpm build && tsx scripts/local-browser-smoke.ts --offline --rolling",
+    "glossary:check": "tsx scripts/glossary-check.ts",
     "docs:check": "tsx scripts/docs-check.ts",
     "check": "pnpm typecheck && pnpm test && pnpm docs:check && pnpm build"
   },

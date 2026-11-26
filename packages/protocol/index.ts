@@ -3,6 +3,7 @@ import { TurnTrace } from './diagnostics.ts';
 import { Mode, Pair, PairTag, Script, Source } from './languages.ts';
 export { Boundary, RecognitionQuality, TurnMeasurement, TranslationDiagnostic, TurnTrace, endsInEllipsis } from './diagnostics.ts';
 export * from './languages.ts';
+export * from './terms.ts';
 
 export const Glossary = z.array(z.object({ term: z.string().min(1).max(80), translation: z.string().min(1).max(120) }).strict()).max(32);
 export type Glossary = z.infer<typeof Glossary>;
@@ -23,6 +24,8 @@ export const Command = z.discriminatedUnion('type', [
   // Applies only while capture is off, and starts a new session in that pair. Without a script, a pair whose language has
   // scripts takes the first.
   z.object({ type: z.literal('set-pair'), pair: Pair, script: Script.nullable().optional() }).strict(),
+  // Applies only while capture is off, and starts a new session with that term set.
+  z.object({ type: z.literal('set-glossary'), name: z.string().min(1).max(40) }).strict(),
 ]);
 export const Failure = z.enum(['credentials', 'transcription', 'translation', 'translation-auth', 'translation-rate-limit', 'translation-network', 'capture', 'overload', 'protocol', 'session-limit']);
 export type Failure = z.infer<typeof Failure>;
@@ -90,6 +93,11 @@ export const Snapshot = z.object({
   // The pairs the operator may switch to while capture is off, as tags such as en-ja or en-zh-Hant; one or none means the
   // pair is fixed.
   pairs: z.array(PairTag).max(32).default([]),
+  // The term set in use and those the operator may switch to while capture is off; names and terms count what the
+  // session's pair sends, and gaps lists the set's terms with no form in one of the pair's languages. null: a fixed list.
+  glossary: z.object({ name: z.string().max(40), sets: z.array(z.string().max(40)).max(64),
+    names: z.number().int().min(0).max(32), terms: z.number().int().min(0).max(32), gaps: z.array(z.string().max(120)).max(32),
+  }).strict().nullable().default(null),
   capture: z.enum(['paused', 'connecting', 'active', 'stopping', 'failed']),
   error: Failure.nullable(), backend: z.string().max(160),
   processing: z.enum(['local-only', 'local-audio-local-text', 'local-audio-cloud-text', 'cloud-audio-and-text', 'cloud-audio-only']),
